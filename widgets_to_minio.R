@@ -64,7 +64,10 @@ save_widget <- function(widg) {
   if (!("htmlwidget" %in% class(widg))) {
     stop("Not an htmlwidget!")
   } else {
-  saveWidget(widg, savepath, selfcontained = T, libdir = libdir, knitrOptions = list(fig.width = 8, fig.height = 3))
+    widg$sizingPolicy$padding = 0
+    widg$sizingPolicy$browser$padding = 0
+    widg$sizingPolicy$viewer$padding = 0
+    saveWidget(widg, savepath, selfcontained = T, libdir = libdir)
     print(paste("Saved to", savepath))
   }
 }
