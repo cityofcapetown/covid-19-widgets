@@ -167,6 +167,10 @@ rsa_latest_confirmed <- nrow(covid19za_timeline_confirmed)
 rsa_latest_deaths <- nrow(covid19za_timeline_deaths)
 rsa_latest_tested <- max(covid19za_timeline_testing$cumulative_tests)
 
+# Latest Values WC --------------------------
+wc_latest_update <- rsa_latest_update
+wc_latest_confirmed <- covid19za_timeline_confirmed %>% filter(province == "WC") %>% nrow()
+
 # expected_future_trajectory_log -----------------------
 countries_this_far <- global_ts_since_100 %>% 
   select(-days_since_passed_100) %>% 
@@ -207,7 +211,9 @@ cct_2016_pop_density <- left_join(wards_2016_polygons, wards_2016_density, by = 
 
 # VALUEBOXES =============================================================
 
-latest_values <- listN(rsa_latest_update,
+latest_values <- listN(wc_latest_update,
+                       wc_latest_confirmed,
+                       rsa_latest_update,
                   rsa_latest_tested, 
                   rsa_latest_confirmed, 
                   rsa_latest_deaths,
@@ -414,7 +420,7 @@ ct_heatmap <- leaflet(cct_2016_pop_density) %>%
                 style = list("font-weight" = "normal", padding = "3px 8px"),
                 textsize = "15px",
                 direction = "auto")) %>%
-  addLegend(pal = pal, title = "Estimated pop density/km2/ward - 2016",
+  addLegend(pal = pal, title = "Pop. density 2016",
             values = ~`2016_POP_DENSITY_KM2`, opacity = 0.7, 
             position = "bottomright") %>%
   # control
