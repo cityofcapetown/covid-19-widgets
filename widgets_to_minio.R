@@ -30,6 +30,7 @@ library(leaflet)
 library(arrow)
 library(sf)
 
+
 # LOAD SECRETS ==========================================================================
 # Credentials
 secrets <- fromJSON(Sys.getenv("SECRETS_FILE"))
@@ -51,6 +52,13 @@ df_as_xts <- function(df, time_col) {
   
   xdf <- xts(df3, order.by= df %>% pull(time_col))
   xdf
+}
+
+# Add values to list
+listN <- function(...){
+  anonList <- list(...)
+  names(anonList) <- as.character(substitute(list(...)))[-1]
+  anonList
 }
 
 save_widget <- function(widg) {
@@ -199,14 +207,18 @@ cct_2016_pop_density <- left_join(wards_2016_polygons, wards_2016_density, by = 
 
 # VALUEBOXES =============================================================
 
-# Value Boxes
-valueBox(rsa_latest_update, icon = "fa-clock")
-valueBox(rsa_latest_tested, icon = "fa-stethoscope")
-valueBox(rsa_latest_confirmed, icon = "fa-ambulance")
-valueBox(rsa_latest_deaths, icon = "fa-skull")
-valueBox(global_last_updated, icon = "fa-clock")
-valueBox(global_last_confirmed_val, icon = "fa-ambulance")
-valueBox(global_last_deaths_val, icon = "fa-skull")
+latest_values <- listN(rsa_latest_update,
+                  rsa_latest_tested, 
+                  rsa_latest_confirmed, 
+                  rsa_latest_deaths,
+                  global_last_updated,
+                  global_last_confirmed_val,
+                  global_last_deaths_val)
+
+write(
+  toJSON(latest_values), 
+  file.path(getwd(), destdir,"latest_values.json")
+  )
 
 # HTML WIDGETS ============================================================
 
