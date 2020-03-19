@@ -64,7 +64,7 @@ save_widget <- function(widg) {
   if (!("htmlwidget" %in% class(widg))) {
     stop("Not an htmlwidget!")
   } else {
-  saveWidget(widg, savepath, selfcontained = T, libdir = libdir)
+  saveWidget(widg, savepath, selfcontained = T, libdir = libdir, knitrOptions = list(fig.width = 8, fig.height = 3))
     print(paste("Saved to", savepath))
   }
 }
@@ -205,7 +205,6 @@ valueBox(global_last_updated, icon = "fa-clock")
 valueBox(global_last_confirmed_val, icon = "fa-ambulance")
 valueBox(global_last_deaths_val, icon = "fa-skull")
 
-
 # HTML WIDGETS ============================================================
 
 # Expected future trajectory
@@ -213,10 +212,9 @@ future_trajectory <- global_ts_since_100 %>%
   mutate(MEDIAN = median_values[,1],
          UPPER_QUARTILE = upper_quartile_values[,1],
          LOWER_QUARTILE = lower_quartile_values[,1]) %>%
-  drop_na(MEDIAN) %>%
-  mutate(days_since_passed_100 = as.POSIXct(days_since_passed_100, origin = "1960-01-01 00:00")) %>%
-  df_as_xts("days_since_passed_100") %>% 
-  dygraph() %>%
+  drop_na(MEDIAN) %>% 
+  select(-days_since_passed_100) %>% ts(., start = 1, end = nrow(.), frequency = 1) %>% 
+  dygraph(height = '300', width = '400') %>%
   dyLegend(width = 400) %>%
   dyCSS(textConnection("
      .dygraph-legend > span { display: none; }
@@ -227,8 +225,8 @@ future_trajectory <- global_ts_since_100 %>%
               hideOnMouseOut = TRUE) %>%
   dyRangeSelector(height = 20) %>%
   dyOptions(stackedGraph = FALSE) %>%
-  dyAxis(name="x",
-         axisLabelFormatter = "function(d){ return d.getSeconds() }") %>% 
+  #dyAxis(name="x",
+  #       axisLabelFormatter = "function(d){ return d.getFullyear() }") %>% 
   dySeries(c("LOWER_QUARTILE", "MEDIAN", "UPPER_QUARTILE"), 
            label = "Quartile Values",
            strokeWidth = 4,
@@ -247,7 +245,7 @@ rsa_tests_vs_cases <- left_join(sa_ts_confirmed,
                                 by = "YYYYMMDD") %>% 
   drop_na() %>%
   df_as_xts("YYYYMMDD") %>% 
-  dygraph() %>%
+  dygraph(height = '300', width = '400') %>%
   dyLegend(width = 400) %>%
   dyCSS(textConnection("
      .dygraph-legend > span { display: none; }
@@ -261,10 +259,14 @@ rsa_tests_vs_cases <- left_join(sa_ts_confirmed,
             logscale = FALSE) 
 save_widget(rsa_tests_vs_cases)
 
+# rsa_tasts_vs_cases_rebased -------------
 rsa_tests_vs_cases_rebased <- rsa_tests_vs_cases %>% dyRebase(value = 100)
 save_widget(rsa_tests_vs_cases_rebased)
 
-rsa_provincial_timeseries <- rsa_provincial_ts_confirmed %>% df_as_xts("YYYYMMDD") %>% dygraph() %>%
+# rsa_provincial_timeseries --------------
+rsa_provincial_timeseries <- rsa_provincial_ts_confirmed %>% 
+  df_as_xts("YYYYMMDD") %>% 
+  dygraph(height = '300', width = '400') %>%
   dyLegend(width = 400) %>%
   dyCSS(textConnection("
      .dygraph-legend > span { display: none; }
@@ -276,10 +278,11 @@ rsa_provincial_timeseries <- rsa_provincial_ts_confirmed %>% df_as_xts("YYYYMMDD
   dyRangeSelector(height = 20) %>%
   dyOptions(stackedGraph = TRUE) 
 
+# rsa_timeline_testing ----------------------------------
 rsa_timeline_testing <- covid19za_timeline_testing %>% 
   select(YYYYMMDD, cumulative_tests) %>%
   df_as_xts("YYYYMMDD") %>% 
-  dygraph() %>%
+  dygraph(height = '300', width = '400') %>%
   dyLegend(width = 400) %>%
   dyCSS(textConnection("
      .dygraph-legend > span { display: none; }
@@ -293,6 +296,7 @@ rsa_timeline_testing <- covid19za_timeline_testing %>%
             logscale = FALSE) 
 save_widget(rsa_timeline_testing)
 
+# rsa_dem_pyramid -------------------------------------
 rsa_dem_pyramid <- ggplot(rsa_pop_genders_ages) +
   geom_bar(aes(x=AGE, y=male), fill="#59ABE3", stat="identity") +
   geom_bar(aes(x=AGE, y=-female), fill="#E66551", stat="identity") +
@@ -313,7 +317,9 @@ rsa_dem_pyramid <- ggplot(rsa_pop_genders_ages) +
 rsa_dem_pyramid <- ggplotly(rsa_dem_pyramid)
 save_widget(rsa_dem_pyramid)
 
-global_timeline_confirmed <- global_ts_sorted_confirmed %>% df_as_xts("report_date") %>% dygraph() %>%
+# global_timeline_confirmed ----------------------------
+global_timeline_confirmed <- global_ts_sorted_confirmed %>% df_as_xts("report_date") %>% 
+  dygraph(height = '300', width = '400') %>%
   dyLegend(width = 400) %>%
   dyCSS(textConnection("
      .dygraph-legend > span { display: none; }
@@ -327,6 +333,7 @@ global_timeline_confirmed <- global_ts_sorted_confirmed %>% df_as_xts("report_da
   dyOptions(stackedGraph = TRUE) 
 save_widget(global_timeline_confirmed)
 
+# browsable_global ------------------------------------
 browsable_global <- global_latest_data %>% 
   select(country,
          population,
@@ -361,6 +368,7 @@ save_widget(browsable_global)
 
 # MAPS =========================================================================
 
+# ct_heatmap ------------------------
 bins <- c(0, 100, 200, 500, 1000, 2000, 5000, 10000, 20000, Inf)
 pal <- colorBin("Blues", domain = cct_2016_pop_density$`2016_POP_DENSITY_KM2`, bins = bins)
 
@@ -391,7 +399,8 @@ ct_heatmap <- leaflet(cct_2016_pop_density) %>%
                 style = list("font-weight" = "normal", padding = "3px 8px"),
                 textsize = "15px",
                 direction = "auto")) %>%
-  addLegend(pal = pal, values = ~`2016_POP_DENSITY_KM2`, opacity = 0.7, title = NULL,
+  addLegend(pal = pal, title = "Estimated pop density/km2/ward - 2016",
+            values = ~`2016_POP_DENSITY_KM2`, opacity = 0.7, 
             position = "bottomright") %>%
   # control
   addLayersControl(
