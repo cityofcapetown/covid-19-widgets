@@ -214,7 +214,7 @@ future_trajectory <- global_ts_since_100 %>%
          LOWER_QUARTILE = lower_quartile_values[,1]) %>%
   drop_na(MEDIAN) %>% 
   select(-days_since_passed_100) %>% ts(., start = 1, end = nrow(.), frequency = 1) %>% 
-  dygraph(height = '300', width = '400') %>%
+  dygraph() %>%
   dyLegend(width = 400) %>%
   dyCSS(textConnection("
      .dygraph-legend > span { display: none; }
@@ -245,7 +245,7 @@ rsa_tests_vs_cases <- left_join(sa_ts_confirmed,
                                 by = "YYYYMMDD") %>% 
   drop_na() %>%
   df_as_xts("YYYYMMDD") %>% 
-  dygraph(height = '300', width = '400') %>%
+  dygraph() %>%
   dyLegend(width = 400) %>%
   dyCSS(textConnection("
      .dygraph-legend > span { display: none; }
@@ -266,7 +266,7 @@ save_widget(rsa_tests_vs_cases_rebased)
 # rsa_provincial_timeseries --------------
 rsa_provincial_timeseries <- rsa_provincial_ts_confirmed %>% 
   df_as_xts("YYYYMMDD") %>% 
-  dygraph(height = '300', width = '400') %>%
+  dygraph() %>%
   dyLegend(width = 400) %>%
   dyCSS(textConnection("
      .dygraph-legend > span { display: none; }
@@ -282,7 +282,7 @@ rsa_provincial_timeseries <- rsa_provincial_ts_confirmed %>%
 rsa_timeline_testing <- covid19za_timeline_testing %>% 
   select(YYYYMMDD, cumulative_tests) %>%
   df_as_xts("YYYYMMDD") %>% 
-  dygraph(height = '300', width = '400') %>%
+  dygraph() %>%
   dyLegend(width = 400) %>%
   dyCSS(textConnection("
      .dygraph-legend > span { display: none; }
@@ -319,7 +319,7 @@ save_widget(rsa_dem_pyramid)
 
 # global_timeline_confirmed ----------------------------
 global_timeline_confirmed <- global_ts_sorted_confirmed %>% df_as_xts("report_date") %>% 
-  dygraph(height = '300', width = '400') %>%
+  dygraph() %>%
   dyLegend(width = 400) %>%
   dyCSS(textConnection("
      .dygraph-legend > span { display: none; }
