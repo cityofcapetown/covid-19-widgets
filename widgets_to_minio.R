@@ -236,11 +236,11 @@ future_trajectory <- global_ts_since_100 %>%
   drop_na(MEDIAN) %>% 
   select(-days_since_passed_100) %>% ts(., start = 1, end = nrow(.), frequency = 1) %>% 
   dygraph() %>%
-  dyLegend(width = 400) %>%
+  #dyLegend(width = 400) %>%
   dyCSS(textConnection("
      .dygraph-legend > span { display: none; }
      .dygraph-legend > span.highlight { display: inline; }
-  ")) %>% 
+  ")) %>%
   dyHighlight(highlightCircleSize = 5, 
               highlightSeriesBackgroundAlpha = 0.4,
               hideOnMouseOut = TRUE) %>%
@@ -267,7 +267,7 @@ rsa_tests_vs_cases <- left_join(sa_ts_confirmed,
   drop_na() %>%
   df_as_xts("YYYYMMDD") %>% 
   dygraph() %>%
-  dyLegend(width = 400) %>%
+  #dyLegend(width = 400) %>%
   dyCSS(textConnection("
      .dygraph-legend > span { display: none; }
      .dygraph-legend > span.highlight { display: inline; }
@@ -288,7 +288,7 @@ save_widget(rsa_tests_vs_cases_rebased)
 rsa_provincial_confirmed_timeseries <- rsa_provincial_ts_confirmed %>% 
   df_as_xts("YYYYMMDD") %>% 
   dygraph() %>%
-  dyLegend(width = 400) %>%
+  #dyLegend(width = 400) %>%
   dyCSS(textConnection("
      .dygraph-legend > span { display: none; }
      .dygraph-legend > span.highlight { display: inline; }
@@ -305,7 +305,7 @@ wc_confirmed_timeseries <- rsa_provincial_ts_confirmed %>%
   select(YYYYMMDD, WC) %>%
   df_as_xts("YYYYMMDD") %>% 
   dygraph() %>%
-  dyLegend(width = 400) %>%
+  #dyLegend(width = 400) %>%
   dyCSS(textConnection("
      .dygraph-legend > span { display: none; }
      .dygraph-legend > span.highlight { display: inline; }
@@ -322,7 +322,7 @@ rsa_timeline_testing <- covid19za_timeline_testing %>%
   select(YYYYMMDD, cumulative_tests) %>%
   df_as_xts("YYYYMMDD") %>% 
   dygraph() %>%
-  dyLegend(width = 400) %>%
+  #dyLegend(width = 400) %>%
   dyCSS(textConnection("
      .dygraph-legend > span { display: none; }
      .dygraph-legend > span.highlight { display: inline; }
@@ -436,7 +436,7 @@ save_widget(demographic_mortality_plot)
 # global_timeline_confirmed ----------------------------
 global_timeline_confirmed <- global_ts_sorted_confirmed %>% df_as_xts("report_date") %>% 
   dygraph() %>%
-  dyLegend(width = 400) %>%
+  #dyLegend(width = 400) %>%
   dyCSS(textConnection("
      .dygraph-legend > span { display: none; }
      .dygraph-legend > span.highlight { display: inline; }
