@@ -29,6 +29,8 @@ library(tools)
 library(leaflet)
 library(arrow)
 library(sf)
+dir.create(Sys.getenv("R_LIBS_USER"), recursive = TRUE)  # create personal library
+.libPaths(Sys.getenv("R_LIBS_USER"))  # add to the path
 devtools::install("R/bpexploder-master/", upgrade = "never")
 library(bpexploder)
 
