@@ -98,7 +98,6 @@ load_rgdb_table <- function(table_name, minio_key, minio_secret) {
   return(geo_layer)
 }
 
-
 # CREATE DIRS =================================================================
 sourcedir <- "data/public"
 dir.create(sourcedir, recursive = TRUE)
@@ -194,6 +193,58 @@ upper_quartile_values <- global_ts_since_100 %>% select(-days_since_passed_100) 
 values_to_drop <- ifelse(countries_this_far < 8, NA, 1)
 
 median_values <- median_values * values_to_drop
+
+# Age brackets
+age_brackets <- c(0, 10, 20, 30,40,50,60,70, 80, Inf)
+age_bracket_labels <- c("0 < 9", 
+                        "10 < 19", 
+                        "20 < 29", 
+                        "30 < 39",
+                        "40 < 49",
+                        "50 < 59",
+                        "60 < 69",
+                        "70 < 79", 
+                        "80 +")
+# China https://www.ncbi.nlm.nih.gov/pubmed/32064853?fbclid=IwAR3JCxH50VTfg3Q_02YTLdz2Tk7yBTmt-5oCxE4KlBe0evh7ByK3HPVU-pU
+# https://ourworldindata.org/uploads/2020/03/Coronavirus-CFR-by-age-in-China-1.png
+chinese_age_fatality_rate <- c(0, 0.2, 0.2, 0.2, 0.4, 1.3, 3.6, 8, 14.8)
+
+# China demographic
+china_demographic <- global_pop_raw %>% filter(NAME == "China") 
+
+china_demographic <- china_demographic %>% 
+  mutate(age_interval = findInterval(china_demographic$AGE, age_brackets, rightmost.closed = TRUE)) 
+
+china_demographic<- china_demographic %>% 
+  mutate(age_interval = age_bracket_labels[age_interval]) %>% 
+  group_by(age_interval) %>% 
+  summarise(cn_population = sum(POP)) %>% 
+  ungroup() %>% 
+  mutate(population_pct = cn_population/sum(cn_population) * 100) %>%
+  select(-cn_population) %>%
+  mutate(fatality_rate_pct = chinese_age_fatality_rate) %>%
+  mutate(population = "China Pop %",
+         fatal_label = "China Fatality Rate %") 
+
+# RSA
+rsa_age_fatality_rate <- c(0, 0, 0, 0, 0, 0, 0, 0, 0)
+
+rsa_demographic <- rsa_pop_genders_ages %>% 
+  mutate(pop = male + female,
+         age_interval = findInterval(rsa_pop_genders_ages$AGE, age_brackets, rightmost.closed = TRUE)) 
+
+rsa_demographic <- rsa_demographic %>% 
+  mutate(age_interval = age_bracket_labels[age_interval]) %>% 
+  group_by(age_interval) %>% 
+  summarise(rsa_population = sum(pop)) %>% 
+  ungroup() %>% 
+  mutate(population_pct = rsa_population/sum(rsa_population)*100) %>%
+  select(-rsa_population) %>%
+  mutate(fatality_rate_pct = rsa_age_fatality_rate) %>% 
+  mutate(population = "SA Pop %",
+         fatal_label = "SA Fatality Rate %") 
+
+
 
 # PULL IN AND PREPARE GEO DATA ==========================================
 # Pull wards spatial layer
@@ -356,59 +407,8 @@ rsa_dem_pyramid <- ggplot(rsa_pop_genders_ages) +
 rsa_dem_pyramid <- ggplotly(rsa_dem_pyramid)
 save_widget(rsa_dem_pyramid)
 
-# age mortality ---------------------------------------
-
-# Age brackets
-age_brackets <- c(0, 10, 20, 30,40,50,60,70, 80, Inf)
-age_bracket_labels <- c("0 < 9", 
-                        "10 < 19", 
-                        "20 < 29", 
-                        "30 < 39",
-                        "40 < 49",
-                        "50 < 59",
-                        "60 < 69",
-                        "70 < 79", 
-                        "80 +")
-# China https://www.ncbi.nlm.nih.gov/pubmed/32064853?fbclid=IwAR3JCxH50VTfg3Q_02YTLdz2Tk7yBTmt-5oCxE4KlBe0evh7ByK3HPVU-pU
-# https://ourworldindata.org/uploads/2020/03/Coronavirus-CFR-by-age-in-China-1.png
-chinese_age_fatality_rate <- c(0, 0.2, 0.2, 0.2, 0.4, 1.3, 3.6, 8, 14.8)
-
-# China demographic
-china_demographic <- global_pop_raw %>% filter(NAME == "China") 
-
-china_demographic <- china_demographic %>% 
-  mutate(age_interval = findInterval(china_demographic$AGE, age_brackets, rightmost.closed = TRUE)) 
-
-china_demographic<- china_demographic %>% 
-  mutate(age_interval = age_bracket_labels[age_interval]) %>% 
-  group_by(age_interval) %>% 
-  summarise(cn_population = sum(POP)) %>% 
-  ungroup() %>% 
-  mutate(population_pct = cn_population/sum(cn_population) * 100) %>%
-  select(-cn_population) %>%
-  mutate(fatality_rate_pct = chinese_age_fatality_rate) %>%
-  mutate(population = "China Pop %",
-         fatal_label = "China Fatality Rate %") 
-
-# RSA
-rsa_age_fatality_rate <- c(0, 0, 0, 0, 0, 0, 0, 0, 0)
-
-rsa_demographic <- rsa_pop_genders_ages %>% 
-  mutate(pop = male + female,
-         age_interval = findInterval(rsa_pop_genders_ages$AGE, age_brackets, rightmost.closed = TRUE)) 
-
-rsa_demographic <- rsa_demographic %>% 
-  mutate(age_interval = age_bracket_labels[age_interval]) %>% 
-  group_by(age_interval) %>% 
-  summarise(rsa_population = sum(pop)) %>% 
-  ungroup() %>% 
-  mutate(population_pct = rsa_population/sum(rsa_population)*100) %>%
-  select(-rsa_population) %>%
-  mutate(fatality_rate_pct = rsa_age_fatality_rate) %>% 
-  mutate(population = "SA Pop %",
-         fatal_label = "SA Fatality Rate %") 
-
-demographic_mortality_plot <- 
+# rsa demographic mortality plot ---------------------
+rsa_demographic_mortality_plot <- 
   china_demographic %>% mutate(fatality_rate_pct = -fatality_rate_pct,
                                 population_pct = -population_pct) %>%
     rbind(., rsa_demographic) %>%
@@ -430,8 +430,31 @@ demographic_mortality_plot <-
     labs(x = "", y = "China vs RSA Age Demographics and COVID Case Fatality Rate (%)") +
     theme_bw()
   
-demographic_mortality_plot <- ggplotly(demographic_mortality_plot)    
-save_widget(demographic_mortality_plot)
+rsa_demographic_mortality_plot <- ggplotly(rsa_demographic_mortality_plot)    
+save_widget(rsa_demographic_mortality_plot)
+
+# china demographic mortality plot ---------------------
+china_demographic_mortality_plot <- 
+  china_demographic %>% mutate(fatality_rate_pct = -fatality_rate_pct,
+                               population_pct = -population_pct) %>%
+  ggplot(aes(x = age_interval, y = population_pct)) +
+  geom_bar(aes(fill = population), 
+           alpha = 6/10,
+           stat = "identity") +
+  geom_bar(aes(y = fatality_rate_pct, fill = fatal_label), 
+           width = 0.5, 
+           stat = "identity", group = 1) +
+  scale_fill_manual(values = c(`SA Pop %` = "#D55E00", 
+                               `China Pop %` = "#E69F00", 
+                               `SA Fatality Rate %` = "#D55E00",
+                               `China Fatality Rate %` = "#E69F00"), 
+                    name="") +
+  coord_flip() +
+  labs(x = "", y = "China Age Demographics and COVID Case Fatality Rate (%)") +
+  theme_bw()
+
+china_demographic_mortality_plot <- ggplotly(china_demographic_mortality_plot)    
+save_widget(china_demographic_mortality_plot)
 
 # global_timeline_confirmed ----------------------------
 global_timeline_confirmed <- global_ts_sorted_confirmed %>% df_as_xts("report_date") %>% 
@@ -456,7 +479,7 @@ browsable_global <- global_latest_data %>%
          confirmed,
          deaths,
          incidence_per_1m,
-         mortality_per_10m,case_fatality_rate_pct) %>%
+         mortality_per_1m,case_fatality_rate_pct) %>%
   DT::datatable(options = list(pageLength = 25))
 save_widget(browsable_global)
 
@@ -470,17 +493,22 @@ save_widget(browsable_global)
 #   hc_xAxis(title = list(text = "Number of confirmed cases"))
 # save_widget(global_mortality_boxplot)
 
-# global_treemap <- global_latest_data %>% 
-#   hctreemap2(group_vars = "country", 
-#              size_var = "confirmed",
-#              color_var = "mortality_per_10m",
-#              layoutAlgorithm = "squarified") %>% 
-#   hc_colorAxis(minColor = brewer.pal(7, "Reds")[1],
-#                maxColor = brewer.pal(7, "Reds")[7]) %>% 
-#   hc_tooltip(pointFormat = "<b>{point.name}</b>:<br>
-#               Confirmed: {point.value:,.0f}<br>
-#               Deaths per 1m: {point.colorValue:,.0f}")
-# save_widget(global_treemap)
+
+# global ranked fatalities per 1m --------------------------
+global_top_fatalities_per_1m <- global_latest_data %>% 
+  select(country, mortality_per_1m) %>% 
+  filter(rank(desc(mortality_per_1m)) <= 20 | country == "South Africa") %>%
+  filter(country != "San Marino") %>% 
+  arrange(desc(mortality_per_1m))
+
+global_top_fatalities_per_1m$country <- factor(global_top_fatalities_per_1m$country, levels = global_top_fatalities_per_1m$country)
+
+global_ranked_fatalities_per_1m  <- ggplot(global_top_fatalities_per_1m, aes(country, mortality_per_1m)) + 
+  geom_col() + 
+  coord_flip()
+
+global_ranked_fatalities_per_1m <- ggplotly(global_ranked_fatalities_per_1m)
+save_widget(global_ranked_fatalities_per_1m)
 
 # MAPS =========================================================================
 
@@ -542,6 +570,4 @@ for (filename in list.files(destdir)) {
     print(filepath)
     print("This is a directory - not sending!")
     }
-}  
-
-
+} 
