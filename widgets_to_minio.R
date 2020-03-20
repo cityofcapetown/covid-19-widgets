@@ -104,7 +104,7 @@ load_rgdb_table <- function(table_name, minio_key, minio_secret) {
 sourcedir <- "data/public"
 dir.create(sourcedir, recursive = TRUE)
 
-destdir <- "widgets"
+destdir <- "widgets/public"
 dir.create(destdir, recursive = TRUE)
 
 # PULL IN PUBLIC DATA =======================================================
@@ -588,3 +588,6 @@ for (filename in list.files(destdir)) {
     print("This is a directory - not sending!")
     }
 } 
+
+# Save a copy of the data to .Rdata for dashboard knit
+save.image(file = "widgets.RData")
