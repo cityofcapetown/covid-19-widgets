@@ -29,6 +29,8 @@ library(tools)
 library(leaflet)
 library(arrow)
 library(sf)
+devtools::install("R/bpexploder-master/", upgrade = "never")
+library(bpexploder)
 
 
 # LOAD SECRETS ==========================================================================
@@ -404,7 +406,7 @@ rsa_dem_pyramid <- ggplot(rsa_pop_genders_ages) +
 #geom_text(aes(label=Mulheres, x=Idade, y=Mulheres),  position="dodge") +
 #theme(axis.title.x=element_blank(), axis.text.x=element_blank(), axis.ticks.x=element_blank())
 
-rsa_dem_pyramid <- ggplotly(rsa_dem_pyramid) %>% config(displayModeBar = F)
+rsa_dem_pyramid <- ggplotly(rsa_dem_pyramid) %>% plotly::config(displayModeBar = F)  
 save_widget(rsa_dem_pyramid)
 
 # rsa demographic mortality plot ---------------------
@@ -430,7 +432,7 @@ rsa_demographic_mortality_plot <-
     labs(x = "", y = "China vs RSA Age Demographics and COVID Case Fatality Rate (%)") +
     theme_bw()
   
-rsa_demographic_mortality_plot <- ggplotly(rsa_demographic_mortality_plot)  %>% config(displayModeBar = F)  
+rsa_demographic_mortality_plot <- ggplotly(rsa_demographic_mortality_plot)  %>% plotly::config(displayModeBar = F)  
 save_widget(rsa_demographic_mortality_plot)
 
 # china demographic mortality plot ---------------------
@@ -453,7 +455,7 @@ china_demographic_mortality_plot <-
   labs(x = "", y = "China Age Demographics and COVID Case Fatality Rate (%)") +
   theme_bw()
 
-china_demographic_mortality_plot <- ggplotly(china_demographic_mortality_plot)  %>% config(displayModeBar = F)  
+china_demographic_mortality_plot <- ggplotly(china_demographic_mortality_plot)  %>% plotly::config(displayModeBar = F)  
 save_widget(china_demographic_mortality_plot)
 
 # global_timeline_confirmed ----------------------------
@@ -483,16 +485,29 @@ browsable_global <- global_latest_data %>%
   DT::datatable(options = list(pageLength = 25))
 save_widget(browsable_global)
 
+# global_mortality_boxplot ----------------------------
+outliers <- boxplot(case_fatality_rate_pct~maturity,
+                    data=global_latest_data
+                    
+                    , plot=FALSE)$out
 
-# global_mortality_boxplot <- hcboxplot(x = global_latest_data$case_fatality_rate, 
-#           var = global_latest_data$maturity, 
-#           outliers = F) %>%
-#   hc_chart(type = "column") %>%
-#   hc_plotOptions(boxplot = list(colorByPoint = TRUE), scatter = list(color = c("#A6BBC8")))  %>%
-#   hc_yAxis(title = list(text = "Case fatality rate")) %>%
-#   hc_xAxis(title = list(text = "Number of confirmed cases"))
-# save_widget(global_mortality_boxplot)
+global_mortality_data <- global_latest_data %>% filter(!(case_fatality_rate_pct %in% outliers)) %>%
+  filter(country != "San Marino") %>% as.data.frame()
 
+global_mortality_boxplot <- bpexploder(data = global_mortality_data,
+           settings = list(
+             groupVar = "maturity",
+             levels = levels(global_mortality_data$maturity),
+             yVar = "case_fatality_rate_pct",
+             yAxisLabel = "Case Fatality Rate %",
+             xAxisLabel = "Cumulative confirmed cases",
+             tipText = list(
+               country = "country"
+             ),
+             relativeWidth = 0.75)
+)
+
+save_widget(global_mortality_boxplot)
 
 # global ranked fatalities per 1m --------------------------
 global_top_fatalities_per_1m <- global_latest_data %>% 
@@ -507,7 +522,7 @@ global_ranked_fatalities_per_1m  <- ggplot(global_top_fatalities_per_1m, aes(cou
   geom_col() + 
   coord_flip()
 
-global_ranked_fatalities_per_1m <- ggplotly(global_ranked_fatalities_per_1m) %>% config(displayModeBar = F)
+global_ranked_fatalities_per_1m <- ggplotly(global_ranked_fatalities_per_1m) %>% plotly::config(displayModeBar = F)
 save_widget(global_ranked_fatalities_per_1m)
 
 # MAPS =========================================================================
@@ -518,8 +533,10 @@ pal <- colorBin("Blues", domain = cct_2016_pop_density$`2016_POP_DENSITY_KM2`, b
 
 labels <- sprintf(
   "<strong>%s</strong><br/>%g people / km<sup>2</sup>",
-  paste("Ward", cct_2016_pop_density$WARD_NAME), cct_2016_pop_density$`2016_POP_DENSITY_KM2`, cct_2016_pop_density$`2016_POP`
-) %>% lapply(htmltools::HTML)
+  paste("Ward", cct_2016_pop_density$WARD_NAME), 
+  cct_2016_pop_density$`2016_POP_DENSITY_KM2`, 
+  cct_2016_pop_density$`2016_POP`) %>% 
+  lapply(htmltools::HTML)
 
 ct_heatmap <- leaflet(cct_2016_pop_density) %>%  
   addProviderTiles("Stamen.TonerLite", options = tileOptions(opacity=0.4), group="Map") %>%
