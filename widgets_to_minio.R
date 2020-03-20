@@ -404,7 +404,7 @@ rsa_dem_pyramid <- ggplot(rsa_pop_genders_ages) +
 #geom_text(aes(label=Mulheres, x=Idade, y=Mulheres),  position="dodge") +
 #theme(axis.title.x=element_blank(), axis.text.x=element_blank(), axis.ticks.x=element_blank())
 
-rsa_dem_pyramid <- ggplotly(rsa_dem_pyramid)
+rsa_dem_pyramid <- ggplotly(rsa_dem_pyramid) %>% config(displayModeBar = F)
 save_widget(rsa_dem_pyramid)
 
 # rsa demographic mortality plot ---------------------
@@ -430,7 +430,7 @@ rsa_demographic_mortality_plot <-
     labs(x = "", y = "China vs RSA Age Demographics and COVID Case Fatality Rate (%)") +
     theme_bw()
   
-rsa_demographic_mortality_plot <- ggplotly(rsa_demographic_mortality_plot)    
+rsa_demographic_mortality_plot <- ggplotly(rsa_demographic_mortality_plot)  %>% config(displayModeBar = F)  
 save_widget(rsa_demographic_mortality_plot)
 
 # china demographic mortality plot ---------------------
@@ -453,7 +453,7 @@ china_demographic_mortality_plot <-
   labs(x = "", y = "China Age Demographics and COVID Case Fatality Rate (%)") +
   theme_bw()
 
-china_demographic_mortality_plot <- ggplotly(china_demographic_mortality_plot)    
+china_demographic_mortality_plot <- ggplotly(china_demographic_mortality_plot)  %>% config(displayModeBar = F)  
 save_widget(china_demographic_mortality_plot)
 
 # global_timeline_confirmed ----------------------------
@@ -507,7 +507,7 @@ global_ranked_fatalities_per_1m  <- ggplot(global_top_fatalities_per_1m, aes(cou
   geom_col() + 
   coord_flip()
 
-global_ranked_fatalities_per_1m <- ggplotly(global_ranked_fatalities_per_1m)
+global_ranked_fatalities_per_1m <- ggplotly(global_ranked_fatalities_per_1m) %>% config(displayModeBar = F)
 save_widget(global_ranked_fatalities_per_1m)
 
 # MAPS =========================================================================
