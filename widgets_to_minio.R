@@ -285,7 +285,7 @@ rsa_tests_vs_cases_rebased <- rsa_tests_vs_cases %>% dyRebase(value = 100)
 save_widget(rsa_tests_vs_cases_rebased)
 
 # rsa_provincial_timeseries --------------
-rsa_provincial_timeseries <- rsa_provincial_ts_confirmed %>% 
+rsa_provincial_confirmed_timeseries <- rsa_provincial_ts_confirmed %>% 
   df_as_xts("YYYYMMDD") %>% 
   dygraph() %>%
   dyLegend(width = 400) %>%
@@ -298,6 +298,24 @@ rsa_provincial_timeseries <- rsa_provincial_ts_confirmed %>%
               hideOnMouseOut = FALSE) %>%
   dyRangeSelector(height = 20) %>%
   dyOptions(stackedGraph = TRUE) 
+save_widget(rsa_provincial_confirmed_timeseries)
+
+# wc_timeseries --------------
+wc_confirmed_timeseries <- rsa_provincial_ts_confirmed %>% 
+  select(YYYYMMDD, WC) %>%
+  df_as_xts("YYYYMMDD") %>% 
+  dygraph() %>%
+  dyLegend(width = 400) %>%
+  dyCSS(textConnection("
+     .dygraph-legend > span { display: none; }
+     .dygraph-legend > span.highlight { display: inline; }
+  ")) %>% 
+  dyHighlight(highlightCircleSize = 5, 
+              highlightSeriesBackgroundAlpha = 0.5,
+              hideOnMouseOut = FALSE) %>%
+  dyRangeSelector(height = 20) %>%
+  dyOptions(stackedGraph = TRUE) 
+save_widget(wc_confirmed_timeseries)
 
 # rsa_timeline_testing ----------------------------------
 rsa_timeline_testing <- covid19za_timeline_testing %>% 
@@ -337,6 +355,83 @@ rsa_dem_pyramid <- ggplot(rsa_pop_genders_ages) +
 
 rsa_dem_pyramid <- ggplotly(rsa_dem_pyramid)
 save_widget(rsa_dem_pyramid)
+
+# age mortality ---------------------------------------
+
+# Age brackets
+age_brackets <- c(0, 10, 20, 30,40,50,60,70, 80, Inf)
+age_bracket_labels <- c("0 < 9", 
+                        "10 < 19", 
+                        "20 < 29", 
+                        "30 < 39",
+                        "40 < 49",
+                        "50 < 59",
+                        "60 < 69",
+                        "70 < 79", 
+                        "80 +")
+# China https://www.ncbi.nlm.nih.gov/pubmed/32064853?fbclid=IwAR3JCxH50VTfg3Q_02YTLdz2Tk7yBTmt-5oCxE4KlBe0evh7ByK3HPVU-pU
+# https://ourworldindata.org/uploads/2020/03/Coronavirus-CFR-by-age-in-China-1.png
+chinese_age_fatality_rate <- c(0, 0.2, 0.2, 0.2, 0.4, 1.3, 3.6, 8, 14.8)
+
+# China demographic
+china_demographic <- global_pop_raw %>% filter(NAME == "China") 
+
+china_demographic <- china_demographic %>% 
+  mutate(age_interval = findInterval(china_demographic$AGE, age_brackets, rightmost.closed = TRUE)) 
+
+china_demographic<- china_demographic %>% 
+  mutate(age_interval = age_bracket_labels[age_interval]) %>% 
+  group_by(age_interval) %>% 
+  summarise(cn_population = sum(POP)) %>% 
+  ungroup() %>% 
+  mutate(population_pct = cn_population/sum(cn_population) * 100) %>%
+  select(-cn_population) %>%
+  mutate(fatality_rate_pct = chinese_age_fatality_rate) %>%
+  mutate(population = "China Pop %",
+         fatal_label = "China Fatality Rate %") 
+
+# RSA
+rsa_age_fatality_rate <- c(0, 0, 0, 0, 0, 0, 0, 0, 0)
+
+rsa_demographic <- rsa_pop_genders_ages %>% 
+  mutate(pop = male + female,
+         age_interval = findInterval(rsa_pop_genders_ages$AGE, age_brackets, rightmost.closed = TRUE)) 
+
+rsa_demographic <- rsa_demographic %>% 
+  mutate(age_interval = age_bracket_labels[age_interval]) %>% 
+  group_by(age_interval) %>% 
+  summarise(rsa_population = sum(pop)) %>% 
+  ungroup() %>% 
+  mutate(population_pct = rsa_population/sum(rsa_population)*100) %>%
+  select(-rsa_population) %>%
+  mutate(fatality_rate_pct = rsa_age_fatality_rate) %>% 
+  mutate(population = "SA Pop %",
+         fatal_label = "SA Fatality Rate %") 
+
+demographic_mortality_plot <- 
+  china_demographic %>% mutate(fatality_rate_pct = -fatality_rate_pct,
+                                population_pct = -population_pct) %>%
+    rbind(., rsa_demographic) %>%
+    ggplot(aes(x = age_interval, y = population_pct)) +
+    geom_bar(aes(fill = population), 
+             alpha = 6/10,
+             stat = "identity") +
+    geom_bar(aes(y = fatality_rate_pct, fill = fatal_label), 
+             
+             width = 0.5, 
+             stat = "identity", group = 1) +
+    
+    scale_fill_manual(values = c(`SA Pop %` = "#D55E00", 
+                                 `China Pop %` = "#E69F00", 
+                                 `SA Fatality Rate %` = "#D55E00",
+                                 `China Fatality Rate %` = "#E69F00"), 
+                      name="") +
+    coord_flip() +
+    labs(x = "", y = "China vs RSA Age Demographics and COVID Case Fatality Rate (%)") +
+    theme_bw()
+  
+demographic_mortality_plot <- ggplotly(demographic_mortality_plot)    
+save_widget(demographic_mortality_plot)
 
 # global_timeline_confirmed ----------------------------
 global_timeline_confirmed <- global_ts_sorted_confirmed %>% df_as_xts("report_date") %>% 
