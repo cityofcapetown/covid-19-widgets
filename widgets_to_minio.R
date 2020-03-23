@@ -76,7 +76,7 @@ save_widget <- function(widg) {
     widg$sizingPolicy$padding = 0
     widg$sizingPolicy$browser$padding = 0
     widg$sizingPolicy$viewer$padding = 0
-    saveWidget(widg, savepath, selfcontained = T, libdir = libdir)
+    saveWidget(widg, savepath, selfcontained = F, libdir = libdir)
     print(paste("Saved to", savepath))
   }
 }
@@ -139,6 +139,17 @@ for (i in seq_along(1:length(public_datasets))) {
 rm(df)
 
 # PREPARE DATA ==========================================================
+# RSA confirmed splitby source
+rsa_confirmed_by_type <- covid19za_timeline_confirmed %>% 
+  group_by(YYYYMMDD, type) %>% 
+  summarise(confirmed = n()) %>% 
+  ungroup() %>%
+  spread(key = type, value = confirmed) %>%
+  replace(is.na(.), 0) %>%
+  mutate(local = cumsum(local),
+         pending = cumsum(pending),
+         travel = cumsum(travel)) 
+
 
 # RSA total timeseries
 sa_ts_confirmed <- rsa_provincial_ts_confirmed %>% 
@@ -373,6 +384,23 @@ save_widget(rsa_tests_vs_cases)
 # rsa_tasts_vs_cases_rebased -------------
 rsa_tests_vs_cases_rebased <- rsa_tests_vs_cases %>% dyRebase(value = 100)
 save_widget(rsa_tests_vs_cases_rebased)
+
+# rsa_transmission_type_timeseries --------
+rsa_transmission_type_timeseries <- rsa_confirmed_by_type %>%
+df_as_xts("YYYYMMDD") %>% 
+  dygraph() %>%
+  #dyLegend(width = 400) %>%
+  dyCSS(textConnection("
+     .dygraph-legend > span { display: none; }
+     .dygraph-legend > span.highlight { display: inline; }
+  ")) %>% 
+  dyHighlight(highlightCircleSize = 5, 
+              highlightSeriesBackgroundAlpha = 0.5,
+              hideOnMouseOut = FALSE) %>%
+  dyRangeSelector(height = 20) %>%
+  dyOptions(stackedGraph = FALSE) 
+
+save_widget(rsa_transmission_type_timeseries)
 
 # rsa_provincial_timeseries --------------
 rsa_provincial_confirmed_timeseries <- rsa_provincial_ts_confirmed %>% 
