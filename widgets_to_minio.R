@@ -248,6 +248,18 @@ rsa_demographic <- rsa_demographic %>%
   mutate(population = "SA Pop %",
          fatal_label = "SA Fatality Rate %") 
 
+# CAPE TOWN
+cct_age_fatality_rate <- c(0, 0, 0, 0, 0, 0, 0, 0, 0)
+cct_demographic <- cct_mid_year_2019_pop_est %>% 
+  mutate(age_interval = NORM_AGE_COHORT) %>%
+  group_by(age_interval) %>% 
+  summarise(cct_population = sum(AMOUNT)) %>% 
+  ungroup() %>%
+  mutate(population_pct = cct_population/sum(cct_population)*100) %>%
+  select(-cct_population) %>%
+  mutate(fatality_rate_pct = rsa_age_fatality_rate) %>% 
+  mutate(population = "CCT Pop %",
+         fatal_label = "CCT Fatality Rate %") 
 
 
 # PULL IN AND PREPARE GEO DATA ==========================================
@@ -436,6 +448,32 @@ rsa_demographic_mortality_plot <-
   
 rsa_demographic_mortality_plot <- ggplotly(rsa_demographic_mortality_plot)  %>% plotly::config(displayModeBar = F)  
 save_widget(rsa_demographic_mortality_plot)
+
+# cape town demographic mortality plot ---------------------
+cct_demographic_mortality_plot <- 
+  china_demographic %>% mutate(fatality_rate_pct = -fatality_rate_pct,
+                               population_pct = -population_pct) %>%
+  rbind(., cct_demographic) %>%
+  ggplot(aes(x = age_interval, y = population_pct)) +
+  geom_bar(aes(fill = population), 
+           alpha = 6/10,
+           stat = "identity") +
+  geom_bar(aes(y = fatality_rate_pct, fill = fatal_label), 
+           
+           width = 0.5, 
+           stat = "identity", group = 1) +
+  
+  scale_fill_manual(values = c(`CCT Pop %` = "#D55E00", 
+                               `China Pop %` = "#E69F00", 
+                               `CCT Fatality Rate %` = "#D55E00",
+                               `China Fatality Rate %` = "#E69F00"), 
+                    name="") +
+  coord_flip() +
+  labs(x = "", y = "China vs CCT Age Demographics and COVID Case Fatality Rate (%)") +
+  theme_bw()
+
+cct_demographic_mortality_plot <- ggplotly(cct_demographic_mortality_plot)  %>% plotly::config(displayModeBar = F)  
+save_widget(cct_demographic_mortality_plot)
 
 # china demographic mortality plot ---------------------
 china_demographic_mortality_plot <- 
