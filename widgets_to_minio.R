@@ -387,6 +387,7 @@ rsa_provincial_confirmed_timeseries <- rsa_provincial_ts_confirmed %>%
               highlightSeriesBackgroundAlpha = 0.5,
               hideOnMouseOut = FALSE) %>%
   dyRangeSelector(height = 20) %>%
+  dySeries(name = "WC", label = "WC", color = "red", strokeWidth = 5) %>%
   dyOptions(stackedGraph = TRUE) 
 save_widget(rsa_provincial_confirmed_timeseries)
 
