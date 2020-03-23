@@ -19,7 +19,6 @@ library(readr)
 library(lubridate)
 library(xts)
 library(dygraphs)
-#library(highcharter)
 library(RColorBrewer)
 library(jsonlite)
 library(DT)
@@ -29,9 +28,7 @@ library(tools)
 library(leaflet)
 library(arrow)
 library(sf)
-dir.create(Sys.getenv("R_LIBS_USER"), recursive = TRUE)  # create personal library
-.libPaths(Sys.getenv("R_LIBS_USER"))  # add to the path
-devtools::install("R/bpexploder-master/", upgrade = "never")
+library(leafpop)
 library(bpexploder)
 
 
@@ -209,6 +206,7 @@ age_bracket_labels <- c("0 < 9",
                         "60 < 69",
                         "70 < 79", 
                         "80 +")
+
 # China https://www.ncbi.nlm.nih.gov/pubmed/32064853?fbclid=IwAR3JCxH50VTfg3Q_02YTLdz2Tk7yBTmt-5oCxE4KlBe0evh7ByK3HPVU-pU
 # https://ourworldindata.org/uploads/2020/03/Coronavirus-CFR-by-age-in-China-1.png
 chinese_age_fatality_rate <- c(0, 0.2, 0.2, 0.2, 0.4, 1.3, 3.6, 8, 14.8)
@@ -231,6 +229,7 @@ china_demographic<- china_demographic %>%
          fatal_label = "China Fatality Rate %") 
 
 # RSA
+# TODO - LINK TO DATA WHEN IT BECOMES AVAILABLE
 rsa_age_fatality_rate <- c(0, 0, 0, 0, 0, 0, 0, 0, 0)
 
 rsa_demographic <- rsa_pop_genders_ages %>% 
@@ -249,7 +248,9 @@ rsa_demographic <- rsa_demographic %>%
          fatal_label = "SA Fatality Rate %") 
 
 # CAPE TOWN
+# TODO - LINK TO DATA WHEN IT BECOMES AVAILABLE
 cct_age_fatality_rate <- c(0, 0, 0, 0, 0, 0, 0, 0, 0)
+
 cct_demographic <- cct_mid_year_2019_pop_est %>% 
   mutate(age_interval = NORM_AGE_COHORT) %>%
   group_by(age_interval) %>% 
@@ -260,7 +261,6 @@ cct_demographic <- cct_mid_year_2019_pop_est %>%
   mutate(fatality_rate_pct = rsa_age_fatality_rate) %>% 
   mutate(population = "CCT Pop %",
          fatal_label = "CCT Fatality Rate %") 
-
 
 # PULL IN AND PREPARE GEO DATA ==========================================
 # Pull wards spatial layer
@@ -276,14 +276,37 @@ wards_2016_density <- read_csv("data/public/ward_density_2016.csv") %>%
 cct_2016_pop_density <- left_join(wards_2016_polygons, wards_2016_density, by = "WARD_NAME") %>% 
   select(WARD_NAME, `2016_POP`, `2016_POP_DENSITY_KM2` ) 
 
+# Pull health care regions
+health_districts <- load_rgdb_table("LDR.SL_CGIS_CITY_HLTH_RGN", minio_key, minio_secret)
+
+# Pull health car facilities
+health_care_facilities <- load_rgdb_table("LDR.SL_ENVH_HLTH_CARE_FCLT", minio_key, minio_secret)
+
+
+informal_taps <- load_rgdb_table("LDR.SL_WTSN_IS_UPDT_TAPS", minio_key, minio_secret)
+informal_toilets <- load_rgdb_table("LDR.SL_WTSN_IS_UPDT_TLTS", minio_key, minio_secret)
+informal_settlements <- load_rgdb_table("LDR.SL_INF_STLM", minio_key, minio_secret)
+
+#informal_settlements %>% st_geometry() %>% mapview::mapview()
+
+#write_sf(health_districts, "health_districts.geojson", quiet = TRUE, append = FALSE, delete_layer = TRUE)
+#write_sf(wards_2016, "wards_2016.geojson", quiet = TRUE, append = FALSE, delete_layer = TRUE)
+
+# Enrich with other spatial data
+
+# Add COVID data
+# TODO ADD REAL WARD LEVEL COVID STATS
+cct_wards_covid_stats <- cct_2016_pop_density %>% mutate(fake_confirmed = rgamma(nrow(wards_2016_polygons), shape = 0.5, rate = 1),
+                                                        fake_deaths = rgamma(nrow(wards_2016_polygons), shape = 0.2, rate = 1))
+
 # VALUEBOXES =============================================================
 
 latest_values <- listN(wc_latest_update,
                        wc_latest_confirmed,
                        rsa_latest_update,
-                  rsa_latest_tested, 
-                  rsa_latest_confirmed, 
-                  rsa_latest_deaths,
+                       rsa_latest_tested, 
+                       rsa_latest_confirmed, 
+                       rsa_latest_deaths,
                   global_last_updated,
                   global_last_confirmed_val,
                   global_last_deaths_val)
@@ -499,7 +522,8 @@ china_demographic_mortality_plot <- ggplotly(china_demographic_mortality_plot)  
 save_widget(china_demographic_mortality_plot)
 
 # global_timeline_confirmed ----------------------------
-global_timeline_confirmed <- global_ts_sorted_confirmed %>% df_as_xts("report_date") %>% 
+global_timeline_confirmed <- global_ts_sorted_confirmed %>% 
+  df_as_xts("report_date") %>% 
   dygraph() %>%
   #dyLegend(width = 400) %>%
   dyCSS(textConnection("
@@ -510,8 +534,8 @@ global_timeline_confirmed <- global_ts_sorted_confirmed %>% df_as_xts("report_da
               highlightSeriesBackgroundAlpha = 0.2,
               hideOnMouseOut = FALSE) %>%
   dyRangeSelector(height = 20) %>%
-  dySeries(name = "South Africa",  color = "red", label = "South Africa", strokeWidth = 5) %>%
-  dyOptions(stackedGraph = TRUE) 
+  dyOptions(stackedGraph = TRUE, strokeWidth = c(1,5) )
+
 save_widget(global_timeline_confirmed)
 
 # browsable_global ------------------------------------
@@ -572,7 +596,7 @@ bins <- c(0, 100, 200, 500, 1000, 2000, 5000, 10000, 20000, Inf)
 pal <- colorBin("Blues", domain = cct_2016_pop_density$`2016_POP_DENSITY_KM2`, bins = bins)
 
 labels <- sprintf(
-  "<strong>%s</strong><br/>%g people / km<sup>2</sup>",
+  "<strong>%s</strong> <br/>%g people / km<sup>2</sup> <br/>%g residents",
   paste("Ward", cct_2016_pop_density$WARD_NAME), 
   cct_2016_pop_density$`2016_POP_DENSITY_KM2`, 
   cct_2016_pop_density$`2016_POP`) %>% 
@@ -627,7 +651,7 @@ for (filename in list.files(destdir)) {
     print(filepath)
     print("This is a directory - not sending!")
     }
-} 
+}
 
 # Save a copy of the data to .Rdata for dashboard knit
 save.image(file = "widgets.RData")
