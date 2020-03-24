@@ -170,17 +170,15 @@ global_last_confirmed_val <- sum(global_latest_data$confirmed)
 global_last_deaths_val <- sum(global_latest_data$deaths)
 
 # Latest Values RSA --------------------------
-rsa_latest_update <- max(c(covid19za_timeline_confirmed$YYYYMMDD,
-                           covid19za_timeline_deaths$YYYYMMDD,
-                           covid19za_timeline_testing$YYYYMMDD), na.rm = T)
+rsa_latest_update <- max(sa_ts_confirmed$YYYYMMDD)
 
-rsa_latest_confirmed <- nrow(covid19za_timeline_confirmed)
+rsa_latest_confirmed <- max(sa_ts_confirmed$confirmed)
 rsa_latest_deaths <- nrow(covid19za_timeline_deaths)
 rsa_latest_tested <- max(covid19za_timeline_testing$cumulative_tests)
 
 # Latest Values WC --------------------------
 wc_latest_update <- rsa_latest_update
-wc_latest_confirmed <- covid19za_timeline_confirmed %>% filter(province == "WC") %>% nrow()
+wc_latest_confirmed <- max(rsa_provincial_ts_confirmed$WC)
 
 # expected_future_trajectory_log -----------------------
 countries_this_far <- global_ts_since_100 %>% 
@@ -330,13 +328,15 @@ write(
 # HTML WIDGETS ============================================================
 
 # Expected future trajectory
-future_trajectory <- global_ts_since_100 %>% 
+future_trajectory <- 
+  global_ts_since_100 %>% 
   mutate(MEDIAN = median_values[,1],
          UPPER_QUARTILE = upper_quartile_values[,1],
          LOWER_QUARTILE = lower_quartile_values[,1]) %>%
-  drop_na(MEDIAN) %>% 
-  select(-days_since_passed_100) %>% ts(., start = 1, end = nrow(.), frequency = 1) %>% 
-  dygraph() %>%
+  drop_na(MEDIAN) %>%
+  select(-days_since_passed_100) %>%
+  ts(., start =1, end = nrow(.), frequency = 1) %>%
+    dygraph() %>%
   #dyLegend(width = 400) %>%
   dyCSS(textConnection("
      .dygraph-legend > span { display: none; }
