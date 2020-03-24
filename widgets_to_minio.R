@@ -187,20 +187,21 @@ countries_this_far <- global_ts_since_100 %>%
 
 median_values <- global_ts_since_100 %>% select(-days_since_passed_100) %>%
   t() %>% as_data_frame() %>%
-  summarise_all(funs(median), na.rm = T, funs(quantile), probs = 0.25) %>%
+  summarise_all(list(~ median(., na.rm = T))) %>%
   t() 
+
 
 lower_quartile_values <- global_ts_since_100 %>% select(-days_since_passed_100) %>%
   t() %>% as_data_frame() %>%
-  summarise_all(funs(quantile), probs = 0.25, na.rm = T) %>%
+  summarise_all(list(~quantile(., probs = 0.25, na.rm = T))) %>%
   t() 
 
 upper_quartile_values <- global_ts_since_100 %>% select(-days_since_passed_100) %>%
   t() %>% as_data_frame() %>%
-  summarise_all(funs(quantile), probs = 0.85, na.rm = T) %>%
+  summarise_all(list(~quantile(., probs = 0.75, na.rm = T))) %>%
   t() 
 
-values_to_drop <- ifelse(countries_this_far < 8, NA, 1)
+values_to_drop <- ifelse(countries_this_far < 14, NA, 1)
 
 median_values <- median_values * values_to_drop
 
@@ -328,8 +329,7 @@ write(
 # HTML WIDGETS ============================================================
 
 # Expected future trajectory
-future_trajectory <- 
-  global_ts_since_100 %>% 
+future_trajectory <- global_ts_since_100 %>% 
   mutate(MEDIAN = median_values[,1],
          UPPER_QUARTILE = upper_quartile_values[,1],
          LOWER_QUARTILE = lower_quartile_values[,1]) %>%
