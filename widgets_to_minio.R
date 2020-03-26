@@ -150,7 +150,6 @@ rsa_confirmed_by_type <- covid19za_timeline_confirmed %>%
          pending = cumsum(pending),
          travel = cumsum(travel)) 
 
-
 # RSA total timeseries
 sa_ts_confirmed <- rsa_provincial_ts_confirmed %>% 
   select(-YYYYMMDD) %>% 
@@ -185,11 +184,11 @@ countries_this_far <- global_ts_since_100 %>%
   select(-days_since_passed_100) %>% 
   apply(., MARGIN = 1, function(x) sum(!is.na(x)))
 
-median_values <- global_ts_since_100 %>% select(-days_since_passed_100) %>%
-  t() %>% as_data_frame() %>%
+median_values <- global_ts_since_100 %>% 
+  select(-days_since_passed_100) %>%
+  t() %>% as_tibble(.name_repair = "universal") %>%
   summarise_all(list(~ median(., na.rm = T))) %>%
   t() 
-
 
 lower_quartile_values <- global_ts_since_100 %>% select(-days_since_passed_100) %>%
   t() %>% as_data_frame() %>%
@@ -357,6 +356,9 @@ future_trajectory <- global_ts_since_100 %>%
   dySeries(name = "South Africa",  color = "red", label = "South Africa", strokeWidth = 5)
 save_widget(future_trajectory)
 
+future_trajectory_log <- future_trajectory %>% dyOptions(logscale = TRUE)
+save_widget(future_trajectory_log)
+
 # r rsa_tests_vs_cases -------
 rsa_tests_vs_cases <- left_join(sa_ts_confirmed, 
                                 covid19za_timeline_testing %>% 
@@ -381,6 +383,9 @@ rsa_tests_vs_cases <- left_join(sa_ts_confirmed,
             logscale = FALSE) 
 save_widget(rsa_tests_vs_cases)
 
+rsa_tests_vs_cases_log <- rsa_tests_vs_cases %>% dyOptions(logscale = TRUE)
+save_widget(rsa_tests_vs_cases_log)
+
 # rsa_tasts_vs_cases_rebased -------------
 rsa_tests_vs_cases_rebased <- rsa_tests_vs_cases %>% dyRebase(value = 100)
 save_widget(rsa_tests_vs_cases_rebased)
@@ -402,6 +407,10 @@ df_as_xts("YYYYMMDD") %>%
 
 save_widget(rsa_transmission_type_timeseries)
 
+rsa_transmission_type_timeseries_log <- rsa_transmission_type_timeseries %>% dyOptions(logscale = TRUE)
+save_widget(rsa_transmission_type_timeseries_log)
+
+
 # rsa_provincial_timeseries --------------
 rsa_provincial_confirmed_timeseries <- rsa_provincial_ts_confirmed %>% 
   df_as_xts("YYYYMMDD") %>% 
@@ -418,6 +427,10 @@ rsa_provincial_confirmed_timeseries <- rsa_provincial_ts_confirmed %>%
   dySeries(name = "WC", label = "WC", color = "red", strokeWidth = 5) %>%
   dyOptions(stackedGraph = TRUE) 
 save_widget(rsa_provincial_confirmed_timeseries)
+
+rsa_provincial_confirmed_timeseries_log <- rsa_provincial_confirmed_timeseries %>% dyOptions(logscale = TRUE)
+save_widget(rsa_provincial_confirmed_timeseries_log)
+
 
 # wc_timeseries --------------
 wc_confirmed_timeseries <- rsa_provincial_ts_confirmed %>% 
@@ -436,6 +449,10 @@ wc_confirmed_timeseries <- rsa_provincial_ts_confirmed %>%
   dyOptions(stackedGraph = TRUE) 
 save_widget(wc_confirmed_timeseries)
 
+wc_confirmed_timeseries_log <- wc_confirmed_timeseries %>% dyOptions(logscale = TRUE)
+save_widget(wc_confirmed_timeseries_log)
+
+
 # rsa_timeline_testing ----------------------------------
 rsa_timeline_testing <- covid19za_timeline_testing %>% 
   select(YYYYMMDD, cumulative_tests) %>%
@@ -453,6 +470,10 @@ rsa_timeline_testing <- covid19za_timeline_testing %>%
   dyOptions(stackedGraph = FALSE,
             logscale = FALSE) 
 save_widget(rsa_timeline_testing)
+
+rsa_timeline_testing_log <- rsa_timeline_testing %>% dyOptions(logscale = TRUE)
+save_widget(rsa_timeline_testing_log)
+
 
 # rsa_dem_pyramid -------------------------------------
 rsa_dem_pyramid <- ggplot(rsa_pop_genders_ages) +
@@ -566,6 +587,10 @@ global_timeline_confirmed <- global_ts_sorted_confirmed %>%
   dyOptions(stackedGraph = TRUE, strokeWidth = c(1,5) )
 
 save_widget(global_timeline_confirmed)
+
+global_timeline_confirmed_log <- global_timeline_confirmed %>% dyOptions(logscale = TRUE)
+save_widget(global_timeline_confirmed_log)
+
 
 # browsable_global ------------------------------------
 browsable_global <- global_latest_data %>% 
