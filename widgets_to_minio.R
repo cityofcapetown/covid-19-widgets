@@ -62,7 +62,7 @@ listN <- function(...){
   anonList
 }
 
-save_widget <- function(widg) {
+save_widget <- function(widg, destdir) {
   savepath <- file.path(getwd(), destdir, 
                         paste(deparse(substitute(widg)), "html", sep = "."))
   libdir <- file.path(getwd(), destdir, 
@@ -80,31 +80,22 @@ save_widget <- function(widg) {
     print(paste("Saved to", savepath))
   }
 }
-
-load_rgdb_table <- function(table_name, minio_key, minio_secret) {
-  temp_dir <- tempdir()
-  cat("Loading", table_name, "from rgdb bucket and reading into memory \n")
-  filename = file.path(temp_dir, paste(table_name, ".parquet", sep = ""))
-  if (!file.exists(filename)) {
-    minio_to_file(filename,
-                  minio_key=minio_key,
-                  minio_secret=minio_secret,
-                  minio_bucket="rgdb",
-                  data_classification= "EDGE")
-  }
-  wkt_df <- read_parquet(filename)
-  cat("Converting", table_name, "data frame into spatial feature \n")
-  geo_layer <- st_as_sf(wkt_df, wkt = "EWKT")
-  names(st_geometry(geo_layer)) <- NULL
-  return(geo_layer)
-}
-
 # CREATE DIRS =================================================================
-sourcedir <- "data/public"
-dir.create(sourcedir, recursive = TRUE)
+public_sourcedir <- "data/public"
+unlink(public_sourcedir, recursive = T )
+dir.create(public_sourcedir, recursive = TRUE)
 
-destdir <- "widgets/public"
-dir.create(destdir, recursive = TRUE)
+private_sourcedir <- "data/private"
+unlink(private_sourcedir, recursive = T )
+dir.create(private_sourcedir, recursive = TRUE)
+
+public_destdir <- "widgets/public"
+unlink(public_destdir, recursive = T )
+dir.create(public_destdir, recursive = TRUE)
+
+private_destdir <- "widgets/private"
+unlink(private_destdir, recursive = T )
+dir.create(private_destdir, recursive = TRUE)
 
 # PULL IN PUBLIC DATA =======================================================
 covid_assets <- bucket_objects_to_df("covid", 
@@ -112,12 +103,15 @@ covid_assets <- bucket_objects_to_df("covid",
                      minio_secret,
                      "ds2.capetown.gov.za")
 
-public_datasets <- covid_assets %>% 
+
+# pull in public dataset ---------------
+datasets <- covid_assets %>% 
   filter(grepl("data/public",object_name) ) %>% 
-  filter(grepl(".csv",object_name)) %>%
+  filter(grepl(".csv",object_name) | grepl(".geojson",object_name)) %>%
   pull(object_name) %>% as.character() 
 
-for (object_name in public_datasets) {
+
+for (object_name in datasets) {
   minio_to_file(object_name,
                 "covid",
                 minio_key,
@@ -126,17 +120,61 @@ for (object_name in public_datasets) {
                 minio_filename_override = object_name)
 }
 
-public_dataset_names <- strsplit(public_datasets, "\\/")
-public_dataset_names <- sapply(public_dataset_names, "[[", 3)
-public_dataset_names <- strsplit(public_dataset_names, "\\.")
-public_dataset_names <- sapply(public_dataset_names, "[[", 1) 
+dataset_names <- strsplit(datasets, "\\/")
+dataset_names <- sapply(dataset_names, "[[", 3)
+dataset_names <- strsplit(dataset_names, "\\.")
+dataset_names <- sapply(dataset_names, "[[", 1) 
 
 # Load all
-for (i in seq_along(1:length(public_datasets))) {
-  df <- read_csv(public_datasets[i])
-  assign(paste(public_dataset_names[i]), df)
+for (i in seq_along(1:length(datasets))) {
+  if (strsplit(datasets[i], "\\.")[[1]][2] == "csv") {
+    df <- read_csv(datasets[i])
+    assign(paste(dataset_names[i]), df)
+    rm(df)
+  } else if (strsplit(datasets[i], "\\.")[[1]][2] == "geojson") {
+    df_spatial <- st_read(datasets[i])
+    assign(paste(dataset_names[i]), df_spatial)
+    rm(df_spatial)
+  }
 }
-rm(df)
+rm(datasets)
+rm(dataset_names)
+
+# pull in private dataset ---------------
+datasets <- covid_assets %>% 
+  filter(grepl("data/private",object_name) ) %>% 
+  filter(grepl(".csv",object_name) | grepl(".geojson",object_name)) %>%
+  pull(object_name) %>% as.character() 
+
+
+for (object_name in datasets) {
+  minio_to_file(object_name,
+                "covid",
+                minio_key,
+                minio_secret,
+                "EDGE",
+                minio_filename_override = object_name)
+}
+
+dataset_names <- strsplit(datasets, "\\/")
+dataset_names <- sapply(dataset_names, "[[", 3)
+dataset_names <- strsplit(dataset_names, "\\.")
+dataset_names <- sapply(dataset_names, "[[", 1) 
+
+# Load all
+for (i in seq_along(1:length(datasets))) {
+  if (strsplit(datasets[i], "\\.")[[1]][2] == "csv") {
+    df <- read_csv(datasets[i])
+    assign(paste(dataset_names[i]), df)
+    rm(df)
+  } else if (strsplit(datasets[i], "\\.")[[1]][2] == "geojson") {
+    df_spatial <- st_read(datasets[i])
+    assign(paste(dataset_names[i]), df_spatial)
+    rm(df_spatial)
+  }
+}
+rm(datasets)
+rm(dataset_names)
 
 # PREPARE DATA ==========================================================
 # RSA confirmed splitby source
@@ -169,13 +207,7 @@ global_last_confirmed_val <- sum(global_latest_data$confirmed)
 global_last_deaths_val <- sum(global_latest_data$deaths)
 
 # Latest Values RSA --------------------------
-rsa_latest_update <- max(sa_ts_confirmed$YYYYMMDD)
-
-rsa_latest_confirmed <- max(sa_ts_confirmed$confirmed)
-rsa_latest_deaths <- nrow(covid19za_timeline_deaths)
-rsa_latest_tested <- max(covid19za_timeline_testing$cumulative_tests)
-
-# Latest Values WC --------------------------
+# TODO Replace with WC direct data
 wc_latest_update <- rsa_latest_update
 wc_latest_confirmed <- max(rsa_provincial_ts_confirmed$WC)
 
@@ -191,12 +223,12 @@ median_values <- global_ts_since_100 %>%
   t() 
 
 lower_quartile_values <- global_ts_since_100 %>% select(-days_since_passed_100) %>%
-  t() %>% as_data_frame() %>%
+  t() %>% as_tibble(.name_repair = "universal") %>%
   summarise_all(list(~quantile(., probs = 0.25, na.rm = T))) %>%
   t() 
 
 upper_quartile_values <- global_ts_since_100 %>% select(-days_since_passed_100) %>%
-  t() %>% as_data_frame() %>%
+  t() %>% as_tibble(.name_repair = "universal") %>%
   summarise_all(list(~quantile(., probs = 0.75, na.rm = T))) %>%
   t() 
 
@@ -271,45 +303,61 @@ cct_demographic <- cct_mid_year_2019_pop_est %>%
   mutate(population = "CCT Pop %",
          fatal_label = "CCT Fatality Rate %") 
 
+
+# RSA total confirmed
+rsa_total_confirmed <- rsa_provincial_ts_confirmed %>% select(-YYYYMMDD) %>% 
+  rowSums(.) %>% 
+  enframe(., value = "rsa_confirmed") %>% 
+  mutate(report_date = as_date(rsa_provincial_ts_confirmed$YYYYMMDD)) %>% 
+  select(-name)
+
+# WC_total_confirmed
+wc_total_confirmed <- rsa_provincial_ts_confirmed %>% select(YYYYMMDD, WC) %>% rename(report_date = YYYYMMDD,
+                                                                                      wc_confirmed = WC)
+
+# Global total confirmed
+global_total_confirmed <- global_ts_sorted_confirmed %>% 
+  select(-report_date) %>% 
+  rowSums(.) %>% 
+  enframe(., value = "global_confirmed") %>% 
+  mutate(report_date = as_date(global_ts_sorted_confirmed$report_date)) %>% 
+  select(-name)
+
+# Global total deaths
+global_total_deaths <- global_ts_sorted_deaths %>% 
+  select(-report_date) %>% 
+  rowSums(.) %>% 
+  enframe(., value = "global_deaths") %>% 
+  mutate(report_date = as_date(global_ts_sorted_deaths$report_date)) %>% 
+  select(-name)
+
+# Prepare announcements data
+# covid_general_announcements <- covid_general_announcements %>% 
+#   mutate(Date = dmy(Date))
+# 
+# covid_general_announcements_pretty <- covid_general_announcements %>% mutate(pretty_text = paste("</br> Entity: ", Entity,
+#                                                                                                  "</br> Headline: ", Decision_Title,
+#                                                                                                  "</br> Detail: </br> ", Decision_Description,
+#                                                                                                  sep = "")) %>% select(Date, pretty_text)
+# covid_general_announcements_by_date <- covid_general_announcements_pretty %>% 
+#   group_by(Date) %>% 
+#   summarise(pretty_text = paste0(pretty_text, collapse = "</br> ---------------- </br>")) %>%
+#   ungroup()
+# 
+# announcements_timeseries <- left_join(rsa_total_confirmed, global_total_confirmed, by = "report_date") %>% 
+#   left_join(., wc_total_confirmed, by = "report_date") %>%
+#   left_join(., global_total_deaths, by = "report_date") %>% 
+#   left_join(., covid_general_announcements_by_date, by = c("report_date" = "Date"))
+
 # PULL IN AND PREPARE GEO DATA ==========================================
-# Pull wards spatial layer
-wards <- load_rgdb_table("LDR.SL_CGIS_WARD", minio_key, minio_secret)
-wards_2016 <- wards %>% filter(WARD_YEAR == 2016)
-
-wards_2016_polygons <- wards_2016 %>% select(WARD_NAME)
-
-wards_2016_density <- read_csv("data/public/ward_density_2016.csv") %>% 
-  mutate(WARD_NAME = as.character(WARD)) %>%
-  select(WARD_NAME, `2016_POP`, `2016_POP_DENSITY_KM2`) 
-
-cct_2016_pop_density <- left_join(wards_2016_polygons, wards_2016_density, by = "WARD_NAME") %>% 
-  select(WARD_NAME, `2016_POP`, `2016_POP_DENSITY_KM2` ) 
-
-# Pull health care regions
-health_districts <- load_rgdb_table("LDR.SL_CGIS_CITY_HLTH_RGN", minio_key, minio_secret)
-
-# Pull health car facilities
-health_care_facilities <- load_rgdb_table("LDR.SL_ENVH_HLTH_CARE_FCLT", minio_key, minio_secret)
-
-
-informal_taps <- load_rgdb_table("LDR.SL_WTSN_IS_UPDT_TAPS", minio_key, minio_secret)
-informal_toilets <- load_rgdb_table("LDR.SL_WTSN_IS_UPDT_TLTS", minio_key, minio_secret)
-informal_settlements <- load_rgdb_table("LDR.SL_INF_STLM", minio_key, minio_secret)
-
-#informal_settlements %>% st_geometry() %>% mapview::mapview()
-
-#write_sf(health_districts, "health_districts.geojson", quiet = TRUE, append = FALSE, delete_layer = TRUE)
-#write_sf(wards_2016, "wards_2016.geojson", quiet = TRUE, append = FALSE, delete_layer = TRUE)
+# THis code moved to covid-19-data repo
 
 # Enrich with other spatial data
 
-# Add COVID data
+# Add COVID data ----
 # TODO ADD REAL WARD LEVEL COVID STATS
-cct_wards_covid_stats <- cct_2016_pop_density %>% mutate(fake_confirmed = rgamma(nrow(wards_2016_polygons), shape = 0.5, rate = 1),
-                                                        fake_deaths = rgamma(nrow(wards_2016_polygons), shape = 0.2, rate = 1))
 
 # VALUEBOXES =============================================================
-
 latest_values <- listN(wc_latest_update,
                        wc_latest_confirmed,
                        rsa_latest_update,
@@ -322,12 +370,11 @@ latest_values <- listN(wc_latest_update,
 
 write(
   toJSON(latest_values), 
-  file.path(getwd(), destdir,"latest_values.json")
+  file.path(getwd(), public_destdir,"latest_values.json")
   )
 
 # HTML WIDGETS ============================================================
-
-# Expected future trajectory
+# Expected future trajectory ---------------
 future_trajectory <- global_ts_since_100 %>% 
   mutate(MEDIAN = median_values[,1],
          UPPER_QUARTILE = upper_quartile_values[,1],
@@ -354,10 +401,10 @@ future_trajectory <- global_ts_since_100 %>%
            strokePattern = "dashed",
            color = "blue") %>%
   dySeries(name = "South Africa",  color = "red", label = "South Africa", strokeWidth = 5)
-save_widget(future_trajectory)
+save_widget(future_trajectory, public_destdir)
 
 future_trajectory_log <- future_trajectory %>% dyOptions(logscale = TRUE)
-save_widget(future_trajectory_log)
+save_widget(future_trajectory_log, public_destdir)
 
 # r rsa_tests_vs_cases -------
 rsa_tests_vs_cases <- left_join(sa_ts_confirmed, 
@@ -381,14 +428,14 @@ rsa_tests_vs_cases <- left_join(sa_ts_confirmed,
   dyRangeSelector(height = 20) %>%
   dyOptions(stackedGraph = FALSE,
             logscale = FALSE) 
-save_widget(rsa_tests_vs_cases)
+save_widget(rsa_tests_vs_cases, public_destdir)
 
 rsa_tests_vs_cases_log <- rsa_tests_vs_cases %>% dyOptions(logscale = TRUE)
-save_widget(rsa_tests_vs_cases_log)
+save_widget(rsa_tests_vs_cases_log, public_destdir)
 
 # rsa_tasts_vs_cases_rebased -------------
 rsa_tests_vs_cases_rebased <- rsa_tests_vs_cases %>% dyRebase(value = 100)
-save_widget(rsa_tests_vs_cases_rebased)
+save_widget(rsa_tests_vs_cases_rebased, public_destdir)
 
 # rsa_transmission_type_timeseries --------
 rsa_transmission_type_timeseries <- rsa_confirmed_by_type %>%
@@ -405,10 +452,10 @@ df_as_xts("YYYYMMDD") %>%
   dyRangeSelector(height = 20) %>%
   dyOptions(stackedGraph = FALSE) 
 
-save_widget(rsa_transmission_type_timeseries)
+save_widget(rsa_transmission_type_timeseries, public_destdir)
 
 rsa_transmission_type_timeseries_log <- rsa_transmission_type_timeseries %>% dyOptions(logscale = TRUE)
-save_widget(rsa_transmission_type_timeseries_log)
+save_widget(rsa_transmission_type_timeseries_log, public_destdir)
 
 
 # rsa_provincial_timeseries --------------
@@ -426,10 +473,10 @@ rsa_provincial_confirmed_timeseries <- rsa_provincial_ts_confirmed %>%
   dyRangeSelector(height = 20) %>%
   dySeries(name = "WC", label = "WC", color = "red", strokeWidth = 5) %>%
   dyOptions(stackedGraph = TRUE) 
-save_widget(rsa_provincial_confirmed_timeseries)
+save_widget(rsa_provincial_confirmed_timeseries, public_destdir)
 
 rsa_provincial_confirmed_timeseries_log <- rsa_provincial_confirmed_timeseries %>% dyOptions(logscale = TRUE)
-save_widget(rsa_provincial_confirmed_timeseries_log)
+save_widget(rsa_provincial_confirmed_timeseries_log, public_destdir)
 
 
 # wc_timeseries --------------
@@ -447,10 +494,10 @@ wc_confirmed_timeseries <- rsa_provincial_ts_confirmed %>%
               hideOnMouseOut = FALSE) %>%
   dyRangeSelector(height = 20) %>%
   dyOptions(stackedGraph = TRUE) 
-save_widget(wc_confirmed_timeseries)
+save_widget(wc_confirmed_timeseries, public_destdir)
 
 wc_confirmed_timeseries_log <- wc_confirmed_timeseries %>% dyOptions(logscale = TRUE)
-save_widget(wc_confirmed_timeseries_log)
+save_widget(wc_confirmed_timeseries_log, public_destdir)
 
 
 # rsa_timeline_testing ----------------------------------
@@ -469,10 +516,10 @@ rsa_timeline_testing <- covid19za_timeline_testing %>%
   dyRangeSelector(height = 20) %>%
   dyOptions(stackedGraph = FALSE,
             logscale = FALSE) 
-save_widget(rsa_timeline_testing)
+save_widget(rsa_timeline_testing, public_destdir)
 
 rsa_timeline_testing_log <- rsa_timeline_testing %>% dyOptions(logscale = TRUE)
-save_widget(rsa_timeline_testing_log)
+save_widget(rsa_timeline_testing_log, public_destdir)
 
 
 # rsa_dem_pyramid -------------------------------------
@@ -494,7 +541,7 @@ rsa_dem_pyramid <- ggplot(rsa_pop_genders_ages) +
 #theme(axis.title.x=element_blank(), axis.text.x=element_blank(), axis.ticks.x=element_blank())
 
 rsa_dem_pyramid <- ggplotly(rsa_dem_pyramid) %>% plotly::config(displayModeBar = F)  
-save_widget(rsa_dem_pyramid)
+save_widget(rsa_dem_pyramid, public_destdir)
 
 # rsa demographic mortality plot ---------------------
 rsa_demographic_mortality_plot <- 
@@ -520,7 +567,7 @@ rsa_demographic_mortality_plot <-
     theme_bw()
   
 rsa_demographic_mortality_plot <- ggplotly(rsa_demographic_mortality_plot)  %>% plotly::config(displayModeBar = F)  
-save_widget(rsa_demographic_mortality_plot)
+save_widget(rsa_demographic_mortality_plot, public_destdir)
 
 # cape town demographic mortality plot ---------------------
 cct_demographic_mortality_plot <- 
@@ -546,7 +593,7 @@ cct_demographic_mortality_plot <-
   theme_bw()
 
 cct_demographic_mortality_plot <- ggplotly(cct_demographic_mortality_plot)  %>% plotly::config(displayModeBar = F)  
-save_widget(cct_demographic_mortality_plot)
+save_widget(cct_demographic_mortality_plot, public_destdir)
 
 # china demographic mortality plot ---------------------
 china_demographic_mortality_plot <- 
@@ -569,7 +616,7 @@ china_demographic_mortality_plot <-
   theme_bw()
 
 china_demographic_mortality_plot <- ggplotly(china_demographic_mortality_plot)  %>% plotly::config(displayModeBar = F)  
-save_widget(china_demographic_mortality_plot)
+save_widget(china_demographic_mortality_plot, public_destdir)
 
 # global_timeline_confirmed ----------------------------
 global_timeline_confirmed <- global_ts_sorted_confirmed %>% 
@@ -586,10 +633,10 @@ global_timeline_confirmed <- global_ts_sorted_confirmed %>%
   dyRangeSelector(height = 20) %>%
   dyOptions(stackedGraph = TRUE, strokeWidth = c(1,5) )
 
-save_widget(global_timeline_confirmed)
+save_widget(global_timeline_confirmed, public_destdir)
 
 global_timeline_confirmed_log <- global_timeline_confirmed %>% dyOptions(logscale = TRUE)
-save_widget(global_timeline_confirmed_log)
+save_widget(global_timeline_confirmed_log, public_destdir)
 
 
 # browsable_global ------------------------------------
@@ -601,7 +648,7 @@ browsable_global <- global_latest_data %>%
          incidence_per_1m,
          mortality_per_1m,case_fatality_rate_pct) %>%
   DT::datatable(options = list(pageLength = 25))
-save_widget(browsable_global)
+save_widget(browsable_global, public_destdir)
 
 # global_mortality_boxplot ----------------------------
 outliers <- boxplot(case_fatality_rate_pct~maturity,
@@ -625,7 +672,7 @@ global_mortality_boxplot <- bpexploder(data = global_mortality_data,
              relativeWidth = 0.75)
 )
 
-save_widget(global_mortality_boxplot)
+save_widget(global_mortality_boxplot, public_destdir)
 
 # global ranked fatalities per 1m --------------------------
 global_top_fatalities_per_1m <- global_latest_data %>% 
@@ -641,19 +688,19 @@ global_ranked_fatalities_per_1m  <- ggplot(global_top_fatalities_per_1m, aes(cou
   coord_flip()
 
 global_ranked_fatalities_per_1m <- ggplotly(global_ranked_fatalities_per_1m) %>% plotly::config(displayModeBar = F)
-save_widget(global_ranked_fatalities_per_1m)
+save_widget(global_ranked_fatalities_per_1m, public_destdir)
 
 # MAPS =========================================================================
 
 # ct_heatmap ------------------------
 bins <- c(0, 100, 200, 500, 1000, 2000, 5000, 10000, 20000, Inf)
-pal <- colorBin("Blues", domain = cct_2016_pop_density$`2016_POP_DENSITY_KM2`, bins = bins)
+pal <- colorBin("Blues", domain = cct_2016_pop_density$`X2016_POP_DENSITY_KM2`, bins = bins)
 
 labels <- sprintf(
   "<strong>%s</strong> <br/>%g people / km<sup>2</sup> <br/>%g residents",
   paste("Ward", cct_2016_pop_density$WARD_NAME), 
-  cct_2016_pop_density$`2016_POP_DENSITY_KM2`, 
-  cct_2016_pop_density$`2016_POP`) %>% 
+  cct_2016_pop_density$`X2016_POP_DENSITY_KM2`, 
+  cct_2016_pop_density$`X2016_POP`) %>% 
   lapply(htmltools::HTML)
 
 ct_heatmap <- leaflet(cct_2016_pop_density) %>%  
@@ -661,7 +708,7 @@ ct_heatmap <- leaflet(cct_2016_pop_density) %>%
   addProviderTiles('Esri.WorldImagery', options = tileOptions(opacity=0.4), group="Satellite") %>% 
   setView(lat = -33.9249, lng = 18.4241, zoom = 10L) %>%
   # ward polys
-  addPolygons(fillColor = ~pal(`2016_POP_DENSITY_KM2`),
+  addPolygons(fillColor = ~pal(`X2016_POP_DENSITY_KM2`),
               weight = 0.5,
               opacity = .6,
               color = "white",
@@ -679,7 +726,7 @@ ct_heatmap <- leaflet(cct_2016_pop_density) %>%
                 textsize = "15px",
                 direction = "auto")) %>%
   addLegend(pal = pal, title = "Pop. density 2016",
-            values = ~`2016_POP_DENSITY_KM2`, opacity = 0.7, 
+            values = ~`X2016_POP_DENSITY_KM2`, opacity = 0.7, 
             position = "bottomright") %>%
   # control
   addLayersControl(
@@ -687,19 +734,19 @@ ct_heatmap <- leaflet(cct_2016_pop_density) %>%
                    "Satellite"),
     options = layersControlOptions(collapsed = FALSE)) 
 
-save_widget(ct_heatmap)
+save_widget(ct_heatmap, public_destdir)
 
 # SEND TO MINIO =================================================================
-for (filename in list.files(destdir)) {
-  filepath <- file.path(destdir, filename)
+for (filename in list.files(public_destdir)) {
+  filepath <- file.path(public_destdir, filename)
   if (file_ext(filepath) != "") {
     print(filepath)
-    file_to_minio(file.path(destdir, filename),
+    file_to_minio(file.path(public_destdir, filename),
                   "covid",
                   minio_key,
                   minio_secret,
                   "EDGE",
-                  filename_prefix_override = paste(destdir, "/", sep=""))
+                  filename_prefix_override = paste(public_destdir, "/", sep=""))
     print("Sent")
   } else {
     print(filepath)
