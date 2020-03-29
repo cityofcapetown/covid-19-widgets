@@ -214,7 +214,7 @@ rsa_latest_tested <- covid19za_timeline_testing %>% summarise(val = max(cumulati
 
 # TODO Replace with WC direct data
 wc_latest_update <- max(rsa_provincial_ts_confirmed$YYYYMMDD)
-wc_latest_confirmed <- max(rsa_provincial_ts_confirmed$WC)
+wc_latest_confirmed <- max(rsa_provincial_ts_confirmed$WC, na.rm = T)
 
 # expected_future_trajectory_log -----------------------
 countries_this_far <- global_ts_since_100 %>% 
