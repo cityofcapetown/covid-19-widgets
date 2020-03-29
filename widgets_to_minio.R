@@ -465,6 +465,7 @@ save_widget(rsa_transmission_type_timeseries_log, public_destdir)
 
 # rsa_provincial_timeseries --------------
 rsa_provincial_confirmed_timeseries <- rsa_provincial_ts_confirmed %>% 
+  select(-total) %>%
   df_as_xts("YYYYMMDD") %>% 
   dygraph() %>%
   #dyLegend(width = 400) %>%
