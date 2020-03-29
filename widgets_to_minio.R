@@ -207,8 +207,13 @@ global_last_confirmed_val <- sum(global_latest_data$confirmed)
 global_last_deaths_val <- sum(global_latest_data$deaths)
 
 # Latest Values RSA --------------------------
+rsa_latest_update <-  max(rsa_provincial_ts_confirmed$YYYYMMDD)
+rsa_latest_confirmed <- rsa_provincial_ts_confirmed %>% filter(YYYYMMDD == max(YYYYMMDD)) %>%  pull(total) %>% .[1]
+rsa_latest_deaths <- nrow(covid19za_timeline_deaths)
+rsa_latest_tested <- covid19za_timeline_testing %>% summarise(val = max(cumulative_tests, na.rm = T)) %>% pull(val) %>% .[1]
+
 # TODO Replace with WC direct data
-wc_latest_update <- rsa_latest_update
+wc_latest_update <- max(rsa_provincial_ts_confirmed$YYYYMMDD)
 wc_latest_confirmed <- max(rsa_provincial_ts_confirmed$WC)
 
 # expected_future_trajectory_log -----------------------
