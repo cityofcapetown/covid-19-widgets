@@ -4,7 +4,7 @@ from airflow.contrib.kubernetes.secret import Secret
 
 from datetime import datetime, timedelta
 
-DAG_STARTDATE = datetime(2020, 3, 23)
+DAG_STARTDATE = datetime(2020, 3, 31)
 default_args = {
     'owner': 'airflow',
     'depends_on_past': False,
@@ -26,7 +26,7 @@ startup_cmd = (
 dag_interval = timedelta(hours=1)
 dag = DAG('covid-19-finance-widgets',
           start_date=DAG_STARTDATE,
-          catchup=True,
+          catchup=False,
           default_args=default_args,
           schedule_interval=dag_interval,
           concurrency=1)
