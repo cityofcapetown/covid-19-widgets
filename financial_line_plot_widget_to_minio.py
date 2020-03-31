@@ -15,7 +15,7 @@ import pandas
 MINIO_BUCKET = "covid"
 MINIO_CLASSIFICATION = minio_utils.DataClassification.EDGE
 
-DATA_RESTRICTED_PREFIX = "widgets/private/"
+DATA_RESTRICTED_PREFIX = "data/private/"
 WIDGETS_RESTRICTED_PREFIX = "widgets/private/business_continuity_"
 INCOME_DATA_FILENAME = "income_totals.csv"
 PAYMENT_DATA_FILENAME = "business_continuity_finance_payments.csv"
@@ -99,6 +99,9 @@ def generate_plotting_datasource(income_df, payments_df):
     logging.debug("Calculating Nett Spend 7 day average...")
     totals_df["NettSpend"] = (-totals_df["TotalPayments"] - totals_df["TotalIncome"]).rolling(window=5).mean()
 
+    # Setting Date
+    totals_df["Date"] = totals_df.index.date
+
     return totals_df
 
 
@@ -153,7 +156,7 @@ def generate_plot(plot_df, start_date="2020-02-01", sast_tz='Africa/Johannesburg
 
 def write_to_minio(html, minio_filename, minio_access, minio_secret):
     with tempfile.TemporaryDirectory() as tempdir:
-        local_path = os.path.join(tempdir.name, minio_filename)
+        local_path = os.path.join(tempdir, minio_filename)
 
         logging.debug(f"Writing out HTML to '{local_path}'")
         with open(local_path, "w") as line_plot_file:
