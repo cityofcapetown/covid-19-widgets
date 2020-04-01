@@ -12,7 +12,7 @@ import pandas
 MINIO_BUCKET = "covid"
 MINIO_CLASSIFICATION = minio_utils.DataClassification.EDGE
 
-DATA_PUBLIC_PREFIX = "data/public"
+DATA_PUBLIC_PREFIX = "data/public/"
 DATA_RESTRICTED_PREFIX = "data/private/"
 WIDGETS_RESTRICTED_PREFIX = "widgets/private/city_"
 
@@ -25,15 +25,16 @@ LAYER_FILES = (
     "informal_settlements.geojson",
     "health_care_facilities.geojson"
 )
-SUBDISTRICT_COUNT_FILENAME = "city_subdistrict_case_count.geojson"
+SUBDISTRICT_COUNT_FILENAME = "subdistrict_case_count.geojson"
 
+CASE_COUNT_COL = "CaseCount"
 CITY_CENTRE = (-33.9715, 18.6021)
 LAYER_PROPERTIES_LOOKUP = {
-    SUBDISTRICT_COUNT_FILENAME: (("subdistrict", "OBJECTID"), ("Subdistrict", "Case Count")),
+    SUBDISTRICT_COUNT_FILENAME: ((HEALTH_DISTRICT_SUBDISTRICT_PROPERTY, CASE_COUNT_COL), ("Subdistrict", "Case Count")),
     "informal_settlements.geojson": (("INF_STLM_NAME",), ("Informal Settlement Name",)),
     "health_care_facilities.geojson": (("NAME", "ADR",), ("Healthcare Facility Name", "Address",)),
 }
-MAP_FILENAME = "city_map.html"
+MAP_FILENAME = "map.html"
 
 
 def get_layers(tempdir, minio_access, minio_secret):
@@ -42,7 +43,7 @@ def get_layers(tempdir, minio_access, minio_secret):
 
         minio_utils.minio_to_file(
             filename=local_path,
-            minio_filename_override=f"data/public/{layer}",
+            minio_filename_override=DATA_PUBLIC_PREFIX + layer,
             minio_bucket=MINIO_BUCKET,
             minio_key=minio_access,
             minio_secret=minio_secret,
@@ -51,21 +52,21 @@ def get_layers(tempdir, minio_access, minio_secret):
 
         layer_gdf = geopandas.read_file(local_path)
 
-        return layer, local_path, layer_gdf
+        yield (layer, local_path, layer_gdf)
 
 
 def get_case_data(minio_access, minio_secret):
     with tempfile.NamedTemporaryFile() as temp_datafile:
         minio_utils.minio_to_file(
             filename=temp_datafile.name,
-            minio_filename_override=CITY_CASE_DATA_FILENAME,
+            minio_filename_override=DATA_RESTRICTED_PREFIX + CITY_CASE_DATA_FILENAME,
             minio_bucket=MINIO_BUCKET,
             minio_key=minio_access,
             minio_secret=minio_secret,
             data_classification=MINIO_CLASSIFICATION,
         )
 
-        case_data_df = pandas.read(temp_datafile.name)
+        case_data_df = pandas.read_csv(temp_datafile.name)
 
     return case_data_df
 
@@ -79,6 +80,7 @@ def spatialise_case_data(case_data_df, health_district_data_gdf):
         right_on=join_col,
         left_on=HEALTH_DISTRICT_SUBDISTRICT_PROPERTY
     )
+    logging.debug(f"case_data_gdf.columns={', '.join(case_data_gdf.columns)}")
 
     return case_data_gdf
 
@@ -86,9 +88,21 @@ def spatialise_case_data(case_data_df, health_district_data_gdf):
 def get_district_case_counts(case_data_gdf):
     # Doing this operation spacialy is unnecessary, but it saves hassle around reapplying the geometry column,
     # which gets lost when you do a standard groupby...
-    distrct_count_gdf = case_data_gdf.dissolve(HEALTH_DISTRICT_SUBDISTRICT_PROPERTY)
+    subdistrict_count_gdf = case_data_gdf.dissolve(
+        by=[HEALTH_DISTRICT_SUBDISTRICT_PROPERTY], aggfunc='count'
+    )
+    subdistrict_count_gdf.reset_index(inplace=True)
 
-    return distrct_count_gdf
+    logging.debug(f"subdistrict_count_gdf.columns={', '.join(subdistrict_count_gdf.columns)}")
+
+    # ToDo filter out other columns - the below code returns a dataframe, not a GDF
+    # subdistrict_count_gdf = subdistrict_count_gdf[[HEALTH_DISTRICT_SUBDISTRICT_PROPERTY, "OBJECTID"]]
+
+    subdistrict_count_gdf = subdistrict_count_gdf.rename(
+        {"OBJECTID": CASE_COUNT_COL}, axis="columns"
+    )
+
+    return subdistrict_count_gdf
 
 
 def write_district_count_gdf_to_disk(district_count_data_gdf, tempdir):
@@ -129,19 +143,24 @@ def generate_map(layers_dict):
         )
     )
 
-    choropleths = []
+    choropleths = {}
 
     # Adding Covid Case count choropleth
     subdistrict_count_local_path, subdistrict_count_gdf = layers_dict[SUBDISTRICT_COUNT_FILENAME]
-    choropleths += [folium.features.Choropleth(
+
+    logging.debug(
+        f"subdistrict_count_gdf[{CITY_CASE_DATA_SUBDISTRICT_COL}, {CASE_COUNT_COL}]"
+        f"=\n{subdistrict_count_gdf[[CITY_CASE_DATA_SUBDISTRICT_COL, CASE_COUNT_COL]]}"
+    )
+    choropleths[SUBDISTRICT_COUNT_FILENAME] = folium.features.Choropleth(
         subdistrict_count_local_path,
         data=subdistrict_count_gdf,
         name="Covid-19 Case Count",
         key_on=f"feature.properties.{CITY_CASE_DATA_SUBDISTRICT_COL}",
-        columns=[CITY_CASE_DATA_SUBDISTRICT_COL, HEALTH_DISTRICT_SUBDISTRICT_PROPERTY],
+        columns=[CITY_CASE_DATA_SUBDISTRICT_COL, CASE_COUNT_COL],
         fill_color='BuPu',
         highlight=True,
-    )]
+    )
 
     # Adding all of the other layers
     # ToDo use layer colours to style the map - I like quintiles
@@ -149,17 +168,19 @@ def generate_map(layers_dict):
         if layer != SUBDISTRICT_COUNT_FILENAME:
             layer_local_path, _ = map_layers_dict[layer]
             layer_name = layer.replace("_", " ").replace(".geojson", "").title()
-            choropleths += [folium.features.Choropleth(
+            choropleths[layer] = folium.features.Choropleth(
                 layer_local_path,
                 name=layer_name,
                 show=False
-            )]
+            )
 
     # Styling them there choropleths.
-    for layer, choropleth in zip(layers_dict, choropleths):
+    for layer in layers_dict:
+        choropleth = choropleths[layer]
+
         # Monkey patching the choropleth GeoJSON to *not* embed
         choropleth.geojson.embed = False
-        choropleth.geojson.embed_link = layer
+        choropleth.geojson.embed_link = "city_" + layer
 
         # Adding the hover-over tooltip
         if layer in LAYER_PROPERTIES_LOOKUP:
@@ -250,5 +271,3 @@ if __name__ == "__main__":
                            secrets["minio"]["edge"]["access"],
                            secrets["minio"]["edge"]["secret"])
         logging.info("Wr[ote] to Minio")
-
-
