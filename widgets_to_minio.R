@@ -275,7 +275,7 @@ china_demographic<- china_demographic %>%
   select(-cn_population) %>%
   mutate(rate_pct = chinese_age_fatality_rate) %>%
   mutate(population = "China Pop %",
-         fatal_label = "China Fatality Rate %") 
+         fatal_label = "Chana Case Fatality Rate %") 
 
 # RSA demographic -----------
 rsa_raw_age_fatalities <- covid19za_timeline_deaths  %>%
@@ -563,25 +563,6 @@ cct_subdistrict_bar_chart <- ggplotly(cct_subdistrict_bar_chart) %>% plotly::con
 save_widget(cct_subdistrict_bar_chart, private_destdir)
 
 # ct_subdistrict_daily_counts -------------
-save_widget <- function(widg, destdir) {
-  savepath <- file.path(getwd(), destdir, 
-                        paste(deparse(substitute(widg)), "html", sep = "."))
-  libdir <- file.path(getwd(), destdir, 
-                      "libdir")
-  if (!(file.exists(libdir))) {
-    dir.create(libdir)
-  }
-  if (!("htmlwidget" %in% class(widg))) {
-    stop("Not an htmlwidget!")
-  } else {
-    widg$sizingPolicy$padding = 0
-    widg$sizingPolicy$browser$padding = 0
-    widg$sizingPolicy$viewer$padding = 0
-    saveWidget(widg, savepath, selfcontained = F, libdir = libdir)
-    print(paste("Saved to", savepath))
-  }
-}
-
 for (sub in unique(ct_subdistrict_timeseries$subdistrict)) {
   plt <- ct_subdistrict_timeseries %>% 
     filter(`subdistrict` == sub) %>%  ggplot(aes(fill=subdistrict, y=count, x=date)) +
@@ -721,7 +702,7 @@ rsa_demographic_mortality_plot <-
     scale_fill_manual(values = c(`SA Pop %` = "#D55E00", 
                                  `China Pop %` = "#E69F00", 
                                  `SA Fatality Rate %` = "#D55E00",
-                                 `China Fatality Rate %` = "#E69F00"), 
+                                 `Chana Case Fatality Rate %` = "#E69F00"), 
                       name="") +
     coord_flip() +
     labs(x = "", y = "China vs RSA Age Demographics and COVID Case Fatality Rate (%)") +
@@ -747,7 +728,7 @@ cct_demographic_confirmed_plot <-
   scale_fill_manual(values = c(`CCT Pop %` = "#D55E00", 
                                `China Pop %` = "#E69F00", 
                                `CCT Rate % of Confirmed Cases` = "#D55E00",
-                               `China Fatality Rate %` = "#E69F00"), 
+                               `Chana Case Fatality Rate %` = "#E69F00"), 
                     name="") +
   coord_flip() +
   #labs(x = "", y = "China vs CCT Age Demographics and COVID Case Fatality Rate (%)") +
@@ -770,7 +751,7 @@ china_demographic_mortality_plot <-
   scale_fill_manual(values = c(`SA Pop %` = "#D55E00", 
                                `China Pop %` = "#E69F00", 
                                `SA Fatality Rate %` = "#D55E00",
-                               `China Fatality Rate %` = "#E69F00"), 
+                               `Chana Case Fatality Rate %` = "#E69F00"), 
                     name="") +
   coord_flip() +
   labs(x = "", y = "China Age Demographics and COVID Case Fatality Rate (%)") +
@@ -807,24 +788,25 @@ browsable_global <- global_latest_data %>%
          confirmed,
          deaths,
          incidence_per_1m,
-         mortality_per_1m,case_rate_pct) %>%
+         mortality_per_1m,
+         case_fatality_rate_pct) %>%
   DT::datatable(options = list(pageLength = 25))
 save_widget(browsable_global, public_destdir)
 
 # global_mortality_boxplot ----------------------------
-outliers <- boxplot(case_rate_pct~maturity,
+outliers <- boxplot(case_fatality_rate_pct~maturity,
                     data=global_latest_data
                     
                     , plot=FALSE)$out
 
-global_mortality_data <- global_latest_data %>% filter(!(case_rate_pct %in% outliers)) %>%
+global_mortality_data <- global_latest_data %>% filter(!(case_fatality_rate_pct %in% outliers)) %>%
   filter(country != "San Marino") %>% as.data.frame()
 
 global_mortality_boxplot <- bpexploder(data = global_mortality_data,
            settings = list(
              groupVar = "maturity",
              levels = levels(global_mortality_data$maturity),
-             yVar = "case_rate_pct",
+             yVar = "case_fatality_rate_pct",
              yAxisLabel = "Case Fatality Rate %",
              xAxisLabel = "Cumulative confirmed cases",
              tipText = list(
