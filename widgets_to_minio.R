@@ -275,7 +275,7 @@ china_demographic<- china_demographic %>%
   select(-cn_population) %>%
   mutate(rate_pct = chinese_age_fatality_rate) %>%
   mutate(population = "China Pop %",
-         fatal_label = "Chana Case Fatality Rate %") 
+         fatal_label = "China Case Fatality Rate %") 
 
 # RSA demographic -----------
 rsa_raw_age_fatalities <- covid19za_timeline_deaths  %>%
@@ -702,7 +702,7 @@ rsa_demographic_mortality_plot <-
     scale_fill_manual(values = c(`SA Pop %` = "#D55E00", 
                                  `China Pop %` = "#E69F00", 
                                  `SA Fatality Rate %` = "#D55E00",
-                                 `Chana Case Fatality Rate %` = "#E69F00"), 
+                                 `China Case Fatality Rate %` = "#E69F00"), 
                       name="") +
     coord_flip() +
     labs(x = "", y = "China vs RSA Age Demographics and COVID Case Fatality Rate (%)") +
@@ -728,7 +728,7 @@ cct_demographic_confirmed_plot <-
   scale_fill_manual(values = c(`CCT Pop %` = "#D55E00", 
                                `China Pop %` = "#E69F00", 
                                `CCT Rate % of Confirmed Cases` = "#D55E00",
-                               `Chana Case Fatality Rate %` = "#E69F00"), 
+                               `China Case Fatality Rate %` = "#E69F00"), 
                     name="") +
   coord_flip() +
   #labs(x = "", y = "China vs CCT Age Demographics and COVID Case Fatality Rate (%)") +
@@ -751,7 +751,7 @@ china_demographic_mortality_plot <-
   scale_fill_manual(values = c(`SA Pop %` = "#D55E00", 
                                `China Pop %` = "#E69F00", 
                                `SA Fatality Rate %` = "#D55E00",
-                               `Chana Case Fatality Rate %` = "#E69F00"), 
+                               `China Case Fatality Rate %` = "#E69F00"), 
                     name="") +
   coord_flip() +
   labs(x = "", y = "China Age Demographics and COVID Case Fatality Rate (%)") +
