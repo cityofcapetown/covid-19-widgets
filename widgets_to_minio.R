@@ -31,7 +31,6 @@ library(sf)
 library(leafpop)
 library(bpexploder)
 
-
 # LOAD SECRETS ==========================================================================
 # Credentials
 secrets <- fromJSON(Sys.getenv("SECRETS_FILE"))
@@ -110,7 +109,6 @@ datasets <- covid_assets %>%
   filter(grepl(".csv",object_name) | grepl(".geojson",object_name)) %>%
   pull(object_name) %>% as.character() 
 
-
 for (object_name in datasets) {
   minio_to_file(object_name,
                 "covid",
@@ -145,7 +143,6 @@ datasets <- covid_assets %>%
   filter(grepl("data/private",object_name) ) %>% 
   filter(grepl(".csv",object_name) | grepl(".geojson",object_name)) %>%
   pull(object_name) %>% as.character() 
-
 
 for (object_name in datasets) {
   minio_to_file(object_name,
@@ -212,9 +209,13 @@ rsa_latest_confirmed <- rsa_provincial_ts_confirmed %>% filter(YYYYMMDD == max(Y
 rsa_latest_deaths <- nrow(covid19za_timeline_deaths)
 rsa_latest_tested <- covid19za_timeline_testing %>% summarise(val = max(cumulative_tests, na.rm = T)) %>% pull(val) %>% .[1]
 
-# TODO Replace with WC direct data
-wc_latest_update <- max(rsa_provincial_ts_confirmed$YYYYMMDD)
-wc_latest_confirmed <- max(rsa_provincial_ts_confirmed$WC, na.rm = T)
+# Latest values WC ---------------------------------
+wc_latest_update <- max(wc_all_cases$date_of_diagnosis1)
+wc_latest_confirmed <- nrow(wc_all_cases)
+
+# Latest values CT
+ct_latest_update <- wc_latest_update
+ct_latest_confirmed <- nrow(ct_all_cases)
 
 # expected_future_trajectory_log -----------------------
 countries_this_far <- global_ts_since_100 %>% 
@@ -241,7 +242,7 @@ values_to_drop <- ifelse(countries_this_far < 14, NA, 1)
 
 median_values <- median_values * values_to_drop
 
-# Age brackets
+# Age brackets -----
 age_brackets <- c(0, 10, 20, 30,40,50,60,70, 80, Inf)
 age_bracket_labels <- c("0 < 9", 
                         "10 < 19", 
@@ -253,11 +254,13 @@ age_bracket_labels <- c("0 < 9",
                         "70 < 79", 
                         "80 +")
 
+# fatality by age -----------------
 # China https://www.ncbi.nlm.nih.gov/pubmed/32064853?fbclid=IwAR3JCxH50VTfg3Q_02YTLdz2Tk7yBTmt-5oCxE4KlBe0evh7ByK3HPVU-pU
 # https://ourworldindata.org/uploads/2020/03/Coronavirus-CFR-by-age-in-China-1.png
 chinese_age_fatality_rate <- c(0, 0.2, 0.2, 0.2, 0.4, 1.3, 3.6, 8, 14.8)
+sum(chinese_age_fatality_rate)
 
-# China demographic
+# China demographic --------
 china_demographic <- global_pop_raw %>% filter(NAME == "China") 
 
 china_demographic <- china_demographic %>% 
@@ -274,8 +277,30 @@ china_demographic<- china_demographic %>%
   mutate(population = "China Pop %",
          fatal_label = "China Fatality Rate %") 
 
-# RSA
-# TODO - LINK TO DATA WHEN IT BECOMES AVAILABLE
+# RSA demographic -----------
+rsa_raw_age_fatalities <- covid19za_timeline_deaths  %>%
+  mutate(age_interval = findInterval(age, age_brackets, rightmost.closed = TRUE)) %>%
+  mutate(age_interval = age_bracket_labels[age_interval]) %>%
+  group_by(age_interval) %>%
+  summarise(rsa_raw_age_fatalities = n()) %>%
+  ungroup() 
+
+# rsa_raw_age_fatality_rate <- left_join(enframe(age_bracket_labels), 
+#                                    rsa_raw_age_fatality_rate, by = c("value" = "age_interval")) %>%
+#   mutate(rsa_raw_age_fatality_rate = replace_na(rsa_raw_age_fatality_rate, 0)) %>%
+#   mutate(rsa_raw_age_fatality_rate = rsa_raw_age_fatality_rate/sum(rsa_raw_age_fatality_rate)) %>%
+#   pull(rsa_raw_age_fatality_rate)*100
+
+# rsa_raw_age_confirmed_cases <- covid19za_timeline_confirmed %>%
+#   mutate(age_interval = findInterval(age, age_brackets, rightmost.closed = TRUE)) %>%
+#   mutate(age_interval = age_bracket_labels[age_interval]) %>%
+#   group_by(age_interval) %>%
+#   summarise(rsa_raw_age_confirmed_cases = n()) %>%
+#   ungroup() 
+# 
+# rsa_age_fatality_rate <- left_join(rsa_raw_age_confirmed_cases, rsa_raw_age_fatalities, by = "age_interval") %>%
+#   mutate(rsa_raw_age_fatalities = replace_na(rsa_raw_age_fatalities, 0)) %>% 
+#   mutate(rsa_age_fatality_rate = rsa_raw_age_fatalities / rsa_raw_age_confirmed)
 rsa_age_fatality_rate <- c(0, 0, 0, 0, 0, 0, 0, 0, 0)
 
 rsa_demographic <- rsa_pop_genders_ages %>% 
@@ -363,7 +388,9 @@ global_total_deaths <- global_ts_sorted_deaths %>%
 # TODO ADD REAL WARD LEVEL COVID STATS
 
 # VALUEBOXES =============================================================
-latest_values <- listN(wc_latest_update,
+latest_values <- listN(ct_latest_update,
+                       ct_latest_confirmed,
+                       wc_latest_update,
                        wc_latest_confirmed,
                        rsa_latest_update,
                        rsa_latest_tested, 
@@ -377,6 +404,15 @@ write(
   toJSON(latest_values), 
   file.path(getwd(), public_destdir,"latest_values.json")
   )
+
+latest_private_values <- append(latest_values,
+                        ct_latest_update,
+                       ct_latest_confirmed)
+
+write(
+  toJSON(latest_private_values), 
+  file.path(getwd(), private_destdir,"latest_values.json")
+)
 
 # HTML WIDGETS ============================================================
 # Expected future trajectory ---------------
@@ -485,10 +521,36 @@ rsa_provincial_confirmed_timeseries_log <- rsa_provincial_confirmed_timeseries %
 save_widget(rsa_provincial_confirmed_timeseries_log, public_destdir)
 
 
-# wc_timeseries --------------
-wc_confirmed_timeseries <- rsa_provincial_ts_confirmed %>% 
-  select(YYYYMMDD, WC) %>%
-  df_as_xts("YYYYMMDD") %>% 
+# ct_daily_count_timeseries --------------
+ct_daily_confirmed_cases <- ct_all_cases %>% 
+  select(date_of_diagnosis1) %>% 
+  group_by(date_of_diagnosis1) %>% 
+  summarise(count = n()) %>% ungroup()
+
+cct_subdistrict_bar_chart <- ct_all_cases %>% 
+  rename(date = date_of_diagnosis1) %>%
+  group_by(date, subdistrict) %>% 
+  summarise(count = n()) %>% 
+  ungroup() %>% 
+  ggplot(aes(fill=subdistrict, y=count, x=date)) +
+  geom_col(position = position_dodge2(width = 0.9, preserve = "single")) +
+  scale_color_manual(values=c(rep("white", 17)))+
+  theme(legend.position="none") + 
+  theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+  facet_wrap(~subdistrict, ncol = 4)
+  
+cct_subdistrict_bar_chart <- ggplotly(cct_subdistrict_bar_chart) %>% plotly::config(displayModeBar = F)  
+save_widget(cct_subdistrict_bar_chart, private_destdir)
+
+# ct_cumulative_count_timeseries --------------
+ct_confirmed_timeseries <- ct_daily_confirmed_cases %>% 
+  mutate(CT = cumsum(count)) %>% 
+  rename(date = date_of_diagnosis1) %>% 
+  select(date, CT)
+
+ct_confirmed_timeseries <- ct_confirmed_timeseries %>% 
+  select(date, CT) %>%
+  df_as_xts("date") %>% 
   dygraph() %>%
   #dyLegend(width = 400) %>%
   dyCSS(textConnection("
@@ -500,11 +562,42 @@ wc_confirmed_timeseries <- rsa_provincial_ts_confirmed %>%
               hideOnMouseOut = FALSE) %>%
   dyRangeSelector(height = 20) %>%
   dyOptions(stackedGraph = TRUE) 
-save_widget(wc_confirmed_timeseries, public_destdir)
+save_widget(ct_confirmed_timeseries, private_destdir)
+
+ct_confirmed_timeseries_log <- ct_confirmed_timeseries %>% dyOptions(logscale = TRUE)
+save_widget(ct_confirmed_timeseries_log, private_destdir)
+
+
+# wc_daily_count_timeseries --------------
+wc_daily_confirmed_cases <- wc_all_cases %>% 
+  select(date_of_diagnosis1) %>% 
+  group_by(date_of_diagnosis1) %>% 
+  summarise(count = n()) %>% ungroup()
+
+# wc_cumulative_count_timeseries --------------
+wc_confirmed_timeseries <- wc_daily_confirmed_cases %>% 
+  mutate(WC = cumsum(count)) %>% 
+  rename(date = date_of_diagnosis1) %>% 
+  select(date, WC)
+
+wc_confirmed_timeseries <- wc_confirmed_timeseries %>% 
+  select(date, WC) %>%
+  df_as_xts("date") %>% 
+  dygraph() %>%
+  #dyLegend(width = 400) %>%
+  dyCSS(textConnection("
+     .dygraph-legend > span { display: none; }
+     .dygraph-legend > span.highlight { display: inline; }
+  ")) %>% 
+  dyHighlight(highlightCircleSize = 5, 
+              highlightSeriesBackgroundAlpha = 0.5,
+              hideOnMouseOut = FALSE) %>%
+  dyRangeSelector(height = 20) %>%
+  dyOptions(stackedGraph = TRUE) 
+save_widget(wc_confirmed_timeseries, private_destdir)
 
 wc_confirmed_timeseries_log <- wc_confirmed_timeseries %>% dyOptions(logscale = TRUE)
-save_widget(wc_confirmed_timeseries_log, public_destdir)
-
+save_widget(wc_confirmed_timeseries_log, private_destdir)
 
 # rsa_timeline_testing ----------------------------------
 rsa_timeline_testing <- covid19za_timeline_testing %>% 
@@ -599,7 +692,7 @@ cct_demographic_mortality_plot <-
   theme_bw()
 
 cct_demographic_mortality_plot <- ggplotly(cct_demographic_mortality_plot)  %>% plotly::config(displayModeBar = F)  
-save_widget(cct_demographic_mortality_plot, public_destdir)
+save_widget(cct_demographic_mortality_plot, private_destdir)
 
 # china demographic mortality plot ---------------------
 china_demographic_mortality_plot <- 
@@ -743,21 +836,52 @@ ct_heatmap <- leaflet(cct_2016_pop_density) %>%
 save_widget(ct_heatmap, public_destdir)
 
 # SEND TO MINIO =================================================================
-for (filename in list.files(public_destdir)) {
+for (filename in list.files(public_destdir, recursive = T)) {
   filepath <- file.path(public_destdir, filename)
   if (file_ext(filepath) != "") {
-    print(filepath)
-    file_to_minio(file.path(public_destdir, filename),
+    print(filename)
+    if(dirname(filename) == ".") {
+      prefix_override = paste(public_destdir, "/", sep="")
+    } else {
+      prefix_override = paste(file.path(public_destdir, dirname(filename)), "/", sep="")
+    }
+    print(prefix_override)
+    file_to_minio(filepath,
                   "covid",
                   minio_key,
                   minio_secret,
                   "EDGE",
-                  filename_prefix_override = paste(public_destdir, "/", sep=""))
+                  filename_prefix_override = prefix_override)
+    
     print("Sent")
   } else {
     print(filepath)
     print("This is a directory - not sending!")
     }
+}
+
+for (filename in list.files(private_destdir, recursive = T)) {
+  filepath <- file.path(private_destdir, filename)
+  if (file_ext(filepath) != "") {
+    print(filename)
+    if(dirname(filename) == ".") {
+      prefix_override = paste(private_destdir, "/", sep="")
+    } else {
+      prefix_override = paste(file.path(private_destdir, dirname(filename)), "/", sep="")
+    }
+    print(prefix_override)
+    file_to_minio(filepath,
+                  "covid",
+                  minio_key,
+                  minio_secret,
+                  "EDGE",
+                  filename_prefix_override = prefix_override)
+    
+    print("Sent")
+  } else {
+    print(filepath)
+    print("This is a directory - not sending!")
+  }
 }
 
 # Save a copy of the data to .Rdata for dashboard knit
