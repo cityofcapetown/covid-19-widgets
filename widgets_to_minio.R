@@ -273,7 +273,7 @@ china_demographic<- china_demographic %>%
   ungroup() %>% 
   mutate(population_pct = cn_population/sum(cn_population) * 100) %>%
   select(-cn_population) %>%
-  mutate(fatality_rate_pct = chinese_age_fatality_rate) %>%
+  mutate(rate_pct = chinese_age_fatality_rate) %>%
   mutate(population = "China Pop %",
          fatal_label = "China Fatality Rate %") 
 
@@ -314,13 +314,25 @@ rsa_demographic <- rsa_demographic %>%
   ungroup() %>% 
   mutate(population_pct = rsa_population/sum(rsa_population)*100) %>%
   select(-rsa_population) %>%
-  mutate(fatality_rate_pct = rsa_age_fatality_rate) %>% 
+  mutate(rate_pct = rsa_age_fatality_rate) %>% 
   mutate(population = "SA Pop %",
          fatal_label = "SA Fatality Rate %") 
 
-# CAPE TOWN
+# cape town confirmed cases pop pyramid
 # TODO - LINK TO DATA WHEN IT BECOMES AVAILABLE
-cct_age_fatality_rate <- c(0, 0, 0, 0, 0, 0, 0, 0, 0)
+
+ct_raw_age_confirmed_cases <- ct_all_cases  %>% 
+    select(agegroup) %>% 
+    separate(agegroup, sep = "[ ]", into = c("age"), extra = "drop") %>%
+    mutate(age_interval = findInterval(age, age_brackets, rightmost.closed = TRUE)) %>% 
+  mutate(age_interval = age_bracket_labels[age_interval]) %>%
+  group_by(age_interval) %>%
+  summarise(ct_raw_age_confirmed_cases = n()) %>%
+  ungroup() 
+
+ct_age_confirmed_case_pct <- ct_raw_age_confirmed_cases %>% 
+  mutate(ct_age_confirmed_case_pct = ct_raw_age_confirmed_cases / sum(ct_raw_age_confirmed_cases)*100) %>% 
+  select(age_interval, ct_age_confirmed_case_pct)
 
 cct_demographic <- cct_mid_year_2019_pop_est %>% 
   mutate(age_interval = NORM_AGE_COHORT) %>%
@@ -329,9 +341,10 @@ cct_demographic <- cct_mid_year_2019_pop_est %>%
   ungroup() %>%
   mutate(population_pct = cct_population/sum(cct_population)*100) %>%
   select(-cct_population) %>%
-  mutate(fatality_rate_pct = rsa_age_fatality_rate) %>% 
+  left_join(., ct_age_confirmed_case_pct, by = "age_interval") %>%
+  rename(rate_pct = ct_age_confirmed_case_pct) %>%
   mutate(population = "CCT Pop %",
-         fatal_label = "CCT Fatality Rate %") 
+         fatal_label = "CCT Rate % of Confirmed Cases") 
 
 
 # RSA total confirmed
@@ -527,11 +540,18 @@ ct_daily_confirmed_cases <- ct_all_cases %>%
   group_by(date_of_diagnosis1) %>% 
   summarise(count = n()) %>% ungroup()
 
-cct_subdistrict_bar_chart <- ct_all_cases %>% 
+ct_subdistrict_timeseries  <- ct_all_cases %>% 
   rename(date = date_of_diagnosis1) %>%
   group_by(date, subdistrict) %>% 
   summarise(count = n()) %>% 
-  ungroup() %>% 
+  ungroup()
+# Make sure all dates are included i the melted dataframe
+spread_ct_subdistrict_timeseries <-  ct_subdistrict_timeseries %>% spread(key = subdistrict, value = count) 
+spread_ct_subdistrict_timeseries[is.na(spread_ct_subdistrict_timeseries)] <- 0
+ct_subdistrict_timeseries <- spread_ct_subdistrict_timeseries %>% gather(key = "subdistrict", value = count, -date)
+
+
+cct_subdistrict_bar_chart <- ct_subdistrict_timeseries %>% 
   ggplot(aes(fill=subdistrict, y=count, x=date)) +
   geom_col(position = position_dodge2(width = 0.9, preserve = "single")) +
   scale_color_manual(values=c(rep("white", 17)))+
@@ -541,6 +561,48 @@ cct_subdistrict_bar_chart <- ct_all_cases %>%
   
 cct_subdistrict_bar_chart <- ggplotly(cct_subdistrict_bar_chart) %>% plotly::config(displayModeBar = F)  
 save_widget(cct_subdistrict_bar_chart, private_destdir)
+
+# ct_subdistrict_daily_counts -------------
+save_widget <- function(widg, destdir) {
+  savepath <- file.path(getwd(), destdir, 
+                        paste(deparse(substitute(widg)), "html", sep = "."))
+  libdir <- file.path(getwd(), destdir, 
+                      "libdir")
+  if (!(file.exists(libdir))) {
+    dir.create(libdir)
+  }
+  if (!("htmlwidget" %in% class(widg))) {
+    stop("Not an htmlwidget!")
+  } else {
+    widg$sizingPolicy$padding = 0
+    widg$sizingPolicy$browser$padding = 0
+    widg$sizingPolicy$viewer$padding = 0
+    saveWidget(widg, savepath, selfcontained = F, libdir = libdir)
+    print(paste("Saved to", savepath))
+  }
+}
+
+for (sub in unique(ct_subdistrict_timeseries$subdistrict)) {
+  plt <- ct_subdistrict_timeseries %>% 
+    filter(`subdistrict` == sub) %>%  ggplot(aes(fill=subdistrict, y=count, x=date)) +
+    geom_col(position = position_dodge2(width = 0.9, preserve = "single")) +
+    scale_color_manual(values=c(rep("white", 17)))+
+    theme(legend.position="none") + 
+    theme(axis.text.x = element_text(angle = 90, hjust = 1)) 
+  plt <- ggplotly(plt) %>% plotly::config(displayModeBar = F)
+  plt$sizingPolicy$padding = 0
+  plt$sizingPolicy$browser$padding = 0
+  plt$sizingPolicy$viewer$padding = 0
+  
+  obj_name <- print(paste("cct_", sub, "_confirmed_timeseries", sep = ""))  
+  assign(obj_name, plt)
+  savepath <- file.path(getwd(), private_destdir, 
+                        paste(obj_name, "html", sep = "."))
+  libdir <- file.path(getwd(), private_destdir, 
+                      "libdir")
+  saveWidget(get(obj_name), savepath, selfcontained = F, libdir = libdir)
+  rm(plt)
+}
 
 # ct_cumulative_count_timeseries --------------
 ct_confirmed_timeseries <- ct_daily_confirmed_cases %>% 
@@ -644,14 +706,14 @@ save_widget(rsa_dem_pyramid, public_destdir)
 
 # rsa demographic mortality plot ---------------------
 rsa_demographic_mortality_plot <- 
-  china_demographic %>% mutate(fatality_rate_pct = -fatality_rate_pct,
+  china_demographic %>% mutate(rate_pct = -rate_pct,
                                 population_pct = -population_pct) %>%
     rbind(., rsa_demographic) %>%
     ggplot(aes(x = age_interval, y = population_pct)) +
     geom_bar(aes(fill = population), 
              alpha = 6/10,
              stat = "identity") +
-    geom_bar(aes(y = fatality_rate_pct, fill = fatal_label), 
+    geom_bar(aes(y = rate_pct, fill = fatal_label), 
              
              width = 0.5, 
              stat = "identity", group = 1) +
@@ -669,40 +731,40 @@ rsa_demographic_mortality_plot <- ggplotly(rsa_demographic_mortality_plot)  %>% 
 save_widget(rsa_demographic_mortality_plot, public_destdir)
 
 # cape town demographic mortality plot ---------------------
-cct_demographic_mortality_plot <- 
-  china_demographic %>% mutate(fatality_rate_pct = -fatality_rate_pct,
+cct_demographic_confirmed_plot <- 
+  china_demographic %>% mutate(rate_pct = -rate_pct,
                                population_pct = -population_pct) %>%
   rbind(., cct_demographic) %>%
   ggplot(aes(x = age_interval, y = population_pct)) +
   geom_bar(aes(fill = population), 
            alpha = 6/10,
            stat = "identity") +
-  geom_bar(aes(y = fatality_rate_pct, fill = fatal_label), 
+  geom_bar(aes(y = rate_pct, fill = fatal_label), 
            
            width = 0.5, 
            stat = "identity", group = 1) +
   
   scale_fill_manual(values = c(`CCT Pop %` = "#D55E00", 
                                `China Pop %` = "#E69F00", 
-                               `CCT Fatality Rate %` = "#D55E00",
+                               `CCT Rate % of Confirmed Cases` = "#D55E00",
                                `China Fatality Rate %` = "#E69F00"), 
                     name="") +
   coord_flip() +
-  labs(x = "", y = "China vs CCT Age Demographics and COVID Case Fatality Rate (%)") +
+  #labs(x = "", y = "China vs CCT Age Demographics and COVID Case Fatality Rate (%)") +
   theme_bw()
 
-cct_demographic_mortality_plot <- ggplotly(cct_demographic_mortality_plot)  %>% plotly::config(displayModeBar = F)  
-save_widget(cct_demographic_mortality_plot, private_destdir)
+cct_demographic_confirmed_plot <- ggplotly(cct_demographic_confirmed_plot)  %>% plotly::config(displayModeBar = F)  
+save_widget(cct_demographic_confirmed_plot, private_destdir)
 
 # china demographic mortality plot ---------------------
 china_demographic_mortality_plot <- 
-  china_demographic %>% mutate(fatality_rate_pct = -fatality_rate_pct,
+  china_demographic %>% mutate(rate_pct = -rate_pct,
                                population_pct = -population_pct) %>%
   ggplot(aes(x = age_interval, y = population_pct)) +
   geom_bar(aes(fill = population), 
            alpha = 6/10,
            stat = "identity") +
-  geom_bar(aes(y = fatality_rate_pct, fill = fatal_label), 
+  geom_bar(aes(y = rate_pct, fill = fatal_label), 
            width = 0.5, 
            stat = "identity", group = 1) +
   scale_fill_manual(values = c(`SA Pop %` = "#D55E00", 
@@ -745,24 +807,24 @@ browsable_global <- global_latest_data %>%
          confirmed,
          deaths,
          incidence_per_1m,
-         mortality_per_1m,case_fatality_rate_pct) %>%
+         mortality_per_1m,case_rate_pct) %>%
   DT::datatable(options = list(pageLength = 25))
 save_widget(browsable_global, public_destdir)
 
 # global_mortality_boxplot ----------------------------
-outliers <- boxplot(case_fatality_rate_pct~maturity,
+outliers <- boxplot(case_rate_pct~maturity,
                     data=global_latest_data
                     
                     , plot=FALSE)$out
 
-global_mortality_data <- global_latest_data %>% filter(!(case_fatality_rate_pct %in% outliers)) %>%
+global_mortality_data <- global_latest_data %>% filter(!(case_rate_pct %in% outliers)) %>%
   filter(country != "San Marino") %>% as.data.frame()
 
 global_mortality_boxplot <- bpexploder(data = global_mortality_data,
            settings = list(
              groupVar = "maturity",
              levels = levels(global_mortality_data$maturity),
-             yVar = "case_fatality_rate_pct",
+             yVar = "case_rate_pct",
              yAxisLabel = "Case Fatality Rate %",
              xAxisLabel = "Cumulative confirmed cases",
              tipText = list(
