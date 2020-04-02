@@ -318,8 +318,7 @@ rsa_demographic <- rsa_demographic %>%
   mutate(population = "SA Pop %",
          fatal_label = "SA Fatality Rate %") 
 
-# cape town confirmed cases pop pyramid
-# TODO - LINK TO DATA WHEN IT BECOMES AVAILABLE
+# cape town confirmed cases pop pyramid ---------------
 
 ct_raw_age_confirmed_cases <- ct_all_cases  %>% 
     select(agegroup) %>% 
@@ -437,10 +436,10 @@ future_trajectory <- global_ts_since_100 %>%
   select(-days_since_passed_100) %>%
   ts(., start =1, end = nrow(.), frequency = 1) %>%
     dygraph() %>%
-  #dyLegend(width = 400) %>%
+  dyLegend(show = "follow") %>%
   dyCSS(textConnection("
-     .dygraph-legend > span { display: none; }
-     .dygraph-legend > span.highlight { display: inline; }
+    .dygraph-legend > span { display: none; }
+    .dygraph-legend > span.highlight { display: inline; }
   ")) %>%
   dyHighlight(highlightCircleSize = 5, 
               highlightSeriesBackgroundAlpha = 0.4,
@@ -471,10 +470,10 @@ rsa_tests_vs_cases <- left_join(sa_ts_confirmed,
   drop_na() %>%
   df_as_xts("YYYYMMDD") %>% 
   dygraph() %>%
-  #dyLegend(width = 400) %>%
+  dyLegend(show = "follow") %>%
   dyCSS(textConnection("
-     .dygraph-legend > span { display: none; }
-     .dygraph-legend > span.highlight { display: inline; }
+    .dygraph-legend > span { display: none; }
+    .dygraph-legend > span.highlight { display: inline; }
   ")) %>% 
   dyHighlight(highlightCircleSize = 5, 
               highlightSeriesBackgroundAlpha = 0.5,
@@ -495,11 +494,11 @@ save_widget(rsa_tests_vs_cases_rebased, public_destdir)
 rsa_transmission_type_timeseries <- rsa_confirmed_by_type %>%
 df_as_xts("YYYYMMDD") %>% 
   dygraph() %>%
-  #dyLegend(width = 400) %>%
+  dyLegend(show = "follow") %>%
   dyCSS(textConnection("
-     .dygraph-legend > span { display: none; }
-     .dygraph-legend > span.highlight { display: inline; }
-  ")) %>% 
+    .dygraph-legend > span { display: none; }
+    .dygraph-legend > span.highlight { display: inline; }
+  ")) %>%
   dyHighlight(highlightCircleSize = 5, 
               highlightSeriesBackgroundAlpha = 0.5,
               hideOnMouseOut = FALSE) %>%
@@ -517,11 +516,11 @@ rsa_provincial_confirmed_timeseries <- rsa_provincial_ts_confirmed %>%
   select(-total) %>%
   df_as_xts("YYYYMMDD") %>% 
   dygraph() %>%
-  #dyLegend(width = 400) %>%
+  dyLegend(show = "follow") %>%
   dyCSS(textConnection("
-     .dygraph-legend > span { display: none; }
-     .dygraph-legend > span.highlight { display: inline; }
-  ")) %>% 
+    .dygraph-legend > span { display: none; }
+    .dygraph-legend > span.highlight { display: inline; }
+  ")) %>%
   dyHighlight(highlightCircleSize = 5, 
               highlightSeriesBackgroundAlpha = 0.5,
               hideOnMouseOut = FALSE) %>%
@@ -595,11 +594,11 @@ ct_confirmed_timeseries <- ct_confirmed_timeseries %>%
   select(date, CT) %>%
   df_as_xts("date") %>% 
   dygraph() %>%
-  #dyLegend(width = 400) %>%
+  dyLegend(show = "follow") %>%
   dyCSS(textConnection("
-     .dygraph-legend > span { display: none; }
-     .dygraph-legend > span.highlight { display: inline; }
-  ")) %>% 
+    .dygraph-legend > span { display: none; }
+    .dygraph-legend > span.highlight { display: inline; }
+  ")) %>%
   dyHighlight(highlightCircleSize = 5, 
               highlightSeriesBackgroundAlpha = 0.5,
               hideOnMouseOut = FALSE) %>%
@@ -627,11 +626,11 @@ wc_confirmed_timeseries <- wc_confirmed_timeseries %>%
   select(date, WC) %>%
   df_as_xts("date") %>% 
   dygraph() %>%
-  #dyLegend(width = 400) %>%
+  dyLegend(show = "follow") %>%
   dyCSS(textConnection("
-     .dygraph-legend > span { display: none; }
-     .dygraph-legend > span.highlight { display: inline; }
-  ")) %>% 
+    .dygraph-legend > span { display: none; }
+    .dygraph-legend > span.highlight { display: inline; }
+  ")) %>%
   dyHighlight(highlightCircleSize = 5, 
               highlightSeriesBackgroundAlpha = 0.5,
               hideOnMouseOut = FALSE) %>%
@@ -647,11 +646,11 @@ rsa_timeline_testing <- covid19za_timeline_testing %>%
   select(YYYYMMDD, cumulative_tests) %>%
   df_as_xts("YYYYMMDD") %>% 
   dygraph() %>%
-  #dyLegend(width = 400) %>%
+  dyLegend(show = "follow") %>%
   dyCSS(textConnection("
-     .dygraph-legend > span { display: none; }
-     .dygraph-legend > span.highlight { display: inline; }
-  ")) %>% 
+    .dygraph-legend > span { display: none; }
+    .dygraph-legend > span.highlight { display: inline; }
+  ")) %>%
   dyHighlight(highlightCircleSize = 5, 
               highlightSeriesBackgroundAlpha = 0.5,
               hideOnMouseOut = TRUE) %>%
@@ -764,11 +763,11 @@ save_widget(china_demographic_mortality_plot, public_destdir)
 global_timeline_confirmed <- global_ts_sorted_confirmed %>% 
   df_as_xts("report_date") %>% 
   dygraph() %>%
-  #dyLegend(width = 400) %>%
+  dyLegend(show = "follow") %>%
   dyCSS(textConnection("
-     .dygraph-legend > span { display: none; }
-     .dygraph-legend > span.highlight { display: inline; }
-  ")) %>% 
+    .dygraph-legend > span { display: none; }
+    .dygraph-legend > span.highlight { display: inline; }
+  ")) %>%
   dyHighlight(highlightCircleSize = 5, 
               highlightSeriesBackgroundAlpha = 0.2,
               hideOnMouseOut = FALSE) %>%
