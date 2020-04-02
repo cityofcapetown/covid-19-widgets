@@ -704,7 +704,7 @@ rsa_demographic_mortality_plot <-
                                  `China Case Fatality Rate %` = "#E69F00"), 
                       name="") +
     coord_flip() +
-    labs(x = "", y = "China vs RSA Age Demographics and COVID Case Fatality Rate (%)") +
+    labs(x = "", y = "RSA Demographics vs COVID Case Fatalities (%)") +
     theme_bw()
   
 rsa_demographic_mortality_plot <- ggplotly(rsa_demographic_mortality_plot)  %>% plotly::config(displayModeBar = F)  
