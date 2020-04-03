@@ -445,7 +445,7 @@ future_trajectory <- global_ts_since_100 %>%
               highlightSeriesBackgroundAlpha = 0.4,
               hideOnMouseOut = TRUE) %>%
   dyRangeSelector(height = 20) %>%
-  dyOptions(stackedGraph = FALSE) %>%
+  dyOptions(stackedGraph = FALSE, connectSeparatedPoints = TRUE) %>%
   #dyAxis(name="x",
   #       axisLabelFormatter = "function(d){ return d.getFullyear() }") %>% 
   dySeries(c("LOWER_QUARTILE", "MEDIAN", "UPPER_QUARTILE"), 
@@ -480,7 +480,8 @@ rsa_tests_vs_cases <- left_join(sa_ts_confirmed,
               hideOnMouseOut = TRUE) %>%
   dyRangeSelector(height = 20) %>%
   dyOptions(stackedGraph = FALSE,
-            logscale = FALSE) 
+            logscale = FALSE,
+            connectSeparatedPoints = TRUE) 
 save_widget(rsa_tests_vs_cases, public_destdir)
 
 rsa_tests_vs_cases_log <- rsa_tests_vs_cases %>% dyOptions(logscale = TRUE)
@@ -503,7 +504,7 @@ df_as_xts("YYYYMMDD") %>%
               highlightSeriesBackgroundAlpha = 0.5,
               hideOnMouseOut = FALSE) %>%
   dyRangeSelector(height = 20) %>%
-  dyOptions(stackedGraph = FALSE) 
+  dyOptions(stackedGraph = FALSE, connectSeparatedPoints = TRUE) 
 
 save_widget(rsa_transmission_type_timeseries, public_destdir)
 
@@ -526,7 +527,7 @@ rsa_provincial_confirmed_timeseries <- rsa_provincial_ts_confirmed %>%
               hideOnMouseOut = FALSE) %>%
   dyRangeSelector(height = 20) %>%
   dySeries(name = "WC", label = "WC", color = "red", strokeWidth = 5) %>%
-  dyOptions(stackedGraph = TRUE) 
+  dyOptions(stackedGraph = TRUE, connectSeparatedPoints = TRUE) 
 save_widget(rsa_provincial_confirmed_timeseries, public_destdir)
 
 rsa_provincial_confirmed_timeseries_log <- rsa_provincial_confirmed_timeseries %>% dyOptions(logscale = TRUE)
@@ -603,7 +604,7 @@ ct_confirmed_timeseries <- ct_confirmed_timeseries %>%
               highlightSeriesBackgroundAlpha = 0.5,
               hideOnMouseOut = FALSE) %>%
   dyRangeSelector(height = 20) %>%
-  dyOptions(stackedGraph = TRUE) 
+  dyOptions(stackedGraph = TRUE, connectSeparatedPoints = TRUE) 
 save_widget(ct_confirmed_timeseries, private_destdir)
 
 ct_confirmed_timeseries_log <- ct_confirmed_timeseries %>% dyOptions(logscale = TRUE)
@@ -635,7 +636,7 @@ wc_confirmed_timeseries <- wc_confirmed_timeseries %>%
               highlightSeriesBackgroundAlpha = 0.5,
               hideOnMouseOut = FALSE) %>%
   dyRangeSelector(height = 20) %>%
-  dyOptions(stackedGraph = TRUE) 
+  dyOptions(stackedGraph = TRUE, connectSeparatedPoints = TRUE) 
 save_widget(wc_confirmed_timeseries, private_destdir)
 
 wc_confirmed_timeseries_log <- wc_confirmed_timeseries %>% dyOptions(logscale = TRUE)
@@ -656,7 +657,7 @@ rsa_timeline_testing <- covid19za_timeline_testing %>%
               hideOnMouseOut = TRUE) %>%
   dyRangeSelector(height = 20) %>%
   dyOptions(stackedGraph = FALSE,
-            logscale = FALSE) 
+            logscale = FALSE, connectSeparatedPoints = TRUE) 
 save_widget(rsa_timeline_testing, public_destdir)
 
 rsa_timeline_testing_log <- rsa_timeline_testing %>% dyOptions(logscale = TRUE)
@@ -772,7 +773,7 @@ global_timeline_confirmed <- global_ts_sorted_confirmed %>%
               highlightSeriesBackgroundAlpha = 0.2,
               hideOnMouseOut = FALSE) %>%
   dyRangeSelector(height = 20) %>%
-  dyOptions(stackedGraph = TRUE, strokeWidth = c(1,5) )
+  dyOptions(stackedGraph = TRUE, strokeWidth = c(1,5), connectSeparatedPoints = TRUE)
 
 save_widget(global_timeline_confirmed, public_destdir)
 
