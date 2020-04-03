@@ -187,7 +187,7 @@ rsa_confirmed_by_type <- covid19za_timeline_confirmed %>%
 
 # RSA total timeseries
 sa_ts_confirmed <- rsa_provincial_ts_confirmed %>% 
-  select(-YYYYMMDD, total) %>% 
+  select(-YYYYMMDD, -total) %>% 
   rowSums() %>% 
   enframe(value = "confirmed")
 
