@@ -550,13 +550,19 @@ spread_ct_subdistrict_timeseries <-  ct_subdistrict_timeseries %>% spread(key = 
 spread_ct_subdistrict_timeseries[is.na(spread_ct_subdistrict_timeseries)] <- 0
 ct_subdistrict_timeseries <- spread_ct_subdistrict_timeseries %>% gather(key = "subdistrict", value = count, -date)
 
+every_nth = function(n) {
+  return(function(x) {x[c(TRUE, rep(FALSE, n - 1))]})
+}
 
 cct_subdistrict_bar_chart <- ct_subdistrict_timeseries %>% 
-  ggplot(aes(fill=subdistrict, y=count, x=date)) +
+  ggplot(aes(fill=subdistrict, y=count, x=as.character(date))) +
   geom_col(position = position_dodge2(width = 0.9, preserve = "single")) +
   scale_color_manual(values=c(rep("white", 17)))+
   theme(legend.position="none") + 
+  xlab("") +
+  ylab("Daily Confirmed Cases") +
   theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+  scale_x_discrete(breaks = every_nth(n = 5)) +
   facet_wrap(~subdistrict, ncol = 4)
   
 cct_subdistrict_bar_chart <- ggplotly(cct_subdistrict_bar_chart) %>% plotly::config(displayModeBar = F)  
@@ -565,11 +571,15 @@ save_widget(cct_subdistrict_bar_chart, private_destdir)
 # ct_subdistrict_daily_counts -------------
 for (sub in unique(ct_subdistrict_timeseries$subdistrict)) {
   plt <- ct_subdistrict_timeseries %>% 
-    filter(`subdistrict` == sub) %>%  ggplot(aes(fill=subdistrict, y=count, x=date)) +
+    filter(`subdistrict` == sub) %>%  ggplot(aes(fill=subdistrict, y=count, as.character(x=date))) +
     geom_col(position = position_dodge2(width = 0.9, preserve = "single")) +
     scale_color_manual(values=c(rep("white", 17)))+
     theme(legend.position="none") + 
-    theme(axis.text.x = element_text(angle = 90, hjust = 1)) 
+    xlab("") +
+    ylab("Daily Confirmed Cases") +
+    theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+    scale_x_discrete(breaks = every_nth(n = 5))
+  
   plt <- ggplotly(plt) %>% plotly::config(displayModeBar = F)
   plt$sizingPolicy$padding = 0
   plt$sizingPolicy$browser$padding = 0
