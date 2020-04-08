@@ -78,5 +78,5 @@ def covid_19_widget_task(task_name, task_kwargs={}):
 
 
 # Defining tasks
-MEDIA_PLOTS = 'media-plots.sh'
+MEDIA_PLOTS = 'media-plots'
 media_plots_operator = covid_19_widget_task(MEDIA_PLOTS)
