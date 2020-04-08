@@ -86,6 +86,7 @@ def to_json_data(values_dict):
 
 
 def get_published_count(mentions_df, category_id, social_media_network_id, start_date, end_date):
+    start_timestamp = pandas.to_datetime(start_date).tz_localize('Africa/Johannesburg')
     filtered_mentions = mentions_df.query(
         "categoryId == @category_id & "
         "socialNetworkId == @social_media_network_id &"
@@ -206,7 +207,7 @@ def generate_sentiment_ts_plot(sentiment_ts_data, sentiment_ts_sample_count):
                                     line_dash='dashed', line_width=3, )
     line_plot.add_layout(long_term_sentiment_span)
 
-    start_timestamp = sentiment_ts_data[DATE_COL_NAME].min()
+    start_timestamp = sentiment_ts_data["date"].min()
     long_term_sentiment_label = Label(x=start_timestamp, y=LONG_TERM_SENTIMENT, x_offset=-10, y_offset=10,
                                       text='Sentiment Baseline', render_mode='css',
                                       border_line_color='white', border_line_alpha=0.0, angle=0, angle_units='deg',
@@ -235,9 +236,9 @@ def get_most_recent_media_datasource(mentions_df):
     ).drop(
         [DATE_COL_NAME], axis='columns'
     )
-    media_data_source_dict = most_recent_export.to_dict(orient='records')
+    media_data_source_json = most_recent_export.to_json(orient='records')
 
-    return media_data_source, media_data_source_dict
+    return media_data_source, media_data_source_json
 
 
 def get_table_formatters():
@@ -290,9 +291,9 @@ def get_social_media_comments_datasource(mentions_df, sentiment_value='-1'):
     ).drop(
         [DATE_COL_NAME], axis='columns'
     )
-    extracts_dict = extracts_export.to_dict(orient='records')
+    extracts_json = extracts_export.to_json(orient='records')
 
-    return data_source, extracts_dict
+    return data_source, extracts_json
 
 
 def generate_social_media_comments_table(media_comments_data_source, sentiment_label="Negative"):
