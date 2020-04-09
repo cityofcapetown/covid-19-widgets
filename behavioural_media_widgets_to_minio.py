@@ -1,6 +1,7 @@
 import json
 import logging
 import os
+import pprint
 import sys
 import tempfile
 
@@ -59,6 +60,10 @@ def get_data(minio_key, minio_access, minio_secret):
         data_df = pandas.read_csv(temp_datafile.name)
 
     data_df[DATE_COL_NAME] = pandas.to_datetime(data_df[DATE_COL_NAME])
+    logging.debug(f"data_df.columns=\n{data_df.columns}")
+    logging.debug(
+        f"data_df.columns=\n{pprint.pformat(data_df.dtypes.to_dict())}"
+    )
 
     return data_df
 
