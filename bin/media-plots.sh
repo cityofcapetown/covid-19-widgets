@@ -1,4 +1,4 @@
 #!/usr/bin/env bash
 set -e
 
-python3 ./financial_line_plot_widget_to_minio.py
+python3 ./behavioural_media_widgets_to_minio.py
