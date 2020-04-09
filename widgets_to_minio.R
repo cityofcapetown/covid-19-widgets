@@ -217,7 +217,7 @@ wc_latest_confirmed <- nrow(wc_all_cases)
 ct_latest_update <- wc_latest_update
 ct_latest_confirmed <- nrow(ct_all_cases)
 
-# expected_future_trajectory_log -----------------------
+# expected_future_trajectory -----------------------
 countries_this_far <- global_ts_since_100 %>% 
   select(-days_since_passed_100) %>% 
   apply(., MARGIN = 1, function(x) sum(!is.na(x)))
@@ -241,6 +241,7 @@ upper_quartile_values <- global_ts_since_100 %>% select(-days_since_passed_100) 
 values_to_drop <- ifelse(countries_this_far < 14, NA, 1)
 
 median_values <- median_values * values_to_drop
+
 
 # Age brackets -----
 age_brackets <- c(0, 10, 20, 30,40,50,60,70, 80, Inf)
@@ -459,6 +460,62 @@ save_widget(future_trajectory, public_destdir)
 future_trajectory_log <- future_trajectory %>% dyOptions(logscale = TRUE)
 save_widget(future_trajectory_log, public_destdir)
 
+# Expected future trajectory deaths ---------------
+countries_this_far_deaths <- global_deaths_since_25 %>% 
+  select(-days_since_passed_25) %>% 
+  apply(., MARGIN = 1, function(x) sum(!is.na(x)))
+
+median_values_deaths <- global_deaths_since_25 %>% 
+  select(-days_since_passed_25) %>%
+  t() %>% as_tibble(.name_repair = "universal") %>%
+  summarise_all(list(~ median(., na.rm = T))) %>%
+  t() 
+
+lower_quartile_values_deaths <- global_deaths_since_25 %>% select(-days_since_passed_25) %>%
+  t() %>% as_tibble(.name_repair = "universal") %>%
+  summarise_all(list(~quantile(., probs = 0.25, na.rm = T))) %>%
+  t() 
+
+upper_quartile_values_deaths <- global_deaths_since_25 %>% select(-days_since_passed_25) %>%
+  t() %>% as_tibble(.name_repair = "universal") %>%
+  summarise_all(list(~quantile(., probs = 0.75, na.rm = T))) %>%
+  t() 
+
+values_to_drop_deaths <- ifelse(countries_this_far_deaths < 14, NA, 1)
+
+median_values_deaths <- median_values_deaths * values_to_drop_deaths
+
+future_deaths_trajectory <- global_deaths_since_25 %>% 
+  mutate(MEDIAN = median_values_deaths[,1],
+         UPPER_QUARTILE = upper_quartile_values_deaths[,1],
+         LOWER_QUARTILE = lower_quartile_values_deaths[,1]) %>%
+  drop_na(MEDIAN) %>%
+  select(-days_since_passed_25) %>%
+  ts(., start =1, end = nrow(.), frequency = 1) %>%
+  dygraph() %>%
+  dyLegend(show = "follow") %>%
+  dyCSS(textConnection("
+    .dygraph-legend > span { display: none; }
+    .dygraph-legend > span.highlight { display: inline; }
+  ")) %>%
+  dyHighlight(highlightCircleSize = 5, 
+              highlightSeriesBackgroundAlpha = 0.4,
+              hideOnMouseOut = TRUE) %>%
+  dyRangeSelector(height = 20) %>%
+  dyOptions(stackedGraph = FALSE, connectSeparatedPoints = TRUE) %>%
+  dyAxis(name="x", label = "Days since 25 deaths") %>%
+  #       axisLabelFormatter = "function(d){ return d.getFullyear() }") %>% 
+  dySeries(c("LOWER_QUARTILE", "MEDIAN", "UPPER_QUARTILE"), 
+           label = "Quartile Values",
+           strokeWidth = 4,
+           strokePattern = "dashed",
+           color = "blue") %>%
+  dySeries(name = "South Africa",  color = "red", label = "South Africa", strokeWidth = 5)
+save_widget(future_deaths_trajectory, public_destdir)
+
+future_deaths_trajectory_log <- future_deaths_trajectory %>% dyOptions(logscale = TRUE)
+save_widget(future_deaths_trajectory_log, public_destdir)
+
 # r rsa_tests_vs_cases -------
 rsa_tests_vs_cases <- left_join(sa_ts_confirmed, 
                                 covid19za_timeline_testing %>% 
@@ -619,7 +676,6 @@ save_widget(ct_confirmed_timeseries, private_destdir)
 
 ct_confirmed_timeseries_log <- ct_confirmed_timeseries %>% dyOptions(logscale = TRUE)
 save_widget(ct_confirmed_timeseries_log, private_destdir)
-
 
 # wc_daily_count_timeseries --------------
 wc_daily_confirmed_cases <- wc_all_cases %>% 
