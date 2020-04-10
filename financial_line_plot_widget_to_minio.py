@@ -143,6 +143,7 @@ def generate_plot(plot_df, start_date="2020-02-01", sast_tz='Africa/Johannesburg
 
     # Legend Location
     line_plot.legend.location = "top_left"
+    line_plot.legend.visible = False
 
     # Y-axis
     max_value = plot_df[["TotalIncome", "TotalPayments"]].abs().quantile(0.99).max()
