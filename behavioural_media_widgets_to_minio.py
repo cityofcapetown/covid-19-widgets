@@ -96,8 +96,8 @@ def get_published_count(mentions_df, category_id, social_media_network_id, start
         "categoryId == @category_id & "
         "socialNetworkId == @social_media_network_id &"
         "published >= @start_timestamp"
-    ).resample(
-        "1D", on="published"
+    ).set_index("published").resample(
+        "1D",
     ).count()["id"].rename("Count")
 
     empty_series = pandas.Series(
@@ -150,8 +150,8 @@ def get_nett_sentiment(mentions_df, start_date, end_date):
     start_timestamp = pandas.to_datetime(start_date).tz_localize('Africa/Johannesburg')
     filtered_mentions = (
         mentions_df.query("published >= @start_timestamp")
-    ).resample(
-        "1D", on="published"
+    ).set_index("published").resample(
+        "1D",
     )
 
     # calculating the nett sentiment per day
