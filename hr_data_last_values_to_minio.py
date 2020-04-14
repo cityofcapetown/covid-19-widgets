@@ -82,20 +82,22 @@ def make_statuses_succinct_again(hr_df):
 def get_latest_values_dict(hr_df):
     most_recent_date = hr_df[DATE_COL_NAME].max()
     current_hr_df = hr_df[
-        hr_df[DATE_COL_NAME].dt.date == most_recent_date.date
+        hr_df[DATE_COL_NAME].dt.date == most_recent_date.date()
         ]
+    logging.debug(f"most_recent_date.date()={most_recent_date.date()}")
 
     last_updated = most_recent_date.strftime(ISO_TIMESTAMP_FORMAT)
-    staff_at_work = (current_hr_df[SUCCINCT_STATUS_COL] == WORKING_STATUS).sum()
-    staff_working_remotely = current_hr_df[STATUS_COL].isin(REMOTE_WORK_STATUSES).sum()
     staff_reported = current_hr_df.shape[0]
-    staff_sick = current_hr_df.isin(SICK_STATUSES).sum()
+
+    staff_at_work = (current_hr_df[SUCCINCT_STATUS_COL] == WORKING_STATUS).sum() if staff_reported > 0 else 0
+    staff_working_remotely = current_hr_df[STATUS_COL].isin(REMOTE_WORK_STATUSES).sum() if staff_reported > 0 else 0
+    staff_sick = current_hr_df[STATUS_COL].isin(SICK_STATUSES).sum() if staff_reported > 0 else 0
 
     business_continuity_dict = {
         "last_updated": last_updated,
         "staff_at_work": f"{staff_at_work} / {staff_reported}",
-        "staff_working_remotely": staff_working_remotely,
-        "staff_sick": staff_sick,
+        "staff_working_remotely": str(staff_working_remotely),
+        "staff_sick": str(staff_sick),
     }
 
     return business_continuity_dict
