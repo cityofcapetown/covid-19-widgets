@@ -320,7 +320,6 @@ rsa_demographic <- rsa_demographic %>%
          fatal_label = "SA Fatality Rate %") 
 
 # cape town confirmed cases pop pyramid ---------------
-
 ct_raw_age_confirmed_cases <- ct_all_cases  %>% 
     select(agegroup) %>% 
     separate(agegroup, sep = "[ ]", into = c("age"), extra = "drop") %>%
@@ -592,26 +591,67 @@ save_widget(rsa_provincial_confirmed_timeseries_log, public_destdir)
 
 
 # ct_daily_count_timeseries --------------
-ct_daily_confirmed_cases <- ct_all_cases %>% 
-  select(date_of_diagnosis1) %>% 
-  group_by(date_of_diagnosis1) %>% 
-  summarise(count = n()) %>% ungroup()
+ct_all_cases_parsed <- ct_all_cases %>% mutate_at(vars(Admission_date, Date_of_ICU_admission, date_of_death), dmy)
 
-ct_subdistrict_timeseries  <- ct_all_cases %>% 
+ct_daily_counts <- ct_all_cases_parsed %>% 
+  group_by(date_of_diagnosis1) %>% 
+  summarise(cases = sum(!is.na(date_of_diagnosis1)),
+            deaths = sum(!is.na(date_of_death)),
+            gen_admissions = sum(!is.na(Admission_date)),
+            icu_admissions = sum(!is.na(Date_of_ICU_admission))) %>% 
+  ungroup() %>% 
+  rename(date = date_of_diagnosis1)
+
+ct_cumulative_daily_counts <- ct_daily_counts %>% 
+  mutate(cumulative_cases = cumsum(cases),
+         cumulative_gen_admissions = cumsum(gen_admissions),
+         cumulative_icu_admissions = cumsum(icu_admissions),
+         cumulative_deaths = cumsum(deaths)) %>% 
+  mutate(cases_under_14_days = rollsum(cases, 14, fill = NA, align = "right")) %>% 
+  mutate(cases_under_14_days = ifelse(is.na(cases_under_14_days), cumulative_cases, cases_under_14_days))
+  
+# ct_cumulative count_timeseries plot ------------
+ct_confirmed_timeseries <- ct_cumulative_daily_counts %>% 
+  select(-cases, -deaths, -gen_admissions, -icu_admissions) %>%
+  rename(`Cumulative Cases` = cumulative_cases,
+         `Cumulative General Admissions` = cumulative_gen_admissions,
+         `Cumulative ICU Admissions` = cumulative_icu_admissions,
+         `Cumulative Deaths` = cumulative_deaths,
+         `Cases less than 14 days old` = cases_under_14_days) %>%
+  df_as_xts("date") %>% 
+  dygraph() %>%
+  dyLegend(show = "follow") %>%
+  dyCSS(textConnection("
+    .dygraph-legend > span { display: none; }
+    .dygraph-legend > span.highlight { display: inline; }
+  ")) %>%
+  dyHighlight(highlightCircleSize = 5, 
+              highlightSeriesBackgroundAlpha = 0.5,
+              hideOnMouseOut = FALSE) %>%
+  dyRangeSelector(height = 20) %>%
+  dyOptions(stackedGraph = FALSE, connectSeparatedPoints = TRUE) 
+save_widget(ct_confirmed_timeseries, private_destdir)
+
+ct_confirmed_timeseries_log <- ct_confirmed_timeseries %>% dyOptions(logscale = TRUE)
+save_widget(ct_confirmed_timeseries_log, private_destdir)
+
+# ct subdistrict count time series -----------------------------
+ct_subdistrict_daily_confirmed_cases  <- ct_all_cases_parsed %>% 
   rename(date = date_of_diagnosis1) %>%
   group_by(date, subdistrict) %>% 
   summarise(count = n()) %>% 
-  ungroup()
-# Make sure all dates are included i the melted dataframe
-spread_ct_subdistrict_timeseries <-  ct_subdistrict_timeseries %>% spread(key = subdistrict, value = count) 
-spread_ct_subdistrict_timeseries[is.na(spread_ct_subdistrict_timeseries)] <- 0
-ct_subdistrict_timeseries <- spread_ct_subdistrict_timeseries %>% gather(key = "subdistrict", value = count, -date)
+  ungroup() 
+
+# Make sure all dates are included in the melted dataframe
+spread_ct_subdistrict_daily_confirmed_cases <-  ct_subdistrict_daily_confirmed_cases %>% spread(key = subdistrict, value = count) 
+spread_ct_subdistrict_daily_confirmed_cases[is.na(spread_ct_subdistrict_daily_confirmed_cases)] <- 0
+ct_subdistrict_daily_confirmed_cases <- spread_ct_subdistrict_daily_confirmed_cases %>% gather(key = "subdistrict", value = count, -date)
 
 every_nth = function(n) {
   return(function(x) {x[c(TRUE, rep(FALSE, n - 1))]})
 }
 
-cct_subdistrict_bar_chart <- ct_subdistrict_timeseries %>% 
+cct_subdistrict_confirmed_cases_bar_chart <- ct_subdistrict_daily_confirmed_cases %>% 
   ggplot(aes(fill=subdistrict, y=count, x=as.character(date))) +
   geom_col(position = position_dodge2(width = 0.9, preserve = "single")) +
   scale_color_manual(values=c(rep("white", 17)))+
@@ -622,8 +662,102 @@ cct_subdistrict_bar_chart <- ct_subdistrict_timeseries %>%
   scale_x_discrete(breaks = every_nth(n = 5)) +
   facet_wrap(~subdistrict, ncol = 4)
   
-cct_subdistrict_bar_chart <- ggplotly(cct_subdistrict_bar_chart) %>% plotly::config(displayModeBar = F)  
-save_widget(cct_subdistrict_bar_chart, private_destdir)
+cct_subdistrict_confirmed_cases_bar_chart <- ggplotly(cct_subdistrict_confirmed_cases_bar_chart) %>% plotly::config(displayModeBar = F)  
+save_widget(cct_subdistrict_confirmed_cases_bar_chart, private_destdir)
+
+# ct subdistrict presumed active -------------------
+ct_subdistrict_daily_active_cases  <- 
+  ct_all_cases_parsed %>% 
+  rename(date = date_of_diagnosis1) %>%
+  group_by(date, subdistrict) %>% 
+  summarise(cases = n()) %>% 
+  ungroup() %>% 
+  spread(key = subdistrict, value = cases) %>% 
+  replace(is.na(.), 0) %>% 
+  gather(key = "subdistrict", value = "cases", -date) %>%
+  group_by(subdistrict) %>% 
+  arrange(date) %>% 
+  mutate(cumulative_cases = cumsum(cases)) %>%
+  mutate(cases_under_14_days = rollsum(cases, 14, fill = NA, align = "right")) %>% 
+  mutate(cases_under_14_days = ifelse(is.na(cases_under_14_days), cumulative_cases, cases_under_14_days)) %>% ungroup() %>% select(date, subdistrict, cases_under_14_days)
+
+ct_subdistrict_cumulative_daily_counts <- ct_all_cases_parsed %>%   
+  rename(date = date_of_diagnosis1) %>%
+  group_by(date, subdistrict)  %>% 
+  summarise(cases = sum(!is.na(date)),
+            deaths = sum(!is.na(date_of_death)),
+            gen_admissions = sum(!is.na(Admission_date)),
+            icu_admissions = sum(!is.na(Date_of_ICU_admission))) %>% 
+  ungroup() 
+
+ct_subdistrict_cumulative_daily_counts <- left_join(ct_subdistrict_daily_active_cases, 
+                                                    ct_subdistrict_cumulative_daily_counts, 
+                                                    by = c("date" = "date",  "subdistrict" = "subdistrict")) %>%   
+  replace(is.na(.), 0) %>%
+  group_by(subdistrict) %>% 
+  arrange(date) %>% 
+  mutate(cumulative_cases = cumsum(cases),
+         cumulative_gen_admissions = cumsum(gen_admissions),
+         cumulative_icu_admissions = cumsum(icu_admissions),
+         cumulative_deaths = cumsum(deaths)) %>% 
+  rename(presumed_active = cases_under_14_days) %>% 
+  mutate(presumed_recovered = cumulative_cases - cumulative_deaths - presumed_active) %>%
+  ungroup() 
+
+
+for (subdist in unique(ct_subdistrict_cumulative_daily_counts$subdistrict)) {
+  subdist_cumulative_daily_counts <- ct_subdistrict_cumulative_daily_counts %>% filter(subdistrict == subdist) 
+  p <- plot_ly(subdist_cumulative_daily_counts, 
+               x = ~date, 
+               y = ~presumed_active, 
+               type = 'bar', 
+               name = 'Presumed Active',
+               marker = list(color = 'rgba(55, 128, 191, 0.7)'))
+  p <- p %>% add_trace(y = ~presumed_recovered, name = 'Presumed Recovered', 
+                       marker = list(color = 'rgba(50, 171, 96, 0.7)'))
+  p <- p %>% add_trace(y = ~cumulative_deaths, name = 'Cumulative Deaths',
+                       marker = list(color = 'rgba(219, 64, 82, 0.7)'))
+  p <- p %>% layout(yaxis = list(title = 'Count'), barmode = 'stack')
+  obj_name <- print(paste("cct_", str_replace_all(str_replace_all(subdist, " ", "_"), "&", ""), "_cumulative_counts", sep = ""))  
+  assign(obj_name, p)
+  savepath <- file.path(getwd(), private_destdir, 
+                        paste(obj_name, "html", sep = "."))
+  libdir <- file.path(getwd(), private_destdir, 
+                      "libdir")
+  saveWidget(get(obj_name), savepath, selfcontained = F, libdir = libdir)
+  rm(p)
+}
+
+y_upper <- max(ct_subdistrict_cumulative_daily_counts$cumulative_cases)
+ct_subdistrict_cumulative_daily_counts_bar_chart <- ct_subdistrict_cumulative_daily_counts %>%
+    group_by(subdistrict) %>%
+    group_map(.f = ~{          
+          ## fill missing levels w/ displ = 0, cyl = first available value 
+          #complete(.x, trans, fill = list(displ = 0, cyl = head(.x$cyl, 1))) %>%
+          plot_ly(.,  x = ~date, 
+               y = ~presumed_active, 
+               type = 'bar', 
+               name = 'Presumed Active',
+               marker = list(color = 'rgba(55, 128, 191, 0.7)'), 
+              showlegend = (.y == "Eastern"), legendgroup = "group1") %>%
+           add_trace(y = ~presumed_recovered, name = 'Presumed Recovered <br> * 14 days since diagnosis', 
+                     marker = list(color = 'rgba(50, 171, 96, 0.7)')) %>%
+           add_trace(y = ~cumulative_deaths, name = 'Cumulative Deaths',
+                     marker = list(color = 'rgba(219, 64, 82, 0.7)')) %>%
+        layout(yaxis = list(range = c(0, y_upper)),
+               barmode = 'stack') %>%
+        add_annotations(text = as.character(.y), x = 0.05, y = 0.95, yref = "paper", xref = "paper",
+                        xanchor = "left", yanchor = "top", showarrow = FALSE, font = list(size = 14), align = "left")
+      
+        }) %>%
+  subplot(margin = 0.01, 
+          shareX = TRUE, 
+          shareY = TRUE, 
+          nrows = 4, 
+          titleX = F, 
+          titleY = F)
+
+save_widget(ct_subdistrict_cumulative_daily_counts_bar_chart, private_destdir)
 
 # ct_subdistrict_daily_counts -------------
 for (sub in unique(ct_subdistrict_timeseries$subdistrict)) {
@@ -631,7 +765,6 @@ for (sub in unique(ct_subdistrict_timeseries$subdistrict)) {
     filter(`subdistrict` == sub) %>%  ggplot(aes(fill=subdistrict, y=count, as.character(x=date))) +
     geom_col(position = position_dodge2(width = 0.9, preserve = "single")) +
     scale_color_manual(values=c(rep("white", 17)))+
-    theme(legend.position="none") + 
     xlab("") +
     ylab("Daily Confirmed Cases") +
     theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
@@ -651,31 +784,6 @@ for (sub in unique(ct_subdistrict_timeseries$subdistrict)) {
   saveWidget(get(obj_name), savepath, selfcontained = F, libdir = libdir)
   rm(plt)
 }
-
-# ct_cumulative_count_timeseries --------------
-ct_confirmed_timeseries <- ct_daily_confirmed_cases %>% 
-  mutate(CT = cumsum(count)) %>% 
-  rename(date = date_of_diagnosis1) %>% 
-  select(date, CT)
-
-ct_confirmed_timeseries <- ct_confirmed_timeseries %>% 
-  select(date, CT) %>%
-  df_as_xts("date") %>% 
-  dygraph() %>%
-  dyLegend(show = "follow") %>%
-  dyCSS(textConnection("
-    .dygraph-legend > span { display: none; }
-    .dygraph-legend > span.highlight { display: inline; }
-  ")) %>%
-  dyHighlight(highlightCircleSize = 5, 
-              highlightSeriesBackgroundAlpha = 0.5,
-              hideOnMouseOut = FALSE) %>%
-  dyRangeSelector(height = 20) %>%
-  dyOptions(stackedGraph = TRUE, connectSeparatedPoints = TRUE) 
-save_widget(ct_confirmed_timeseries, private_destdir)
-
-ct_confirmed_timeseries_log <- ct_confirmed_timeseries %>% dyOptions(logscale = TRUE)
-save_widget(ct_confirmed_timeseries_log, private_destdir)
 
 # wc_daily_count_timeseries --------------
 wc_daily_confirmed_cases <- wc_all_cases %>% 
@@ -898,6 +1006,181 @@ global_ranked_fatalities_per_1m  <- ggplot(global_top_fatalities_per_1m, aes(cou
 
 global_ranked_fatalities_per_1m <- ggplotly(global_ranked_fatalities_per_1m) %>% plotly::config(displayModeBar = F)
 save_widget(global_ranked_fatalities_per_1m, public_destdir)
+
+# HR HEATMAP ==========================================================================
+# # Munge
+# hr_data_complete_functionality <- hr_data_complete %>% mutate(functionality = recode(hr_data_complete$Evaluation, 
+#        "We won't be able to perform the required minimum" = 0,
+#        "We cannot deliver on daily tasks" = 0.1,
+#        "We can do the bare minimum" = 0.3,
+#        "Staff can do 50% of their function" = 0.5,              
+#        "Staff can do 70 % of their function" = 0.7,              
+#        "We can deliver 75% or less of daily tasks" = 0.75,
+#        "We can deliver on daily tasks" = 0.9,                   
+#        "We can continue as normal" = 1))
+# 
+# hr_latest_known <- hr_data_complete_functionality %>% 
+#   select(`Employee No`, Date, Categories, functionality) %>% 
+#   group_by(`Employee No`) %>% 
+#   filter(Date == max(Date)) %>% 
+#   ungroup() %>% select(-Date, -Categories) %>% rename(attendance = functionality)
+# 
+# # Make sure to show blanks
+# 
+# city_people_sf <- city_people %>% filter(!is.na(LocationWkt)) %>% st_as_sf(wkt = "LocationWkt")
+# st_crs(city_people_sf) <- st_crs(cct_2016_pop_density)
+# city_people_sf
+# 
+# # Create base heatmap
+# org_status <- city_people %>% 
+#   select(StaffNumber, Section, Branch, Department, Directorate)  %>% 
+#   mutate(StaffNumber = as.character(StaffNumber)) 
+# 
+# org_status <- org_status  %>% left_join(., hr_latest_known, by = c("StaffNumber" = "Employee No"))
+# 
+# org_status <- org_status %>% filter(!is.na(attendance))
+# 
+# section_level_org_status <- org_status %>% 
+#   filter(!is.na(Section)) %>% 
+#   group_by(Section) %>% 
+#   summarise(section_attendance_pct = (sum(attendance, na.rm = T) / length(attendance))) %>% 
+#   ungroup()
+# 
+# branch_level_org_status <- org_status %>% 
+#   filter(!is.na(Branch)) %>% 
+#   group_by(Branch) %>% 
+#   summarise(branch_attendance_pct = (sum(attendance, na.rm = T) / length(attendance))) %>% 
+#   ungroup()
+# 
+# dept_level_org_status <- org_status %>% 
+#   filter(!is.na(Department)) %>% 
+#   group_by(Department) %>% 
+#   summarise(dept_attendance_pct = (sum(attendance, na.rm = T) / length(attendance))) %>% 
+#   ungroup()
+# 
+# dir_level_org_status <- org_status %>% 
+#   filter(!is.na(Directorate)) %>% 
+#   group_by(Directorate) %>% 
+#   summarise(dir_attendance_pct = (sum(attendance, na.rm = T) / length(attendance))) %>% 
+#   ungroup()
+# 
+# org_view <- org_status %>% 
+#   select(-StaffNumber, -attendance) %>% 
+#   unique() %>% 
+#   filter(!is.na(Section)) %>%
+#   left_join(., section_level_org_status, by = c("Section")) %>%
+#   left_join(., branch_level_org_status, by = c("Branch")) %>%
+#   left_join(., dept_level_org_status, by = c("Department")) %>%
+#   left_join(., dir_level_org_status, by = c("Directorate"))
+# 
+# org_xyz <- org_view  %>% 
+#   rename(`Section Level` = section_attendance_pct ,
+#          `Branch Level` = branch_attendance_pct,
+#          `Dept Level` = dept_attendance_pct,
+#          `Dir Level` = dir_attendance_pct) %>%
+#   gather(key = hierarchy, 
+#          value = attendance, 
+#          -Section, -Branch, -Department, -Directorate)  
+# 
+# hierarchy_order <- c("Section Level", "Branch Level", "Dept Level", "Dir Level")
+# org_xyz$hierarchy <- factor(x = org_xyz$hierarchy,
+#                                levels = hierarchy_order, 
+#                                ordered = TRUE)
+# 
+# # # GGPLOT VERSION
+# # p <- ggplot(org_xyz, aes(Section, hierarchy, fill= attendance)) + 
+# #   geom_tile(color="black", size=0.1) +
+# #   scale_fill_distiller(palette = "RdBu", direction = 1) +
+# #   xlab(label = "Attendance %") + 
+# #   theme(axis.title.x=element_blank(),
+# #         axis.text.x=element_blank(),
+# #         axis.ticks.x=element_blank()) +
+# #   #facet_grid(~ Directorate, switch = "x", scales = "free_x", space = "free_x") +
+# #   facet_wrap(~ Directorate, scales = "free_x") +
+# #   theme(strip.text.x = element_text(size = 8, colour = "red", angle = 90)) 
+# # 
+# # p
+# # 
+# #   
+# # ggplotly(p)
+# # p
+# # fig <- style(ggplotly(p), xgap = 5, ygap = 5, hoverinfo = "y", traces = 2)
+# # fig
+# 
+# # PLOTLY VERSION
+# library(plotly)
+# library(stringr)
+# #org_xyz <- org_xyz %>% 
+# #  mutate(text = paste0("x: ", Section, "\n", "y: ", Branch, "\n", "Value: ", Department, "\n", "What else?"))
+# 
+# for (directorate in unique(org_xyz$Directorate)) {
+#   dir_xyz <- org_xyz %>% filter(Directorate == directorate) 
+#   dir_plotly_view <- dir_xyz %>% spread(key = hierarchy, value = attendance)
+#   plotly_matrix <- dir_plotly_view %>% select(-Section, -Branch, -Department, -Directorate) %>% t()
+#   p <- plot_ly(x = dir_plotly_view$Section,
+#                y = c("Section", "Branch", "Department", "Directorate"), 
+#                z = plotly_matrix,
+#                colors = colorRamp(c("red", "blue")),
+#                type = "heatmap") %>% 
+#     layout(xaxis= list(showticklabels = FALSE)) %>%
+#     style(xgap = 1, ygap = 1)
+#   obj_name <- print(paste("cct_", str_replace_all(str_replace_all(directorate, " ", "_"), "&", ""), "_hr_attendance", sep = ""))  
+#   assign(obj_name, p)
+#   savepath <- file.path(getwd(), private_destdir, 
+#                         paste(obj_name, "html", sep = "."))
+#   libdir <- file.path(getwd(), private_destdir, 
+#                       "libdir")
+#   saveWidget(get(obj_name), savepath, selfcontained = F, libdir = libdir)
+#   rm(p)
+# }
+# 
+# subplot(cct_WATER_AND_WASTE_hr_attendance,
+#         cct_COMMUNITY_SERVICES_and_HEALTH_hr_attendance,
+#         cct_CORPORATE_SERVICES_hr_attendance,
+#         cct_ECONOMIC_OPPORTUNITIES_ASSET_MANAGEMENT_hr_attendance,
+#         cct_SPATIAL_PLANNING_AND_ENVIRONMENT_hr_attendance, 
+#         margin = 0.01, 
+#         shareX = F, 
+#         shareY = TRUE, 
+#         nrows = 4, 
+#         titleX = FALSE, 
+#         titleY = FALSE)
+# 
+
+# WC MODEL OUTPUT ==============================================================
+
+wc_model_latest_date <- max(wc_model_data$ForecastDate)
+
+wc_model_latest_date_list <- listN(wc_model_latest_date)
+
+write(
+  toJSON(wc_model_latest_date_list), 
+  file.path(getwd(), private_destdir,"latest_wc_model_update.json")
+)
+
+wc_model_latest <- wc_model_data %>% filter(ForecastDate == wc_model_latest_date) %>% select(-ForecastDate)
+
+wc_model_latest_default <- wc_model_latest %>% filter(Scenario == "DEFAULT")
+
+wc_model_latest_default <- wc_model_latest_default %>% mutate(TotalDeaths = cumsum(Deaths))
+
+wc_model_latest_default <- wc_model_latest_default %>% mutate(CaseFatalityRate = Deaths / NewInfections)
+
+wc_model_latest_disease_figures <- plot_ly(wc_model_latest_default, x = ~WeekStart, y = ~NewInfections, type = 'bar', name = 'Modeled New Infections') %>%
+  add_trace(y = ~PositiveTests, name = 'Actual Positive Tests') %>%
+  add_trace(y = ~TotalDeaths, name = 'Modeled Cumulative Deaths') %>%
+  layout(legend = list(orientation = 'h'), xaxis = list(title = ""))
+save_widget(wc_model_latest_disease_figures, private_destdir)
+
+wc_model_latest_hospital_figures <- wc_model_latest_default %>% 
+  plot_ly() %>% 
+  add_trace(x = ~WeekStart, y = ~Deaths, name = 'Modeled Deaths', type = 'bar', marker = list(color = 'rgb(205, 12, 24)')) %>%
+  add_trace(x = ~WeekStart, y = ~GeneralAdmissions, name = 'Modeled General Admissions', type = 'bar', marker = list(color = 'rgb(22, 96, 167)')) %>%
+  add_trace(x = ~WeekStart, y = ~ICUAdmissions, name = 'Modeled ICU Admissions', type = 'bar', marker = list(color = 'rgb(255, 153, 51)')) %>%
+  add_trace(x = ~WeekStart, y = ~GeneralBeds, name = 'Modeled General Capacity', type = 'scatter', mode = 'lines', line = list(color = 'rgb(22, 96, 167)')) %>%
+  add_trace(x = ~WeekStart, y = ~ICUBeds, name = 'Modeled ICU Capacity', type = 'scatter', mode = 'lines', line = list(color = 'rgb(255, 153, 51)')) %>%
+  layout(legend = list(orientation = 'h'), xaxis = list(title = ""))
+save_widget(wc_model_latest_hospital_figures, private_destdir)
 
 # MAPS =========================================================================
 
