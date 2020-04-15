@@ -21,7 +21,7 @@ DATA_RESTRICTED_PREFIX = "data/private/"
 MEDIA_DATA_FILENAME = "media_complete.csv"
 DATE_COL_NAME = "published"
 
-START_DATE = "2020-02-01"
+START_DATE = "2020-03-01"
 TZ_STRING = "Africa/Johannesburg"
 END_DATE = pandas.Timestamp.now(tz=TZ_STRING).strftime("%Y-%m-%d")
 ISO_TIMESTAMP_FORMAT = "%Y-%m-%dT%H:%M"
