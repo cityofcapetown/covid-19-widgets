@@ -760,9 +760,9 @@ ct_subdistrict_cumulative_daily_counts_bar_chart <- ct_subdistrict_cumulative_da
 save_widget(ct_subdistrict_cumulative_daily_counts_bar_chart, private_destdir)
 
 # ct_subdistrict_daily_counts -------------
-for (sub in unique(ct_subdistrict_timeseries$subdistrict)) {
-  plt <- ct_subdistrict_timeseries %>% 
-    filter(`subdistrict` == sub) %>%  ggplot(aes(fill=subdistrict, y=count, as.character(x=date))) +
+for (sub in unique(ct_subdistrict_cumulative_daily_counts$subdistrict)) {
+  plt <- ct_subdistrict_cumulative_daily_counts %>% 
+    filter(`subdistrict` == sub) %>%  ggplot(aes(fill=subdistrict, y=cases, as.character(x=date))) +
     geom_col(position = position_dodge2(width = 0.9, preserve = "single")) +
     scale_color_manual(values=c(rep("white", 17)))+
     xlab("") +
