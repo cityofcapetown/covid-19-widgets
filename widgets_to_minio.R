@@ -1158,7 +1158,7 @@ write(
   file.path(getwd(), private_destdir,"latest_wc_model_update.json")
 )
 
-wc_model_latest <- wc_model_data %>% filter(ForecastDate == wc_model_latest_date) %>% select(-ForecastDate)
+wc_model_latest <- wc_model_data %>% filter(ForecastDate == wc_model_latest_date) %>% select(-ForecastDate) %>% mutate(Scenario = tolower(Scenario))
 
 wc_model_latest_cumulative <- wc_model_latest %>% 
   arrange(TimeInterval) %>% 
@@ -1169,7 +1169,7 @@ wc_model_latest_cumulative <- wc_model_latest %>%
   mutate(CaseFatalityRate = TotalDeaths / TotalInfections)
 
 wc_model_latest_default <- wc_model_latest_cumulative %>% 
-  filter(Scenario == "DEFAULT")
+  filter(Scenario == "default")
 
 wc_model_latest_disease_figures <- plot_ly(wc_model_latest_default,
                                            x = ~TimeInterval,
