@@ -16,43 +16,78 @@ DATA_PUBLIC_PREFIX = "data/public/"
 DATA_RESTRICTED_PREFIX = "data/private/"
 WIDGETS_RESTRICTED_PREFIX = "widgets/private/city_"
 
-CITY_CASE_DATA_FILENAME = "wc_all_cases.csv"
-CITY_CASE_DATA_SUBDISTRICT_COL = "subdistrict"
-HEALTH_DISTRICT_FILENAME = "health_districts.geojson"
-HEALTH_DISTRICT_SUBDISTRICT_PROPERTY = "CITY_HLTH_RGN_NAME"
-LAYER_FILES = (
-    "health_districts.geojson",
-    "informal_settlements.geojson",
-    "health_care_facilities.geojson"
+CITY_CASE_DATA_FILENAME = "ct_all_cases.csv"
+WARD_COUNT_FILENAME = "ward_case_count.geojson"
+HEX_COUNT_FILENAME = "hex_case_count.geojson"
+CHOROPLETH_LAYERS = (
+    WARD_COUNT_FILENAME,
+    HEX_COUNT_FILENAME,
 )
-SUBDISTRICT_COUNT_FILENAME = "subdistrict_case_count.geojson"
+CHOROPLETH_SOURCE_LAYERS = {
+    HEX_COUNT_FILENAME: "cct_hex_polygons_7.geojson",
+    WARD_COUNT_FILENAME: "ct_wards.geojson"
+}
+LAYER_FILES = (
+    "informal_settlements.geojson",
+    "health_care_facilities.geojson",
+    *CHOROPLETH_SOURCE_LAYERS.values(),
+    *CHOROPLETH_LAYERS
+)
 
+WARD_COUNT_NAME_PROPERTY = "WardNo"
+HEX_COUNT_INDEX_PROPERTY = "index"
+CHOROPLETH_COL_LOOKUP = {
+    # filename: (col name in gdf, col name in case count df)
+    WARD_COUNT_FILENAME: (
+        "WardID", "ward_number",
+        lambda ward: (str(int(ward)) if pandas.notna(ward) else None)
+    ),
+    HEX_COUNT_FILENAME: (HEX_COUNT_INDEX_PROPERTY, "hex_l7", lambda hex: hex)
+}
+
+CASE_COUNT_COL_OLD = "date_of_diagnosis1"
 CASE_COUNT_COL = "CaseCount"
 CITY_CENTRE = (-33.9715, 18.6021)
 LAYER_PROPERTIES_LOOKUP = {
-    SUBDISTRICT_COUNT_FILENAME: ((HEALTH_DISTRICT_SUBDISTRICT_PROPERTY, CASE_COUNT_COL), ("Subdistrict", "Case Count")),
-    "informal_settlements.geojson": (("INF_STLM_NAME",), ("Informal Settlement Name",)),
-    "health_care_facilities.geojson": (("NAME", "ADR",), ("Healthcare Facility Name", "Address",)),
+    WARD_COUNT_FILENAME: (
+        (WARD_COUNT_NAME_PROPERTY, CASE_COUNT_COL), ("Ward Name", "Case Count"), "BuPu", "Covid-19 Cases by Ward"
+    ),
+    HEX_COUNT_FILENAME: (
+        (HEX_COUNT_INDEX_PROPERTY, CASE_COUNT_COL), ("Hex ID", "Case Count"), "OrRd", "Covid-19 Cases by L7 Hex"
+    ),
+    "ct_wards.geojson": (
+        (WARD_COUNT_NAME_PROPERTY,), ("Ward Name",), "BuPu", "City of Cape Town Wards"
+    ),
+    "cct_hex_polygons_7.geojson": (
+        (HEX_COUNT_INDEX_PROPERTY,), ("Hex ID",), "OrRd", "City of Cape Town L7 Hexes"
+    ),
+    "informal_settlements.geojson": (
+        ("INF_STLM_NAME",), ("Informal Settlement Name",), None, "Informal Settlements"
+    ),
+    "health_care_facilities.geojson": (
+        ("NAME", "ADR",), ("Healthcare Facility Name", "Address",), None, "Healthcare Facilities"
+    ),
 }
 MAP_FILENAME = "map.html"
 
 
 def get_layers(tempdir, minio_access, minio_secret):
     for layer in LAYER_FILES:
-        local_path = os.path.join(tempdir, layer)
+        if layer not in CHOROPLETH_LAYERS:
+            local_path = os.path.join(tempdir, layer)
 
-        minio_utils.minio_to_file(
-            filename=local_path,
-            minio_filename_override=DATA_PUBLIC_PREFIX + layer,
-            minio_bucket=MINIO_BUCKET,
-            minio_key=minio_access,
-            minio_secret=minio_secret,
-            data_classification=MINIO_CLASSIFICATION,
-        )
+            minio_utils.minio_to_file(
+                filename=local_path,
+                minio_filename_override=DATA_PUBLIC_PREFIX + layer,
+                minio_bucket=MINIO_BUCKET,
+                minio_key=minio_access,
+                minio_secret=minio_secret,
+                data_classification=MINIO_CLASSIFICATION,
+            )
 
-        layer_gdf = geopandas.read_file(local_path)
+            layer_gdf = geopandas.read_file(local_path)
 
-        yield (layer, local_path, layer_gdf)
+            yield layer, local_path, layer_gdf
 
 
 def get_case_data(minio_access, minio_secret):
@@ -71,45 +106,24 @@ def get_case_data(minio_access, minio_secret):
     return case_data_df
 
 
-def spatialise_case_data(case_data_df, health_district_data_gdf):
-    join_col = "join_col"
-    case_data_df[join_col] = case_data_df[CITY_CASE_DATA_SUBDISTRICT_COL].str.upper()
+def spatialise_case_data(case_data_df, case_data_groupby_index, data_gdf, data_gdf_index):
+    case_counts = case_data_df.groupby(
+        case_data_groupby_index
+    ).count()[CASE_COUNT_COL_OLD].rename(CASE_COUNT_COL)
 
-    case_data_gdf = health_district_data_gdf.merge(
-        case_data_df,
-        right_on=join_col,
-        left_on=HEALTH_DISTRICT_SUBDISTRICT_PROPERTY
-    )
-    logging.debug(f"case_data_gdf.columns={', '.join(case_data_gdf.columns)}")
+    case_count_gdf = data_gdf.copy().set_index(data_gdf_index)
+    case_count_gdf[CASE_COUNT_COL] = case_counts
+    case_count_gdf[CASE_COUNT_COL].fillna(0, inplace=True)
+    logging.debug(f"case_count_gdf.head(5)=\n{case_count_gdf.head(5)}")
 
-    return case_data_gdf
-
-
-def get_district_case_counts(case_data_gdf):
-    # Doing this operation spacialy is unnecessary, but it saves hassle around reapplying the geometry column,
-    # which gets lost when you do a standard groupby...
-    subdistrict_count_gdf = case_data_gdf.dissolve(
-        by=[HEALTH_DISTRICT_SUBDISTRICT_PROPERTY], aggfunc='count'
-    )
-    subdistrict_count_gdf.reset_index(inplace=True)
-
-    logging.debug(f"subdistrict_count_gdf.columns={', '.join(subdistrict_count_gdf.columns)}")
-
-    # ToDo filter out other columns - the below code returns a dataframe, not a GDF
-    # subdistrict_count_gdf = subdistrict_count_gdf[[HEALTH_DISTRICT_SUBDISTRICT_PROPERTY, "OBJECTID"]]
-
-    subdistrict_count_gdf = subdistrict_count_gdf.rename(
-        {"OBJECTID": CASE_COUNT_COL}, axis="columns"
-    )
-
-    return subdistrict_count_gdf
+    return case_count_gdf
 
 
-def write_district_count_gdf_to_disk(district_count_data_gdf, tempdir):
-    local_path = os.path.join(tempdir, SUBDISTRICT_COUNT_FILENAME)
-    district_count_data_gdf.to_file(local_path, driver='GeoJSON')
+def write_case_count_gdf_to_disk(case_count_data_gdf, tempdir, case_count_filename):
+    local_path = os.path.join(tempdir, case_count_filename)
+    case_count_data_gdf.reset_index().to_file(local_path, driver='GeoJSON')
 
-    return SUBDISTRICT_COUNT_FILENAME, (local_path, district_count_data_gdf)
+    return local_path, case_count_data_gdf
 
 
 def write_layers_to_minio(layers_dict, minio_access, minio_secret):
@@ -145,32 +159,31 @@ def generate_map(layers_dict):
 
     choropleths = {}
 
-    # Adding Covid Case count choropleth
-    subdistrict_count_local_path, subdistrict_count_gdf = layers_dict[SUBDISTRICT_COUNT_FILENAME]
+    # Adding Covid Case count choropleth(s)
+    for layer_filename in CHOROPLETH_LAYERS:
+        layer_path, count_gdf = layers_dict[layer_filename]
+        layer_lookup_fields, _, colour_scheme, title = LAYER_PROPERTIES_LOOKUP[layer_filename]
 
-    logging.debug(
-        f"subdistrict_count_gdf[{CITY_CASE_DATA_SUBDISTRICT_COL}, {CASE_COUNT_COL}]"
-        f"=\n{subdistrict_count_gdf[[CITY_CASE_DATA_SUBDISTRICT_COL, CASE_COUNT_COL]]}"
-    )
-    choropleths[SUBDISTRICT_COUNT_FILENAME] = folium.features.Choropleth(
-        subdistrict_count_local_path,
-        data=subdistrict_count_gdf,
-        name="Covid-19 Case Count",
-        key_on=f"feature.properties.{CITY_CASE_DATA_SUBDISTRICT_COL}",
-        columns=[CITY_CASE_DATA_SUBDISTRICT_COL, CASE_COUNT_COL],
-        fill_color='BuPu',
-        highlight=True,
-    )
+        choropleths[layer_filename] = folium.features.Choropleth(
+            layer_path,
+            data=count_gdf.reset_index(),
+            name=title,
+            key_on=f"feature.properties.{layer_lookup_fields[0]}",
+            columns=[layer_lookup_fields[0], CASE_COUNT_COL],
+            fill_color=colour_scheme,
+            highlight=True,
+            show=(layer_filename == CHOROPLETH_LAYERS[0])
+        )
 
     # Adding all of the other layers
     # ToDo use layer colours to style the map - I like quintiles
     for layer in layers_dict:
-        if layer != SUBDISTRICT_COUNT_FILENAME:
+        if layer not in CHOROPLETH_LAYERS:
             layer_local_path, _ = map_layers_dict[layer]
-            layer_name = layer.replace("_", " ").replace(".geojson", "").title()
+            _, _, _, title = LAYER_PROPERTIES_LOOKUP[layer]
             choropleths[layer] = folium.features.Choropleth(
                 layer_local_path,
-                name=layer_name,
+                name=title,
                 show=False
             )
 
@@ -184,7 +197,7 @@ def generate_map(layers_dict):
 
         # Adding the hover-over tooltip
         if layer in LAYER_PROPERTIES_LOOKUP:
-            layer_lookup_fields, layer_lookup_aliases = LAYER_PROPERTIES_LOOKUP[layer]
+            layer_lookup_fields, layer_lookup_aliases, _, _ = LAYER_PROPERTIES_LOOKUP[layer]
             layer_tooltip = folium.features.GeoJsonTooltip(
                 fields=layer_lookup_fields,
                 aliases=layer_lookup_aliases
@@ -217,7 +230,7 @@ def write_map_to_minio(city_map, tempdir, minio_access, minio_secret):
 
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.DEBUG,
+    logging.basicConfig(level=logging.INFO,
                         format='%(asctime)s-%(module)s.%(funcName)s [%(levelname)s]: %(message)s')
 
     # Loading secrets
@@ -245,18 +258,24 @@ if __name__ == "__main__":
                                  secrets["minio"]["edge"]["secret"])
         logging.info("G[ot] Case Data")
 
-        logging.info("Spatialis[ing] case data")
-        _, health_district_gdf = map_layers_dict[HEALTH_DISTRICT_FILENAME]
-        cases_gdf = spatialise_case_data(cases_df, health_district_gdf)
-        logging.info("Spatialis[ed] case data")
+        for layer_filename in CHOROPLETH_LAYERS:
+            gdf_property, df_col, sanitise_func = CHOROPLETH_COL_LOOKUP[layer_filename]
+            logging.debug(f"gdf_property={gdf_property}, df_col={df_col}")
 
-        logging.info("Count[ing] cases per district")
-        district_count_gdf = get_district_case_counts(cases_gdf)
-        logging.info("Count[ed] cases per district")
+            logging.info(f"Count[ing] cases for '{layer_filename}'")
+            source_layer = CHOROPLETH_SOURCE_LAYERS[layer_filename]
+            _, data_gdf = map_layers_dict[source_layer]
+            cases_df[df_col] = cases_df[df_col].apply(sanitise_func)
+            case_count_gdf = spatialise_case_data(cases_df, df_col,
+                                                  data_gdf, gdf_property)
+            logging.info(f"Count[ed] cases for '{layer_filename}'")
+
+            logging.info(f"Writ[ing] geojson for '{layer_filename}'")
+            count_layer_values = write_case_count_gdf_to_disk(case_count_gdf, tempdir, layer_filename)
+            map_layers_dict[layer_filename] = count_layer_values
+            logging.info(f"Wr[ote] geojson for '{layer_filename}'")
 
         logging.info("Writ[ing] layers to Minio")
-        count_layer_name, count_layer_values = write_district_count_gdf_to_disk(district_count_gdf, tempdir)
-        map_layers_dict[count_layer_name] = count_layer_values
         write_layers_to_minio(map_layers_dict,
                               secrets["minio"]["edge"]["access"],
                               secrets["minio"]["edge"]["secret"])
