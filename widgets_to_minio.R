@@ -1160,29 +1160,35 @@ write(
 
 wc_model_latest <- wc_model_data %>% filter(ForecastDate == wc_model_latest_date) %>% select(-ForecastDate)
 
-wc_model_latest_default <- wc_model_latest %>% filter(Scenario == "DEFAULT")
+wc_model_latest_cumulative <- wc_model_latest %>% 
+  arrange(TimeInterval) %>% 
+  group_by(Scenario) %>% 
+  mutate(TotalDeaths = cumsum(NewDeaths),
+         TotalInfections = cumsum(NewInfections)) %>% 
+  ungroup() %>% 
+  mutate(CaseFatalityRate = TotalDeaths / TotalInfections)
 
-wc_model_latest_default <- wc_model_latest_default %>% mutate(TotalDeaths = cumsum(Deaths))
+wc_model_latest_default <- wc_model_latest_cumulative %>% 
+  filter(Scenario == "DEFAULT")
 
-wc_model_latest_default <- wc_model_latest_default %>% mutate(CaseFatalityRate = Deaths / NewInfections)
-
-wc_model_latest_disease_figures <- plot_ly(wc_model_latest_default, 
-                                           x = ~TimeInterval, 
-                                           y = ~NewInfections, type = 'bar', 
-                                           name = 'Modeled New Infections') %>%
-  add_trace(y = ~PositiveTests, name = 'Actual Positive Tests') %>%
+wc_model_latest_disease_figures <- plot_ly(wc_model_latest_default,
+                                           x = ~TimeInterval,
+                                           y = ~NewInfections, type = 'bar',
+                                           name = 'Daily New Infections') %>%
   add_trace(y = ~TotalDeaths, name = 'Modeled Cumulative Deaths') %>%
   layout(legend = list(orientation = 'h'), xaxis = list(title = ""))
+
 save_widget(wc_model_latest_disease_figures, private_destdir)
 
 wc_model_latest_hospital_figures <- wc_model_latest_default %>% 
   plot_ly() %>% 
-  add_trace(x = ~TimeInterval, y = ~Deaths, name = 'Modeled Deaths', type = 'bar', marker = list(color = 'rgb(205, 12, 24)')) %>%
-  add_trace(x = ~TimeInterval, y = ~GeneralAdmissions, name = 'Modeled General Admissions', type = 'bar', marker = list(color = 'rgb(22, 96, 167)')) %>%
-  add_trace(x = ~TimeInterval, y = ~ICUAdmissions, name = 'Modeled ICU Admissions', type = 'bar', marker = list(color = 'rgb(255, 153, 51)')) %>%
-  add_trace(x = ~TimeInterval, y = ~GeneralBedsOccupied, name = 'Modeled General Occupied', type = 'scatter', mode = 'lines', line = list(color = 'rgb(22, 96, 167)')) %>%
-  add_trace(x = ~TimeInterval, y = ~ICUBedsOccupied, name = 'Modeled ICU Occupied', type = 'scatter', mode = 'lines', line = list(color = 'rgb(255, 153, 51)')) %>%
-  layout(legend = list(orientation = 'h'), xaxis = list(title = ""))
+  add_trace(x = ~TimeInterval, y = ~TotalDeaths, name = 'Modeled Cumulative Deaths', type = 'scatter', mode = 'lines', line = list(color = 'rgb(205, 12, 24)')) %>%
+  add_trace(x = ~TimeInterval, y = ~NewDeaths, name = 'Daily New Deaths', type = 'bar', marker = list(color = 'rgb(205, 12, 24)')) %>%
+  add_trace(x = ~TimeInterval, y = ~NewGeneralAdmissions, name = 'Daily New General Admissions', type = 'bar', marker = list(color = 'rgb(22, 96, 167)')) %>%
+  add_trace(x = ~TimeInterval, y = ~NewICUAdmissions, name = 'Daily New ICU Admissions', type = 'bar', marker = list(color = 'rgb(255, 153, 51)')) %>%
+  add_trace(x = ~TimeInterval, y = ~GeneralBedNeed, name = 'Daily General Beds Needed', type = 'scatter', mode = 'lines', line = list(color = 'rgb(22, 96, 167)')) %>%
+  add_trace(x = ~TimeInterval, y = ~ICUBedNeed, name = 'Daily ICU Beds Needed', type = 'scatter', mode = 'lines', line = list(color = 'rgb(255, 153, 51)')) %>%
+  layout(legend = list(orientation = 'h'), xaxis = list(title = ""), yaxis = list(title = ""))
 save_widget(wc_model_latest_hospital_figures, private_destdir)
 
 # MAPS =========================================================================
