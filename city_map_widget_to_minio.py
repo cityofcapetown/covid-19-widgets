@@ -59,7 +59,7 @@ LAYER_PROPERTIES_LOOKUP = {
         (WARD_COUNT_NAME_PROPERTY,), ("Ward Name",), "BuPu", "City of Cape Town Wards"
     ),
     "cct_hex_polygons_7.geojson": (
-        (HEX_COUNT_INDEX_PROPERTY,), ("Hex ID",), "OrRd", "City of Cape Town L7 Wards"
+        (HEX_COUNT_INDEX_PROPERTY,), ("Hex ID",), "OrRd", "City of Cape Town L7 Hexes"
     ),
     "informal_settlements.geojson": (
         ("INF_STLM_NAME",), ("Informal Settlement Name",), None, "Informal Settlements"
