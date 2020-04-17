@@ -320,18 +320,46 @@ rsa_demographic <- rsa_demographic %>%
          fatal_label = "SA Fatality Rate %") 
 
 # cape town confirmed cases pop pyramid ---------------
-ct_raw_age_confirmed_cases <- ct_all_cases  %>% 
-    select(agegroup) %>% 
-    separate(agegroup, sep = "[ ]", into = c("age"), extra = "drop") %>%
-    mutate(age_interval = findInterval(age, age_brackets, rightmost.closed = TRUE)) %>% 
+# ct_raw_age_confirmed_cases <- ct_all_cases  %>% 
+#     select(agegroup) %>% 
+#     separate(agegroup, sep = "[ ]", into = c("age"), extra = "drop") %>%
+#     mutate(age_interval = findInterval(age, age_brackets, rightmost.closed = TRUE)) %>% 
+#   mutate(age_interval = age_bracket_labels[age_interval]) %>%
+#   group_by(age_interval) %>%
+#   summarise(ct_raw_age_confirmed_cases = n()) %>%
+#   ungroup() 
+# 
+# ct_age_confirmed_case_pct <- ct_raw_age_confirmed_cases %>% 
+#   mutate(ct_age_confirmed_case_pct = ct_raw_age_confirmed_cases / sum(ct_raw_age_confirmed_cases)*100) %>% 
+#   select(age_interval, ct_age_confirmed_case_pct)
+# 
+# cct_demographic <- cct_mid_year_2019_pop_est %>% 
+#   mutate(age_interval = NORM_AGE_COHORT) %>%
+#   group_by(age_interval) %>% 
+#   summarise(cct_population = sum(AMOUNT)) %>% 
+#   ungroup() %>%
+#   mutate(population_pct = cct_population/sum(cct_population)*100) %>%
+#   select(-cct_population) %>%
+#   left_join(., ct_age_confirmed_case_pct, by = "age_interval") %>%
+#   rename(rate_pct = ct_age_confirmed_case_pct) %>%
+#   mutate(population = "CCT Pop %",
+#          fatal_label = "CCT Rate % of Confirmed Cases") 
+
+# cape town case fatality pop pyramid ---------------
+ct_raw_age_deaths <- ct_all_cases  %>%
+  filter(!is.na(date_of_death)) %>%
+  select(agegroup) %>% 
+  separate(agegroup, sep = "[ ]", into = c("age"), extra = "drop") %>%
+  mutate(age_interval = findInterval(age, age_brackets, rightmost.closed = TRUE)) %>% 
   mutate(age_interval = age_bracket_labels[age_interval]) %>%
   group_by(age_interval) %>%
-  summarise(ct_raw_age_confirmed_cases = n()) %>%
+  summarise(ct_raw_age_deaths = n()) %>%
   ungroup() 
 
-ct_age_confirmed_case_pct <- ct_raw_age_confirmed_cases %>% 
-  mutate(ct_age_confirmed_case_pct = ct_raw_age_confirmed_cases / sum(ct_raw_age_confirmed_cases)*100) %>% 
-  select(age_interval, ct_age_confirmed_case_pct)
+
+ct_age_fatality_rate <- left_join(ct_raw_age_confirmed_cases, ct_raw_age_deaths, by = "age_interval") %>%
+  mutate(ct_raw_age_deaths = ifelse(is.na(ct_raw_age_deaths), 0, ct_raw_age_deaths)) %>%
+  mutate(ct_case_fatality_rate = ct_raw_age_deaths / ct_raw_age_confirmed_cases * 100) %>% pull(ct_case_fatality_rate)
 
 cct_demographic <- cct_mid_year_2019_pop_est %>% 
   mutate(age_interval = NORM_AGE_COHORT) %>%
@@ -340,11 +368,9 @@ cct_demographic <- cct_mid_year_2019_pop_est %>%
   ungroup() %>%
   mutate(population_pct = cct_population/sum(cct_population)*100) %>%
   select(-cct_population) %>%
-  left_join(., ct_age_confirmed_case_pct, by = "age_interval") %>%
-  rename(rate_pct = ct_age_confirmed_case_pct) %>%
+  mutate(rate_pct = ct_age_fatality_rate) %>%
   mutate(population = "CCT Pop %",
-         fatal_label = "CCT Rate % of Confirmed Cases") 
-
+         fatal_label = "CCT Case Fatality Rate %") 
 
 # RSA total confirmed
 rsa_total_confirmed <- rsa_provincial_ts_confirmed %>% select(-YYYYMMDD) %>% 
@@ -901,7 +927,7 @@ cct_demographic_confirmed_plot <-
   
   scale_fill_manual(values = c(`CCT Pop %` = "#D55E00", 
                                `China Pop %` = "#E69F00", 
-                               `CCT Rate % of Confirmed Cases` = "#D55E00",
+                               `CCT Case Fatality Rate %` = "#D55E00",
                                `China Case Fatality Rate %` = "#E69F00"), 
                     name="") +
   coord_flip() +
