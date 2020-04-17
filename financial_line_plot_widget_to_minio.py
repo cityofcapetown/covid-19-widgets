@@ -105,7 +105,7 @@ def generate_plotting_datasource(income_df, payments_df):
     return totals_df
 
 
-def generate_plot(plot_df, start_date="2020-02-01", sast_tz='Africa/Johannesburg'):
+def generate_plot(plot_df, start_date="2020-03-01", sast_tz='Africa/Johannesburg'):
     start_date = pandas.Timestamp(start_date, tz=sast_tz).date()
     end_date = pandas.Timestamp.now(tz=sast_tz).date()
 

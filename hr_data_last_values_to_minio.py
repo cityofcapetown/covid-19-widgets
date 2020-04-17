@@ -146,8 +146,6 @@ if __name__ == "__main__":
     logging.info("Fetch[ing] data...")
     hr_transactional_data_df = get_data(HR_DATA_FILENAME,
                                         secrets["minio"]["edge"]["access"], secrets["minio"]["edge"]["secret"])
-    hr_master_data_df = get_data(HR_DATA_FILENAME,
-                                 secrets["minio"]["edge"]["access"], secrets["minio"]["edge"]["secret"])
     logging.info("...Fetch[ed] data.")
 
     logging.info("Add[ing] succinct status column...")
