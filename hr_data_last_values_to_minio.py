@@ -46,6 +46,10 @@ SICK_STATUSES = {
     "Sick (linked to Covid-19)",
     "Sick (NOT linked to Covid-19)"
 }
+COVID_STATUSES = {
+    "Sick (linked to Covid-19)",
+    "Quarantine leave – working remotely, Covid-19 exposure / isolation",
+}
 
 WIDGETS_RESTRICTED_PREFIX = "widgets/private/business_continuity_"
 OUTPUT_VALUE_FILENAME = "values.json"
@@ -92,12 +96,14 @@ def get_latest_values_dict(hr_df):
     staff_at_work = (current_hr_df[SUCCINCT_STATUS_COL] == WORKING_STATUS).sum() if staff_reported > 0 else 0
     staff_working_remotely = current_hr_df[STATUS_COL].isin(REMOTE_WORK_STATUSES).sum() if staff_reported > 0 else 0
     staff_sick = current_hr_df[STATUS_COL].isin(SICK_STATUSES).sum() if staff_reported > 0 else 0
+    staff_covid = current_hr_df[STATUS_COL].isin(COVID_STATUSES).sum() if staff_reported > 0 else 0
 
     business_continuity_dict = {
         "last_updated": last_updated,
         "staff_at_work": f"{staff_at_work} / {staff_reported}",
         "staff_working_remotely": str(staff_working_remotely),
         "staff_sick": str(staff_sick),
+        "staff_covid": str(staff_covid),
     }
     logging.debug(f"business_continuity_dict=\n{pprint.pformat(business_continuity_dict)}")
 
