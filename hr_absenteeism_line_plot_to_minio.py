@@ -46,7 +46,7 @@ STATUSES_TO_SUCCINCT_MAP = {
 }
 COVID_SICK = "Sick (linked to Covid-19)"
 
-WIDGETS_RESTRICTED_PREFIX = "widgets/staging/business_continuity_"
+WIDGETS_RESTRICTED_PREFIX = "widgets/private/business_continuity_"
 PLOT_FILENAME = "hr_absenteeism_plot.html"
 
 
