@@ -912,7 +912,7 @@ rsa_demographic_mortality_plot <- ggplotly(rsa_demographic_mortality_plot)  %>% 
 save_widget(rsa_demographic_mortality_plot, public_destdir)
 
 # cape town demographic mortality plot ---------------------
-cct_demographic_confirmed_plot <- 
+cct_demographic_case_fatality_plot <- 
   china_demographic %>% mutate(rate_pct = -rate_pct,
                                population_pct = -population_pct) %>%
   rbind(., cct_demographic) %>%
@@ -931,11 +931,15 @@ cct_demographic_confirmed_plot <-
                                `China Case Fatality Rate %` = "#E69F00"), 
                     name="") +
   coord_flip() +
-  #labs(x = "", y = "China vs CCT Age Demographics and COVID Case Fatality Rate (%)") +
-  theme_bw()
+  labs(x = "", y = "") +
+  theme_bw() +
+  theme(legend.position="bottom")
 
-cct_demographic_confirmed_plot <- ggplotly(cct_demographic_confirmed_plot)  %>% plotly::config(displayModeBar = F)  
-save_widget(cct_demographic_confirmed_plot, private_destdir)
+cct_demographic_case_fatality_plot <- ggplotly(cct_demographic_case_fatality_plot)  %>% 
+  plotly::config(displayModeBar = F)  %>% 
+  layout(legend = list(orientation = "h",y = 0, x = 0))
+
+save_widget(cct_demographic_case_fatality_plot, private_destdir)
 
 # china demographic mortality plot ---------------------
 china_demographic_mortality_plot <- 
