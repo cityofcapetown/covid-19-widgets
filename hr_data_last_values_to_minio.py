@@ -99,6 +99,7 @@ def get_latest_values_dict(hr_df):
         "staff_working_remotely": str(staff_working_remotely),
         "staff_sick": str(staff_sick),
     }
+    logging.debug(f"business_continuity_dict=\n{pprint.pformat(business_continuity_dict)}")
 
     return business_continuity_dict
 
