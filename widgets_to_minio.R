@@ -320,14 +320,14 @@ rsa_demographic <- rsa_demographic %>%
          fatal_label = "SA Fatality Rate %") 
 
 # cape town confirmed cases pop pyramid ---------------
-# ct_raw_age_confirmed_cases <- ct_all_cases  %>% 
-#     select(agegroup) %>% 
-#     separate(agegroup, sep = "[ ]", into = c("age"), extra = "drop") %>%
-#     mutate(age_interval = findInterval(age, age_brackets, rightmost.closed = TRUE)) %>% 
-#   mutate(age_interval = age_bracket_labels[age_interval]) %>%
-#   group_by(age_interval) %>%
-#   summarise(ct_raw_age_confirmed_cases = n()) %>%
-#   ungroup() 
+ct_raw_age_confirmed_cases <- ct_all_cases  %>%
+    select(agegroup) %>%
+    separate(agegroup, sep = "[ ]", into = c("age"), extra = "drop") %>%
+    mutate(age_interval = findInterval(age, age_brackets, rightmost.closed = TRUE)) %>%
+  mutate(age_interval = age_bracket_labels[age_interval]) %>%
+  group_by(age_interval) %>%
+  summarise(ct_raw_age_confirmed_cases = n()) %>%
+  ungroup()
 # 
 # ct_age_confirmed_case_pct <- ct_raw_age_confirmed_cases %>% 
 #   mutate(ct_age_confirmed_case_pct = ct_raw_age_confirmed_cases / sum(ct_raw_age_confirmed_cases)*100) %>% 
