@@ -80,3 +80,6 @@ def covid_19_widget_task(task_name, task_kwargs={}):
 # Defining tasks
 LATEST_VALUES = 'hr-latest-values'
 latest_values_operator = covid_19_widget_task(LATEST_VALUES)
+
+ABSENTEEISM_LINE_PLOT = 'hr-absenteeism-plot.sh'
+absenteeism_operator = covid_19_widget_task(ABSENTEEISM_LINE_PLOT)
