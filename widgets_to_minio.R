@@ -216,6 +216,7 @@ wc_latest_confirmed <- nrow(wc_all_cases)
 # Latest values CT
 ct_latest_update <- wc_latest_update
 ct_latest_confirmed <- nrow(ct_all_cases)
+ct_latest_deaths <- ct_all_cases %>% filter(!is.na(date_of_death)) %>% nrow() 
 
 # expected_future_trajectory -----------------------
 countries_this_far <- global_ts_since_100 %>% 
@@ -444,8 +445,9 @@ write(
   )
 
 latest_private_values <- append(latest_values,
-                        ct_latest_update,
-                       ct_latest_confirmed)
+                                listN(ct_latest_update,
+                                ct_latest_confirmed,
+                                ct_latest_deaths))
 
 write(
   toJSON(latest_private_values), 
