@@ -30,6 +30,7 @@ library(arrow)
 library(sf)
 library(leafpop)
 library(bpexploder)
+library(sparkline)
 
 # LOAD SECRETS ==========================================================================
 # Credentials
@@ -45,7 +46,7 @@ minio_url_override = NA
 # FUNCTIONS =================================================================
 df_as_xts <- function(df, time_col) {
   df2 <- df %>% 
-    select(-time_col) 
+    select(-time_col)
   
   df3 <- df2 %>% 
     dplyr::select(names(sort(colSums(df2, na.rm = T)))) 
@@ -508,7 +509,7 @@ upper_quartile_values_deaths <- global_deaths_since_25 %>% select(-days_since_pa
   summarise_all(list(~quantile(., probs = 0.75, na.rm = T))) %>%
   t() 
 
-values_to_drop_deaths <- ifelse(countries_this_far_deaths < 14, NA, 1)
+values_to_drop_deaths <- ifelse(countries_this_far_deaths < 1, NA, 1)
 
 median_values_deaths <- median_values_deaths * values_to_drop_deaths
 
@@ -1268,6 +1269,107 @@ ct_heatmap <- leaflet(cct_2016_pop_density) %>%
     options = layersControlOptions(collapsed = FALSE)) 
 
 save_widget(ct_heatmap, public_destdir)
+
+# Hex l7 table with sparklines -----------------
+# 
+# # Construct complete timeseries
+# ct_geom_daily_stats <- ct_all_cases_parsed %>% 
+#   group_by(hex_l7, date_of_diagnosis1) %>%
+#   summarise(daily_cases = n(),
+#             daily_hospitalised = sum(!is.na(Admission_date)),
+#             daily_ICU = sum(!is.na(Date_of_ICU_admission)),
+#             daily_deaths  = sum(!is.na(date_of_death)))
+# 
+# day_series <- seq(min(ct_all_cases_parsed$date_of_diagnosis1),
+#                   max(ct_all_cases_parsed$date_of_diagnosis1), 
+#                   by = "day") 
+# 
+# geom_series <- cct_hex_polygons_7
+# geom_series_names <- geom_series$index
+# 
+# geom_timeseries <- data.frame(matrix(ncol = length(day_series), nrow = length(geom_series_names)))
+# colnames(geom_timeseries) <- day_series
+# geom_timeseries$index <- geom_series_names
+# 
+# geom_timeseries <- geom_timeseries %>% as_tibble() %>% 
+#   gather(key = "date", value = "dummy", -index) %>% 
+#   mutate(date = ymd(date)) %>% 
+#   select(-dummy)
+# 
+# geom_timeseries <- geom_timeseries %>% 
+#   left_join(., ct_geom_daily_stats, by = c("index" = "hex_l7",  "date" = "date_of_diagnosis1")) %>% 
+#   arrange(date)
+# 
+# geom_timeseries[is.na(geom_timeseries)] <- 0
+# 
+# geom_latest <- geom_timeseries %>% 
+#   group_by(index) %>% 
+#   mutate(CumulativeCases = cumsum(daily_cases)) %>%
+#   summarise(`Cumulative Cases` = sum(daily_cases),
+#             `Cumulative Admitted` = sum(daily_hospitalised),
+#             `Cumulative ICU` = sum(daily_ICU),
+#             `Cumulative Deaths` = sum(daily_deaths)) 
+# 
+# geom_series <- geom_timeseries %>% 
+#   group_by(index) %>% 
+#   mutate(CumulativeCases = cumsum(daily_cases)) %>%
+#   summarise(Cases = paste(daily_cases, collapse = ","),
+#             Admitted = paste(daily_hospitalised, collapse = ","),
+#             ICU = paste(daily_ICU, collapse = ","),
+#             Deaths = paste(daily_deaths, collapse = ",")) 
+# 
+# # Some js custom functions. INcluded line as well in case you want to use instead
+# line_string <- "type: 'line', lineColor: 'black', fillColor: '#ccc', highlightLineColor: 'orange', highlightSpotColor: 'orange'"
+# bar_string <- "type: 'bar', barColor: 'orange', negBarColor: 'purple', highlightColor: 'black'"
+# js <- "function(data, type, full){ return '<span class=sparkLine>' + data + '</span>' }"
+# js_bar <- "function(data, type, full){ return '<span class=sparkBar>' + data + '</span>' }"
+# cd <- list(list(targets = 2, render = JS(js_bar)))
+# cb <- JS(paste0("function (oSettings, json) {
+#   $('.sparkLine:not(:has(canvas))').sparkline('html', { ", 
+#                 line_string, " });
+#   $('.sparkBar:not(:has(canvas))').sparkline('html', { ", 
+#                 bar_string, " });
+# 
+# }"), collapse = "")
+# 
+# # Complete table
+# geom_object <- right_join(cct_hex_polygons_7, 
+#            left_join(geom_latest, 
+#                      geom_series, by = "index"), 
+#            by = "index")
+# complete_table_sparkdef <- list(list(targets = 6, render = JS(js_bar)),
+#                                 list(targets = 7, render = JS(js_bar)),
+#                                 list(targets = 8, render = JS(js_bar)),
+#                                 list(targets = 9, render = JS(js_bar)))
+# complete_table <- geom_object %>% 
+#   st_set_geometry(NULL) %>% datatable(rownames = TRUE,
+#                                       options = list(columnDefs = complete_table_sparkdef, 
+#                                                      fnDrawCallback = cb, 
+#                                                      dom = 'lrt')) 
+# complete_table$dependencies <- append(complete_table$dependencies, htmlwidgets:::getDependency("sparkline"))
+
+
+# Sparkline table per hex 7 -----------------
+# # FOR LOOP HERE
+# popups <- vector()
+# for (sample_index in geom_latest$index) {
+#   sample_latest <- geom_latest %>% 
+#     filter(index == geom_latest$index[200]) %>% t() %>% as_tibble()
+#   
+#   sample_series <- geom_series %>% 
+#     filter(`index` == pull(sample_latest[1,1])) %>% t() %>% as_tibble()
+#   
+#   sample_table <- cbind(sample_latest, sample_series) 
+#   rownames(sample_table) <- c("Index", "Cases", "Admitted", "ICU", "Deaths")
+#   colnames(sample_table) <- c("Cumulative", "Daily New")
+# 
+#   d5 <- datatable(sample_table, 
+#                   rownames = TRUE, 
+#                   options = list(columnDefs = cd, fnDrawCallback = cb, dom = '')) 
+#   d5$dependencies <- append(d5$dependencies, htmlwidgets:::getDependency("sparkline"))
+#   popups <- append(popups, as.character(d5))
+#   
+# }
 
 # SEND TO MINIO =================================================================
 for (filename in list.files(public_destdir, recursive = T)) {
