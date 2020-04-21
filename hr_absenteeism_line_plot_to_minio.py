@@ -1,28 +1,29 @@
 import json
 import logging
 import os
-import pprint
 import sys
 import tempfile
 
 from bokeh.embed import file_html
-from bokeh.models import HoverTool, DatetimeTickFormatter
+from bokeh.models import HoverTool, NumeralTickFormatter, DatetimeTickFormatter, Range1d, LinearAxis
 from bokeh.plotting import figure
 from bokeh.resources import CDN
 from db_utils import minio_utils
+import holidays
 import pandas
 
 MINIO_BUCKET = "covid"
 MINIO_CLASSIFICATION = minio_utils.DataClassification.EDGE
 
 DATA_RESTRICTED_PREFIX = "data/private/"
-HR_DATA_FILENAME = "business_continuity_org_unit_statuses.csv"
+HR_DATA_FILENAME = "business_continuity_people_status.csv"
 
 DATE_COL_NAME = "Date"
 STATUS_COL = "Categories"
 SUCCINCT_STATUS_COL = "SuccinctStatus"
 ABSENTEEISM_RATE_COL = "Absent"
 COVID_SICK_COL = "CovidSick"
+DAY_COUNT_COL = "DayCount"
 
 TZ_STRING = "Africa/Johannesburg"
 ISO_TIMESTAMP_FORMAT = "%Y-%m-%dT%H:%M"
@@ -45,7 +46,7 @@ STATUSES_TO_SUCCINCT_MAP = {
 }
 COVID_SICK = "Sick (linked to Covid-19)"
 
-WIDGETS_RESTRICTED_PREFIX = "widgets/staging/business_continuity_"
+WIDGETS_RESTRICTED_PREFIX = "widgets/private/business_continuity_"
 PLOT_FILENAME = "hr_absenteeism_plot.html"
 
 
@@ -63,10 +64,6 @@ def get_data(minio_key, minio_access, minio_secret):
         data_df = pandas.read_csv(temp_datafile.name)
 
     data_df[DATE_COL_NAME] = pandas.to_datetime(data_df[DATE_COL_NAME])
-    logging.debug(f"data_df.columns=\n{data_df.columns}")
-    logging.debug(
-        f"data_df.columns=\n{pprint.pformat(data_df.dtypes.to_dict())}"
-    )
 
     return data_df
 
@@ -75,39 +72,42 @@ def make_statuses_succinct_again(hr_df):
     hr_df[SUCCINCT_STATUS_COL] = hr_df[STATUS_COL].apply(STATUSES_TO_SUCCINCT_MAP.get)
     logging.debug(f"hr_df.head(5)=\n{hr_df.head(5)}")
 
-    succinct_df = hr_df.groupby(DATE_COL_NAME, SUCCINCT_STATUS_COL).sum().reset_index()
-    logging.debug(f"succinct_df=\n{succinct_df}")
-
-    return succinct_df
+    return hr_df
 
 
 def get_plot_df(succinct_hr_df):
-
-    def get_col_rate(series, key):
-        counts = series.value_counts(normalize=True)
-
-        return counts[key]
-
+    succinct_hr_df[DATE_COL_NAME] = succinct_hr_df[DATE_COL_NAME].dt.date
     plot_df = (
         succinct_hr_df.groupby(DATE_COL_NAME)
-                      .apply(
-                        lambda data_df: pandas.DataFrame({
-                            ABSENTEEISM_RATE_COL: data_df[SUCCINCT_STATUS_COL].apply(get_col_rate, NOT_WORKING_STATUS),
-                            COVID_SICK_COL: data_df[STATUS_COL].apply(get_col_rate, COVID_SICK),
-                        }))
-    ).reset_index().drop("level_2", axis='columns')
+            .apply(
+            lambda data_df: pandas.DataFrame({
+                ABSENTEEISM_RATE_COL: [data_df[SUCCINCT_STATUS_COL].value_counts(normalize=True)[NOT_WORKING_STATUS]],
+                COVID_SICK_COL: [
+                    data_df[STATUS_COL].value_counts(normalize=True)[COVID_SICK] if data_df[STATUS_COL].str.contains(
+                        COVID_SICK).any() else 0],
+                DAY_COUNT_COL: data_df.shape[0]
+            }))
+    ).reset_index().drop("level_1", axis='columns')
+
+    # Filtering out holidays
+    za_holidays = holidays.CountryHoliday("ZA")
+    plot_df = plot_df[
+        plot_df[DATE_COL_NAME].apply(lambda date: date not in za_holidays) &
+        (pandas.to_datetime(plot_df[DATE_COL_NAME]).dt.weekday != 6)  # Sunday
+        ]
 
     return plot_df
 
 
-def generate_plot(plot_df, start_date="2020-03-01", sast_tz='Africa/Johannesburg'):
-    start_date = pandas.Timestamp(start_date, tz=sast_tz).date()
+def generate_plot(plot_df, sast_tz='Africa/Johannesburg'):
+    start_date = plot_df[DATE_COL_NAME].min()
     end_date = pandas.Timestamp.now(tz=sast_tz).date()
 
     TOOLTIPS = [
         ("Date", "@Date{%F}"),
-        ("Absenteeism Rate", f"@{ABSENTEEISM_RATE_COL}"),
-        ("Covid-19 Related illness", f"@{COVID_SICK_COL}")
+        ("Absenteeism Rate", f"@{ABSENTEEISM_RATE_COL}{{0.0 %}}"),
+        ("Covid-19 Related illness", f"@{COVID_SICK_COL}{{0.0 %}}"),
+        ("Number reported", f"@{DAY_COUNT_COL}{{0 a}}")
     ]
     hover_tool = HoverTool(tooltips=TOOLTIPS,
                            formatters={'Date': 'datetime'})
@@ -116,17 +116,33 @@ def generate_plot(plot_df, start_date="2020-03-01", sast_tz='Africa/Johannesburg
         title=None,
         width=None, height=None,
         x_axis_type='datetime', sizing_mode="scale_both",
-        x_range=(start_date, end_date), y_axis_label="Amount (ZAR)",
+        x_range=(start_date, end_date), y_axis_label="Rate (%)",
+        y_range=(0, 1.05),
         toolbar_location=None,
     )
     line_plot.add_tools(hover_tool)
 
-    # Line plots
-    line_plot.line(x=DATE_COL_NAME, y=ABSENTEEISM_RATE_COL, color='red', source=plot_df)
-    line_plot.line(x=DATE_COL_NAME, y=COVID_SICK_COL, color='organge', source=plot_df)
+    # Adding count on the right
+    line_plot.extra_y_ranges = {"count_range": Range1d(start=0, end=plot_df[DAY_COUNT_COL].max() * 1.1)}
+    second_y_axis = LinearAxis(y_range_name="count_range", axis_label="Number Assessed")
+    line_plot.add_layout(second_y_axis, 'right')
 
-    # X-axis
+    # Bar plot for counts
+    line_plot.vbar(x=DATE_COL_NAME, top=DAY_COUNT_COL, width=5e7, color="blue", source=plot_df,
+                   y_range_name="count_range", alpha=0.4)
+
+    # Line plots
+    line_plot.line(x=DATE_COL_NAME, y=ABSENTEEISM_RATE_COL, color='red', source=plot_df, line_width=5)
+    line_plot.scatter(x=DATE_COL_NAME, y=ABSENTEEISM_RATE_COL, fill_color='red', source=plot_df, size=20, line_alpha=0)
+
+    line_plot.line(x=DATE_COL_NAME, y=COVID_SICK_COL, color='orange', source=plot_df, line_width=5)
+    line_plot.scatter(x=DATE_COL_NAME, y=COVID_SICK_COL, fill_color='orange', source=plot_df, size=20, line_alpha=0)
+
+    # axis formatting
     line_plot.xaxis.formatter = DatetimeTickFormatter(days="%Y-%m-%d")
+
+    line_plot.yaxis.formatter = NumeralTickFormatter(format="0 %")
+    second_y_axis.formatter = NumeralTickFormatter(format="0 a")
 
     # Legend Location
     line_plot.legend.location = "bottom_left"
