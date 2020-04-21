@@ -188,7 +188,7 @@ rsa_confirmed_by_type <- covid19za_timeline_confirmed %>%
 
 # RSA total timeseries
 sa_ts_confirmed <- rsa_provincial_ts_confirmed %>% 
-  select(-YYYYMMDD, -total) %>% 
+  select(-YYYYMMDD, -total, -source) %>% 
   rowSums() %>% 
   enframe(value = "confirmed")
 
@@ -375,11 +375,10 @@ cct_demographic <- cct_mid_year_2019_pop_est %>%
          fatal_label = "CCT Case Fatality Rate %") 
 
 # RSA total confirmed
-rsa_total_confirmed <- rsa_provincial_ts_confirmed %>% select(-YYYYMMDD) %>% 
-  rowSums(.) %>% 
-  enframe(., value = "rsa_confirmed") %>% 
-  mutate(report_date = as_date(rsa_provincial_ts_confirmed$YYYYMMDD)) %>% 
-  select(-name)
+rsa_total_confirmed <- rsa_provincial_ts_confirmed %>% select(YYYYMMDD, total) %>% 
+  rename(rsa_confirmed = total,
+         report_date = YYYYMMDD) %>% 
+  mutate(report_date = as_date(report_date))  
 
 # WC_total_confirmed
 wc_total_confirmed <- rsa_provincial_ts_confirmed %>% select(YYYYMMDD, WC) %>% rename(report_date = YYYYMMDD,
@@ -599,7 +598,7 @@ save_widget(rsa_transmission_type_timeseries_log, public_destdir)
 
 # rsa_provincial_timeseries --------------
 rsa_provincial_confirmed_timeseries <- rsa_provincial_ts_confirmed %>% 
-  select(-total) %>%
+  select(-total, -source) %>%
   df_as_xts("YYYYMMDD") %>% 
   dygraph() %>%
   dyLegend(show = "follow") %>%
