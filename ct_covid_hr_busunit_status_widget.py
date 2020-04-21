@@ -65,7 +65,7 @@ def orgstatus_data_munge(status_df):
     
     # Convert evaluation statusse to ordinal number
     status_df['unit_status'] = np.where(status_df['Evaluation'] == 'We cannot deliver on daily tasks', 0, 
-                                             (np.where(status_df['Evaluation'] == 'We can deliver 75% or less of daily tasks ', 1, 2)))
+                                             (np.where(status_df['Evaluation'] == 'We can deliver 75% or less of daily tasks', 1, 2)))
 
     status_df = status_df.drop_duplicates(['Date', 'Directorate', 'bus_unit'], keep='last')
     status_df = status_df.sort_values(['Date','Directorate','bus_unit'], ascending=True)
@@ -107,7 +107,7 @@ def get_hover_text(df_subset):
                         'Org Unit:  {}<br />'
                         '<br />'
                         'Status:     {}<br />'
-                        '<br />')
+                        '<br />'.format(b_val, e_val))
             
     return hovertext
     
@@ -115,7 +115,7 @@ def get_hover_text(df_subset):
 def generate_plot(status_df):
     
     dir_list = pd.unique(status_df['Directorate'])
-    fig = make_subplots(rows=len(dir_list), cols=1)#, subplot_titles=(dir_list[0],dir_list[1],dir_list[2],dir_list[3]))
+    fig = make_subplots(rows=len(dir_list), cols=1)
 
     colorscale = ['#8B0000', '#ffe6e6']
 
