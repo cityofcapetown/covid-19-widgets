@@ -25,6 +25,7 @@ WORKING_STATUS = "working"
 NOT_WORKING_STATUS = "not-working"
 STATUSES_TO_SUCCINCT_MAP = {
     "Working remotely (NO Covid-19 exposure)": WORKING_STATUS,
+    "Working remotely (NO COVID 19 exposure)": WORKING_STATUS,
     "At work (on site)": WORKING_STATUS,
     "On leave": NOT_WORKING_STATUS,
     "On suspension": NOT_WORKING_STATUS,
@@ -32,23 +33,32 @@ STATUSES_TO_SUCCINCT_MAP = {
     "Quarantine leave – working remotely": WORKING_STATUS,
     "Quarantine leave – unable to work remotely": NOT_WORKING_STATUS,
     "Quarantine leave – working remotely, Covid-19 exposure / isolation": WORKING_STATUS,
+    "Quarantine leave – working remotely, COVID 19 exposure / isolation": WORKING_STATUS,
     "Sick (linked to Covid-19)": NOT_WORKING_STATUS,
+    "Sick (linked to COVID 19)": NOT_WORKING_STATUS,
     "Sick (NOT linked to Covid-19)": NOT_WORKING_STATUS,
+    "Sick (NOT linked to COVID 19)": NOT_WORKING_STATUS,
     "On Lockdown leave – unable to work remotely": NOT_WORKING_STATUS,
     "On Lockdown leave – able to work remotely": NOT_WORKING_STATUS
 }
 REMOTE_WORK_STATUSES = {
     "Working remotely (NO Covid-19 exposure)",
+    "Working remotely (NO COVID 19 exposure)",
     "Quarantine leave – working remotely",
+    "Quarantine leave – working remotely, Covid-19 exposure / isolation",
     "Quarantine leave – working remotely, Covid-19 exposure / isolation",
 }
 SICK_STATUSES = {
     "Sick (linked to Covid-19)",
-    "Sick (NOT linked to Covid-19)"
+    "Sick (linked to COVID 19)",
+    "Sick (NOT linked to Covid-19)",
+    "Sick (NOT linked to COVID 19)"
 }
 COVID_STATUSES = {
     "Sick (linked to Covid-19)",
+    "Sick (linked to COVID 19)",
     "Quarantine leave – working remotely, Covid-19 exposure / isolation",
+    "Quarantine leave – working remotely, COVID 19 exposure / isolation",
 }
 
 WIDGETS_RESTRICTED_PREFIX = "widgets/private/business_continuity_"
@@ -152,7 +162,8 @@ if __name__ == "__main__":
 
     logging.info("Fetch[ing] data...")
     hr_transactional_data_df = get_data(HR_DATA_FILENAME,
-                                        secrets["minio"]["edge"]["access"], secrets["minio"]["edge"]["secret"])
+                                        secrets["minio"]["edge"]["access"],
+                                        secrets["minio"]["edge"]["secret"])
     logging.info("...Fetch[ed] data.")
 
     logging.info("Add[ing] succinct status column...")
