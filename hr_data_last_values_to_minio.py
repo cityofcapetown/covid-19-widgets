@@ -63,7 +63,7 @@ COVID_STATUSES = {
 }
 
 WIDGETS_RESTRICTED_PREFIX = "widgets/private/business_continuity_"
-OUTPUT_VALUE_FILENAME = "values.json"
+OUTPUT_VALUE_FILENAME = "values_v2.json"
 
 
 def get_data(minio_key, minio_access, minio_secret):
