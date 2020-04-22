@@ -509,7 +509,7 @@ upper_quartile_values_deaths <- global_deaths_since_25 %>% select(-days_since_pa
   summarise_all(list(~quantile(., probs = 0.75, na.rm = T))) %>%
   t() 
 
-values_to_drop_deaths <- ifelse(countries_this_far_deaths < 1, NA, 1)
+values_to_drop_deaths <- ifelse(countries_this_far_deaths < 2, NA, 1)
 
 median_values_deaths <- median_values_deaths * values_to_drop_deaths
 
@@ -543,6 +543,41 @@ save_widget(future_deaths_trajectory, public_destdir)
 
 future_deaths_trajectory_log <- future_deaths_trajectory %>% dyOptions(logscale = TRUE)
 save_widget(future_deaths_trajectory_log, public_destdir)
+
+# Expected future trajectory deaths per million ---------------
+global_country_pop <- global_pop_raw %>% 
+  group_by(NAME) %>% 
+  summarise(population = sum(POP)) %>% 
+  ungroup()
+
+deaths_per_million_trajectory <-   global_deaths_since_25 %>% 
+  rownames_to_column(var = "day") %>% mutate(day = as.numeric(day)) %>%
+  select(-days_since_passed_25) %>% gather(key = "country", value = "deaths", -day)
+
+deaths_per_million_trajectory <- left_join(deaths_per_million_trajectory, 
+            global_country_pop, by = c("country" = "NAME")) %>% 
+  mutate(deaths_per_million = deaths / population * 10^6) %>% select(day, country, deaths_per_million) %>% 
+  spread(key = "country", value = "deaths_per_million") %>% arrange(day) %>% select(-day)
+
+deaths_per_million_trajectory <- deaths_per_million_trajectory %>%
+  ts(., start =1, end = nrow(.), frequency = 1) %>%
+  dygraph() %>%
+  dyLegend(show = "follow") %>%
+  dyCSS(textConnection("
+    .dygraph-legend > span { display: none; }
+    .dygraph-legend > span.highlight { display: inline; }
+  ")) %>%
+  dyHighlight(highlightCircleSize = 5, 
+              highlightSeriesBackgroundAlpha = 0.4,
+              hideOnMouseOut = TRUE) %>%
+  dyRangeSelector(height = 20) %>%
+  dyOptions(stackedGraph = FALSE, connectSeparatedPoints = TRUE) %>%
+  dyAxis(name="x", label = "Days since 25 deaths") %>%
+  dySeries(name = "South Africa",  color = "red", label = "South Africa", strokeWidth = 5)
+save_widget(deaths_per_million_trajectory, public_destdir)
+
+deaths_per_million_trajectory_log <- deaths_per_million_trajectory %>% dyOptions(logscale = TRUE)
+save_widget(deaths_per_million_trajectory_log, public_destdir)
 
 # r rsa_tests_vs_cases -------
 rsa_tests_vs_cases <- left_join(sa_ts_confirmed, 
