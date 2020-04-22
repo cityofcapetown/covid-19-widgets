@@ -12,6 +12,9 @@ from db_utils import minio_utils
 import holidays
 import pandas
 
+import hr_data_last_values_to_minio
+from hr_data_last_values_to_minio import WORKING_STATUS, NOT_WORKING_STATUS
+
 MINIO_BUCKET = "covid"
 MINIO_CLASSIFICATION = minio_utils.DataClassification.EDGE
 
@@ -21,30 +24,13 @@ HR_DATA_FILENAME = "business_continuity_people_status.csv"
 DATE_COL_NAME = "Date"
 STATUS_COL = "Categories"
 SUCCINCT_STATUS_COL = "SuccinctStatus"
+COVID_SICK_COL = "CovidSick"
 ABSENTEEISM_RATE_COL = "Absent"
 COVID_SICK_COL = "CovidSick"
 DAY_COUNT_COL = "DayCount"
 
 TZ_STRING = "Africa/Johannesburg"
 ISO_TIMESTAMP_FORMAT = "%Y-%m-%dT%H:%M"
-
-WORKING_STATUS = "working"
-NOT_WORKING_STATUS = "not-working"
-STATUSES_TO_SUCCINCT_MAP = {
-    "Working remotely (NO Covid-19 exposure)": WORKING_STATUS,
-    "At work (on site)": WORKING_STATUS,
-    "On leave": NOT_WORKING_STATUS,
-    "On suspension": NOT_WORKING_STATUS,
-    "Absent from work (unauthorised)": NOT_WORKING_STATUS,
-    "Quarantine leave – working remotely": WORKING_STATUS,
-    "Quarantine leave – unable to work remotely": NOT_WORKING_STATUS,
-    "Quarantine leave – working remotely, Covid-19 exposure / isolation": WORKING_STATUS,
-    "Sick (linked to Covid-19)": NOT_WORKING_STATUS,
-    "Sick (NOT linked to Covid-19)": NOT_WORKING_STATUS,
-    "On Lockdown leave – unable to work remotely": NOT_WORKING_STATUS,
-    "On Lockdown leave – able to work remotely": NOT_WORKING_STATUS
-}
-COVID_SICK = "Sick (linked to Covid-19)"
 
 WIDGETS_RESTRICTED_PREFIX = "widgets/private/business_continuity_"
 PLOT_FILENAME = "hr_absenteeism_plot.html"
@@ -69,8 +55,16 @@ def get_data(minio_key, minio_access, minio_secret):
 
 
 def make_statuses_succinct_again(hr_df):
-    hr_df[SUCCINCT_STATUS_COL] = hr_df[STATUS_COL].apply(STATUSES_TO_SUCCINCT_MAP.get)
+    hr_df[SUCCINCT_STATUS_COL] = hr_df[STATUS_COL].apply(
+        hr_data_last_values_to_minio.STATUSES_TO_SUCCINCT_MAP.get
+    )
     logging.debug(f"hr_df.head(5)=\n{hr_df.head(5)}")
+
+    no_succinct_status = hr_df[hr_df[SUCCINCT_STATUS_COL].isna()].Categories
+    logging.debug(f"no_succinct_status.value_counts()=\n{no_succinct_status.value_counts()}")
+
+    hr_df[COVID_SICK_COL] = hr_df[STATUS_COL].isin(hr_data_last_values_to_minio.COVID_STATUSES)
+    logging.debug(f"hr_df[COVID_SICK_COL].head(5)=\n{hr_df[COVID_SICK_COL].head(5)}")
 
     return hr_df
 
@@ -81,13 +75,18 @@ def get_plot_df(succinct_hr_df):
         succinct_hr_df.groupby(DATE_COL_NAME)
             .apply(
             lambda data_df: pandas.DataFrame({
-                ABSENTEEISM_RATE_COL: [data_df[SUCCINCT_STATUS_COL].value_counts(normalize=True)[NOT_WORKING_STATUS]],
+                ABSENTEEISM_RATE_COL: [
+                    data_df[SUCCINCT_STATUS_COL].value_counts(normalize=True)[NOT_WORKING_STATUS]
+                    if data_df[SUCCINCT_STATUS_COL].str.contains(NOT_WORKING_STATUS).any() else 0
+                ],
                 COVID_SICK_COL: [
-                    data_df[STATUS_COL].value_counts(normalize=True)[COVID_SICK] if data_df[STATUS_COL].str.contains(
-                        COVID_SICK).any() else 0],
+                    data_df[COVID_SICK_COL].sum()/data_df[COVID_SICK_COL].shape[0]
+                    if data_df[COVID_SICK_COL].shape[0] > 0 else 0
+                ],
                 DAY_COUNT_COL: data_df.shape[0]
             }))
     ).reset_index().drop("level_1", axis='columns')
+    logging.debug(f"plot_df=\n{plot_df}")
 
     # Filtering out holidays
     za_holidays = holidays.CountryHoliday("ZA")
