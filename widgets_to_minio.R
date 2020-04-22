@@ -360,6 +360,7 @@ ct_raw_age_deaths <- ct_all_cases  %>%
 
 
 ct_age_fatality_rate <- left_join(ct_raw_age_confirmed_cases, ct_raw_age_deaths, by = "age_interval") %>%
+  filter(!(is.na(age_interval))) %>%
   mutate(ct_raw_age_deaths = ifelse(is.na(ct_raw_age_deaths), 0, ct_raw_age_deaths)) %>%
   mutate(ct_case_fatality_rate = ct_raw_age_deaths / ct_raw_age_confirmed_cases * 100) %>% pull(ct_case_fatality_rate)
 
