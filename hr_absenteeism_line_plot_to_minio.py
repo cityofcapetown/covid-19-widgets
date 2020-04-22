@@ -26,7 +26,6 @@ STATUS_COL = "Categories"
 SUCCINCT_STATUS_COL = "SuccinctStatus"
 COVID_SICK_COL = "CovidSick"
 ABSENTEEISM_RATE_COL = "Absent"
-COVID_SICK_COL = "CovidSick"
 DAY_COUNT_COL = "DayCount"
 
 TZ_STRING = "Africa/Johannesburg"
@@ -104,9 +103,9 @@ def generate_plot(plot_df, sast_tz='Africa/Johannesburg'):
 
     TOOLTIPS = [
         ("Date", "@Date{%F}"),
-        ("Absenteeism Rate", f"@{ABSENTEEISM_RATE_COL}{{0.0 %}}"),
-        ("Covid-19 Related illness", f"@{COVID_SICK_COL}{{0.0 %}}"),
-        ("Number reported", f"@{DAY_COUNT_COL}{{0 a}}")
+        ("Essential Staff Absent", f"@{ABSENTEEISM_RATE_COL}{{0.0 %}}"),
+        ("Covid-19 Exposure", f"@{COVID_SICK_COL}{{0.0 %}}"),
+        ("Essential Staff Assessed", f"@{DAY_COUNT_COL}{{0 a}}")
     ]
     hover_tool = HoverTool(tooltips=TOOLTIPS,
                            formatters={'Date': 'datetime'})
@@ -123,7 +122,7 @@ def generate_plot(plot_df, sast_tz='Africa/Johannesburg'):
 
     # Adding count on the right
     line_plot.extra_y_ranges = {"count_range": Range1d(start=0, end=plot_df[DAY_COUNT_COL].max() * 1.1)}
-    second_y_axis = LinearAxis(y_range_name="count_range", axis_label="Number Assessed")
+    second_y_axis = LinearAxis(y_range_name="count_range", axis_label="Essential Staff Assessed")
     line_plot.add_layout(second_y_axis, 'right')
 
     # Bar plot for counts
@@ -146,7 +145,7 @@ def generate_plot(plot_df, sast_tz='Africa/Johannesburg'):
     # Legend Location
     line_plot.legend.location = "bottom_left"
 
-    plot_html = file_html(line_plot, CDN, "Business Continuity Absenteeism Time Series")
+    plot_html = file_html(line_plot, CDN, "Business Continuity HR Capacity Time Series")
 
     return plot_html
 
