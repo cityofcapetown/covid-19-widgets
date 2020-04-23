@@ -85,10 +85,10 @@ DIRECTORATE_DETAILS_DICT = {
         {"receiver_name": ["Phindile"],
          "receiver_email": ["PreciousPhindile.Dlamini@capetown.gov.za"],
          "cc_email": DATASCIENCE_CREW + HR_CREW},
-    # "TRANSPORT":
-    #     {"receiver_name": [],
-    #      "receiver_email": [],
-    #      "cc_email": DATASCIENCE_CREW + HR_CREW},
+    "TRANSPORT":
+        {"receiver_name": ["Louise"],
+         "receiver_email": ["Louise.Burger@capetown.gov.za"],
+         "cc_email": DATASCIENCE_CREW + HR_CREW},
     "ECONOMIC OPPORTUNITIES &ASSET MANAGEMENT":
         {"receiver_name": ["Roline"],
          "receiver_email": ["Roline.Henning@capetown.gov.za"],
@@ -105,10 +105,10 @@ DIRECTORATE_DETAILS_DICT = {
         {"receiver_name": ["Sibusiso"],
          "receiver_email": ["Sibusiso.Mayekiso@capetown.gov.za"],
          "cc_email": DATASCIENCE_CREW + HR_CREW},
-    # "CITY MANAGER":
-    #     {"receiver_name": [],
-    #      "receiver_email": [],
-    #      "cc_email": DATASCIENCE_CREW + HR_CREW},
+    "CITY MANAGER":
+        {"receiver_name": ["Phindile"],
+         "receiver_email": ["PreciousPhindile.Dlamini@capetown.gov.za"],
+         "cc_email": DATASCIENCE_CREW + HR_CREW},
 }
 
 EXCHANGE_VERSION = Version(build=Build(15, 0, 1395, 4000))
