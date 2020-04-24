@@ -65,22 +65,22 @@ DIRECTORATE_DETAILS_DICT = {
     #     {"receiver_name": ["Deon"],
     #      "receiver_email": ["Deon.Franks@capetown.gov.za"],
     #      "cc_email": DATASCIENCE_CREW + HR_CREW},
-    "COMMUNITY SERVICES and HEALTH":
-        {"receiver_name": ["Hennie"],
-         "receiver_email": ["Hendrik.Viviers@capetown.gov.za"],
-         "cc_email": ["Lele.Sithole@capetown.gov.za"]},
-    "SAFETY AND SECURITY":
-        {"receiver_name": ["Althea"],
-         "receiver_email": ["Althea.Daniels@capetown.gov.za"],
-         "cc_email": ["Lele.Sithole@capetown.gov.za"]},
-    "ENERGY AND CLIMATE CHANGE":
-        {"receiver_name": ["Maurietta"],
-         "receiver_email": ["Maurietta.Page@capetown.gov.za"],
-         "cc_email": ["Lele.Sithole@capetown.gov.za"]},
-    "FINANCE":
-        {"receiver_name": ["Tembekile"],
-         "receiver_email": ["Tembekile.Solanga@capetown.gov.za"],
-         "cc_email": ["Lele.Sithole@capetown.gov.za"]},
+    # "COMMUNITY SERVICES and HEALTH":
+    #     {"receiver_name": ["Hennie"],
+    #      "receiver_email": ["Hendrik.Viviers@capetown.gov.za"],
+    #      "cc_email": ["Lele.Sithole@capetown.gov.za"]},
+    # "SAFETY AND SECURITY":
+    #     {"receiver_name": ["Althea"],
+    #      "receiver_email": ["Althea.Daniels@capetown.gov.za"],
+    #      "cc_email": ["Lele.Sithole@capetown.gov.za"]},
+    # "ENERGY AND CLIMATE CHANGE":
+    #     {"receiver_name": ["Maurietta"],
+    #      "receiver_email": ["Maurietta.Page@capetown.gov.za"],
+    #      "cc_email": ["Lele.Sithole@capetown.gov.za"]},
+    # "FINANCE":
+    #     {"receiver_name": ["Tembekile"],
+    #      "receiver_email": ["Tembekile.Solanga@capetown.gov.za"],
+    #      "cc_email": ["Lele.Sithole@capetown.gov.za"]},
     "CORPORATE SERVICES":
         {"receiver_name": ["Phindile"],
          "receiver_email": ["PreciousPhindile.Dlamini@capetown.gov.za"],
