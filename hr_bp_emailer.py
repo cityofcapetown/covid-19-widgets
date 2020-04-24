@@ -64,51 +64,51 @@ DIRECTORATE_DETAILS_DICT = {
     # "WATER AND WASTE":
     #     {"receiver_name": ["Deon"],
     #      "receiver_email": ["Deon.Franks@capetown.gov.za"],
-    #      "cc_email": DATASCIENCE_CREW + HR_CREW},
+    #      "cc_email": HR_CREW + ["Lele.Sithole@capetown.gov.za"]},
     # "COMMUNITY SERVICES and HEALTH":
     #     {"receiver_name": ["Hennie"],
     #      "receiver_email": ["Hendrik.Viviers@capetown.gov.za"],
-    #      "cc_email": ["Lele.Sithole@capetown.gov.za"]},
+    #      "cc_email": HR_CREW + ["Lele.Sithole@capetown.gov.za"]},
     # "SAFETY AND SECURITY":
     #     {"receiver_name": ["Althea"],
     #      "receiver_email": ["Althea.Daniels@capetown.gov.za"],
-    #      "cc_email": ["Lele.Sithole@capetown.gov.za"]},
+    #      "cc_email": HR_CREW + ["Lele.Sithole@capetown.gov.za"]},
     # "ENERGY AND CLIMATE CHANGE":
     #     {"receiver_name": ["Maurietta"],
     #      "receiver_email": ["Maurietta.Page@capetown.gov.za"],
-    #      "cc_email": ["Lele.Sithole@capetown.gov.za"]},
+    #      "cc_email": HR_CREW + ["Lele.Sithole@capetown.gov.za"]},
     # "FINANCE":
     #     {"receiver_name": ["Tembekile"],
     #      "receiver_email": ["Tembekile.Solanga@capetown.gov.za"],
-    #      "cc_email": ["Lele.Sithole@capetown.gov.za"]},
+    #      "cc_email": HR_CREW + ["Lele.Sithole@capetown.gov.za"]},
     "CORPORATE SERVICES":
         {"receiver_name": ["Phindile"],
          "receiver_email": ["PreciousPhindile.Dlamini@capetown.gov.za"],
-         "cc_email": DATASCIENCE_CREW + HR_CREW},
+         "cc_email": HR_CREW + ["Lele.Sithole@capetown.gov.za"]},
     "TRANSPORT":
         {"receiver_name": ["Louise"],
          "receiver_email": ["Louise.Burger@capetown.gov.za"],
-         "cc_email": DATASCIENCE_CREW + HR_CREW},
+         "cc_email": HR_CREW + ["Lele.Sithole@capetown.gov.za"]},
     "ECONOMIC OPPORTUNITIES &ASSET MANAGEMENT":
         {"receiver_name": ["Roline"],
          "receiver_email": ["Roline.Henning@capetown.gov.za"],
-         "cc_email": DATASCIENCE_CREW + HR_CREW},
+         "cc_email": HR_CREW + ["Lele.Sithole@capetown.gov.za"]},
     "SPATIAL PLANNING AND ENVIRONMENT":
         {"receiver_name": ["Leonie"],
          "receiver_email": ["Leonie.Kroese@capetown.gov.za"],
-         "cc_email": DATASCIENCE_CREW + HR_CREW},
+         "cc_email": HR_CREW + ["Lele.Sithole@capetown.gov.za"]},
     "HUMAN SETTLEMENTS":
         {"receiver_name": ["Gerard"],
          "receiver_email": ["Gerard.Joyce@capetown.gov.za"],
-         "cc_email": DATASCIENCE_CREW + HR_CREW},
+         "cc_email": HR_CREW + ["Lele.Sithole@capetown.gov.za"]},
     "URBAN MANAGEMENT":
         {"receiver_name": ["Sibusiso"],
          "receiver_email": ["Sibusiso.Mayekiso@capetown.gov.za"],
-         "cc_email": DATASCIENCE_CREW + HR_CREW},
+         "cc_email": HR_CREW + ["Lele.Sithole@capetown.gov.za"]},
     "CITY MANAGER":
         {"receiver_name": ["Phindile"],
          "receiver_email": ["PreciousPhindile.Dlamini@capetown.gov.za"],
-         "cc_email": DATASCIENCE_CREW + HR_CREW},
+         "cc_email": HR_CREW + ["Lele.Sithole@capetown.gov.za"]},
 }
 
 EXCHANGE_VERSION = Version(build=Build(15, 0, 1395, 4000))
