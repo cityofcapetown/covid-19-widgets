@@ -78,5 +78,11 @@ def covid_19_widget_task(task_name, task_kwargs={}):
 
 
 # Defining tasks
+CITY_MAP_LAYERS_GENERATE = 'city-map-layers-generate'
+city_map_layers_generate_operator = covid_19_widget_task(CITY_MAP_LAYERS_GENERATE)
+
 CITY_MAP_PLOT = 'city-map-plot'
 city_map_plot_operator = covid_19_widget_task(CITY_MAP_PLOT)
+
+# Dependencies
+city_map_layers_generate_operator >> city_map_plot_operator
