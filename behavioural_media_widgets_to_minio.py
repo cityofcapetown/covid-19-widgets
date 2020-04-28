@@ -6,7 +6,7 @@ import sys
 import tempfile
 
 from bokeh.embed import file_html
-from bokeh.models import HoverTool, Range1d, ColumnDataSource,  LinearAxis, Span, Label
+from bokeh.models import HoverTool, Range1d, ColumnDataSource,  LinearAxis, Span, Label, DatetimeTickFormatter
 from bokeh.models.widgets.tables import HTMLTemplateFormatter, TableColumn, DataTable, DateFormatter
 
 from bokeh.plotting import figure
@@ -124,11 +124,12 @@ def generate_media_count_plot(media_count_datasource):
         *[(media_source, f"@{media_source}") for media_source in MEDIA_SOURCES]
     ]
     hover_tool = HoverTool(tooltips=tooltips,
-                           formatters={'date': 'datetime'})
+                           formatters={'@date': 'datetime'})
 
     line_plot = figure(
         title=None,
         width=None, height=None,
+        x_range=(media_count_datasource["date"].min(), media_count_datasource["date"].max()),
         toolbar_location=None, sizing_mode="scale_both", x_axis_type='datetime',
         tools=[hover_tool]
     )
@@ -139,6 +140,7 @@ def generate_media_count_plot(media_count_datasource):
 
     line_plot.legend.location = "top_left"
     line_plot.y_range.start = 0
+    line_plot.xaxis.formatter = DatetimeTickFormatter(days="%Y-%m-%d")
 
     plot_html = file_html(line_plot, CDN, "Behavioural Media Channel Timeseries")
 
@@ -186,13 +188,15 @@ def generate_sentiment_ts_plot(sentiment_ts_data, sentiment_ts_sample_count):
     tooltips = [
         ("Date", "@date{%F}"),
         ("Mentions", "@Count"),
-        ("Nett Sentiment", "@NettSentiment{%0.2f}%"),
+        ("Nett Sentiment", "@NettSentiment %"),
     ]
 
     line_plot = figure(title=None,
                        width=None, height=None,
                        sizing_mode="scale_both",
-                       x_axis_type='datetime', y_axis_label="Nett Sentiment (%)",
+                       x_range=(sentiment_ts_data["date"].min(), sentiment_ts_data["date"].max()),
+                       x_axis_type='datetime',
+                       y_axis_label="Nett Sentiment (%)",
                        tools=[], toolbar_location=None
                        )
     # Setting range of y range
@@ -221,8 +225,10 @@ def generate_sentiment_ts_plot(sentiment_ts_data, sentiment_ts_sample_count):
     line_plot.add_layout(long_term_sentiment_label)
 
     hover_tool = HoverTool(renderers=[sentiment_line, sentiment_count_bars], tooltips=tooltips,
-                           formatters={'date': 'datetime', 'NettSentiment': 'printf'})
+                           formatters={'@date': 'datetime', 'NettSentiment': 'printf'})
     line_plot.add_tools(hover_tool)
+
+    line_plot.xaxis.formatter = DatetimeTickFormatter(days="%Y-%m-%d")
 
     plot_html = file_html(line_plot, CDN, "Behavioural Sentiment Timeseries")
 
