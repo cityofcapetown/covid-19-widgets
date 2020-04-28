@@ -767,7 +767,7 @@ ct_cumulative_daily_counts_bar_chart <-  ct_subdistrict_cumulative_daily_counts 
             marker = list(color = 'rgba(50, 171, 96, 0.7)')) %>%
   add_trace(y = ~cumulative_deaths, name = 'Cumulative Deaths',
             marker = list(color = 'rgba(219, 64, 82, 0.7)')) %>%
-  layout(barmode = 'stack', legend = list(orientation = 'h')) 
+  layout(barmode = 'stack', legend = list(x = 0.1, y = 0.9))
 
 save_widget(ct_cumulative_daily_counts_bar_chart, private_destdir)
 
@@ -837,7 +837,7 @@ ct_daily_counts_bar_chart <-  ct_subdistrict_cumulative_daily_counts %>%
             marker = list(color = 'rgba(255,165,0, 0.7)')) %>%
   add_trace(y = ~deaths, name = 'Deaths',
             marker = list(color = 'rgba(219, 64, 82, 0.7)')) %>%
-  layout(barmode = 'stack', legend = list(orientation = 'h'))
+  layout(barmode = 'stack', legend = list(x = 0.1, y = 0.9))
 
 save_widget(ct_daily_counts_bar_chart, private_destdir)
 
