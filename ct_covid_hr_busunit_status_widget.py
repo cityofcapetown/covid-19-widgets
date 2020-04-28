@@ -52,9 +52,8 @@ def orgstatus_data_munge(status_df):
     status_df = status_df.fillna('')
 
     status_df['bus_unit'] = status_df['Department'] + " | " + status_df['Branch'] + " | " + status_df[
-        'Section'] + " - [" + status_df['Org Unit Name'] + "]"
-    status_df['y_axis_title'] = status_df['Department'] + " - [" + status_df['Org Unit Name'] + "]"
-    status_df = status_df[['Date', 'Directorate', 'bus_unit', 'Evaluation', 'y_axis_title']]
+        'Section'] + " - [" + status_df['Org Unit Name'] + "]"   
+    status_df = status_df[['Date', 'Directorate', 'bus_unit', 'Evaluation', 'Org Unit Name']]
     status_df['Evaluation'] = status_df['Evaluation'].str.strip()
 
     # Convert evaluation statusse to ordinal number
@@ -64,8 +63,8 @@ def orgstatus_data_munge(status_df):
                                             2)))
 
     status_df = status_df.drop_duplicates(['Date', 'Directorate', 'bus_unit'], keep='last')
-    status_df = status_df.sort_values(['Date', 'Directorate', 'bus_unit'], ascending=True)
-    status_df = status_df.loc[status_df['unit_status'].isin([0, 1]), :]
+    status_df = status_df.sort_values(['Date','Directorate','bus_unit'], ascending=True)
+    status_df = status_df.loc[status_df['unit_status'].isin([0,1]),:]
     status_df = status_df.reset_index().drop('index', axis=1)
 
     return status_df
@@ -75,10 +74,10 @@ def generate_plot(status_df):
     dir_list = pd.unique(status_df['Directorate'])
     fig = make_subplots(rows=len(dir_list), cols=1)
 
-    colorscale = [[0, '#8B0000'],
-                  [0.5, '#8B0000'],
-                  [0.5, '#FFE6E6'],
-                  [1, '#FFE6E6']]
+    colorscale = [[0, '#900C3F'],
+                  [0.5, '#900C3F'],
+                  [0.5, '#A3E4D7'],
+                  [1, '#A3E4D7']]
 
     datum = list(status_df['Date'].unique())
     datum = pd.to_datetime(pd.Series(datum), format="%Y-%m-%d")
@@ -93,7 +92,7 @@ def generate_plot(status_df):
 
     datum = datum.dt.strftime("%Y-%m-%d")
 
-    column_names = ['Date', 'Directorate', 'bus_unit', 'y_axis_title']
+    column_names = ['Date', 'Directorate', 'bus_unit', 'Org Unit Name']
     df_dt = pd.DataFrame(columns=column_names)
 
     for index, directorate in enumerate(dir_list):
@@ -105,7 +104,7 @@ def generate_plot(status_df):
         df_subset = df_subset.sort_values(['Date', 'Directorate', 'bus_unit'], ascending=True)
 
         bus_unit = list(df_subset['bus_unit'].unique())
-        y_value = list(df_subset['y_axis_title'].unique())
+        y_value = list(df_subset['Org Unit Name'].unique())
 
         dat = []
         ev = []
@@ -120,7 +119,7 @@ def generate_plot(status_df):
 
             for n, dt in enumerate(datum):
                 df_dt_single = pd.DataFrame(
-                    {'Date': dt, 'Directorate': directorate, 'bus_unit': b_val, 'y_axis_title': y_value[b_i]},
+                    {'Date': dt, 'Directorate': directorate, 'bus_unit': b_val, 'Org Unit Name': y_value[b_i]},
                     index=[n])
                 df_dt = df_dt.append(df_dt_single, ignore_index=True)
 
@@ -130,11 +129,11 @@ def generate_plot(status_df):
             df_busunit = df_busunit.reset_index().drop('index', axis=1)
 
             df_busunit['Date'] = df_busunit['Date'].astype(str)
-            df_dt_bu_merge = df_dt.merge(df_busunit, how='left', on=['Date', 'Directorate', 'bus_unit', 'y_axis_title'])
+            df_dt_bu_merge = df_dt.merge(df_busunit, how='left', on=['Date', 'Directorate', 'bus_unit', 'Org Unit Name'])
             df_dt_bu_merge['unit_status'] = df_dt_bu_merge['unit_status'].fillna('')
 
             for i in range(len(df_dt_bu_merge)):
-                b_val = df_dt_bu_merge['y_axis_title'][i]
+                b_val = df_dt_bu_merge['Org Unit Name'][i]
                 d_val = df_dt_bu_merge['Date'][i]
                 e_val = df_dt_bu_merge['unit_status'][i]
 
@@ -145,7 +144,7 @@ def generate_plot(status_df):
         daat = [item for sublist in dat for item in sublist]
         evalu = [item for sublist in ev for item in sublist]
         yvalu = [item for sublist in struct for item in sublist]
-        df_dt_sub = pd.DataFrame({'Date': daat, 'unit_status': evalu, 'y_axis_title': yvalu})
+        df_dt_sub = pd.DataFrame({'Date': daat, 'unit_status': evalu, 'Org Unit Name': yvalu})
 
         hovertext = []
 
@@ -155,7 +154,7 @@ def generate_plot(status_df):
 
             for n, dt in enumerate(datum):
                 df_dt_single = pd.DataFrame(
-                    {'Date': dt, 'Directorate': directorate, 'bus_unit': b_val, 'y_axis_title': y_value[b_i]},
+                    {'Date': dt, 'Directorate': directorate, 'bus_unit': b_val, 'Org Unit Name': y_value[b_i]},
                     index=[n])
                 df_dt = df_dt.append(df_dt_single, ignore_index=True)
 
@@ -165,7 +164,7 @@ def generate_plot(status_df):
             df_busunit = df_busunit.reset_index().drop('index', axis=1)
 
             df_busunit['Date'] = df_busunit['Date'].astype(str)
-            df_dt_bu_merge = df_dt.merge(df_busunit, how='left', on=['Date', 'Directorate', 'bus_unit', 'y_axis_title'])
+            df_dt_bu_merge = df_dt.merge(df_busunit, how='left', on=['Date', 'Directorate', 'bus_unit', 'Org Unit Name'])
             df_dt_bu_merge['unit_status'] = df_dt_bu_merge['unit_status'].fillna('')
 
             for i in range(len(df_dt_bu_merge)):
@@ -183,13 +182,13 @@ def generate_plot(status_df):
         heatmap = go.Heatmap(
             z=df_dt_sub.unit_status,
             x=df_dt_sub.Date,
-            y=df_dt_sub.y_axis_title,
+            y=df_dt_sub['Org Unit Name'],
             # z=ev,
             # x=datum,
             # y=y_value,
             colorscale=colorscale,
             xgap=3,
-            ygap=3,
+            ygap=2,
             showscale=False,
             hoverinfo='text',
             text=hovertext,
@@ -202,7 +201,7 @@ def generate_plot(status_df):
             title_text=abbrevated_directorate_label,
             # title_text=dir,
             title_font=dict(
-                size=14
+                size=9
             ),
             showline=False,
             showgrid=False,
@@ -211,7 +210,7 @@ def generate_plot(status_df):
             ticks='',
             showticklabels=True,
             tickfont=dict(
-                size=10
+                size=5
             ),
             row=index + 1, col=1)
 
@@ -226,13 +225,13 @@ def generate_plot(status_df):
             ticks='',
             side="top",
             tickfont=dict(
-                size=14
+                size=7
             ),
             showticklabels=(index == 0),
             row=index + 1, col=1)
 
     fig.update_layout(
-
+        height=1400,
         plot_bgcolor=('#fff'),
         hoverlabel=dict(
             bgcolor='black',
