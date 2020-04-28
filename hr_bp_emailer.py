@@ -357,7 +357,9 @@ if __name__ == "__main__":
     report_date = pandas.to_datetime(args.report_date, format="%Y-%m-%d")
 
     dry_run = not args.not_a_drill
-    logging.warning(f"This {'is' if dry_run else '*is not*'} a drill")
+    logging.warning(f"**This {'is' if dry_run else '*is not*'} a drill**")
+
+    logging.debug(f"Run args: report_date='{report_date}', dry_run='{dry_run}'")
 
     za_holidays = holidays.CountryHoliday("ZA")
     if report_date in za_holidays or report_date.weekday == 6:
