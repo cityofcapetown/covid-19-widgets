@@ -1,3 +1,4 @@
+import datetime
 import json
 import logging
 import os
@@ -98,8 +99,12 @@ def get_plot_df(succinct_hr_df):
 
 
 def generate_plot(plot_df, sast_tz='Africa/Johannesburg'):
-    start_date = plot_df[DATE_COL_NAME].min()
-    end_date = pandas.Timestamp.now(tz=sast_tz).date()
+    start_date = datetime.datetime.combine(
+        plot_df[DATE_COL_NAME].min(), datetime.datetime.min.time()
+    )
+    end_date = datetime.datetime.combine(
+        pandas.Timestamp.now(tz=sast_tz).date(), datetime.datetime.min.time()
+    )
 
     TOOLTIPS = [
         ("Date", "@Date{%F}"),
@@ -108,7 +113,7 @@ def generate_plot(plot_df, sast_tz='Africa/Johannesburg'):
         ("Essential Staff Assessed", f"@{DAY_COUNT_COL}{{0 a}}")
     ]
     hover_tool = HoverTool(tooltips=TOOLTIPS,
-                           formatters={'Date': 'datetime'})
+                           formatters={'@Date': 'datetime'})
     # Main plot
     line_plot = figure(
         title=None,
