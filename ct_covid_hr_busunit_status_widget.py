@@ -191,7 +191,6 @@ def generate_plot(status_df):
             xgap=3,
             ygap=3,
             showscale=False,
-            hoverongaps=False,
             hoverinfo='text',
             text=hovertext,
         )
