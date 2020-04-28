@@ -895,7 +895,7 @@ ct_subdistrict_daily_counts_bar_chart <- ct_subdistrict_cumulative_daily_counts 
           shareY = TRUE, 
           nrows = 4, 
           titleX = F, 
-          titleY = F) %>% layout(legend = list(orientation = 'h'))
+          titleY = F) 
 
 save_widget(ct_subdistrict_daily_counts_bar_chart, private_destdir)
 
