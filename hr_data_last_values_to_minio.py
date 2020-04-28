@@ -1,3 +1,4 @@
+import datetime
 import json
 import logging
 import os
@@ -14,11 +15,13 @@ MINIO_CLASSIFICATION = minio_utils.DataClassification.EDGE
 DATA_RESTRICTED_PREFIX = "data/private/"
 HR_DATA_FILENAME = "business_continuity_people_status.csv"
 HR_MASTER_DATA_FILENAME = "city_people.csv"
+STAFF_NUMBER_COL_NAME = "StaffNumber"
 DATE_COL_NAME = "Date"
 STATUS_COL = "Categories"
 SUCCINCT_STATUS_COL = "SuccinctStatus"
 ESSENTIAL_COL = "EssentialStaff"
 
+STATUS_WINDOW_LENGTH = 3
 TZ_STRING = "Africa/Johannesburg"
 ISO_TIMESTAMP_FORMAT = "%Y-%m-%dT%H:%M"
 
@@ -88,14 +91,28 @@ def make_statuses_succinct_again(hr_df):
     return hr_df
 
 
-def get_latest_values_dict(hr_df, hr_master_df):
-    most_recent_date = hr_df[DATE_COL_NAME].max()
-    current_hr_df = hr_df[
-        hr_df[DATE_COL_NAME].dt.date == most_recent_date.date()
-        ]
-    logging.debug(f"most_recent_date.date()={most_recent_date.date()}")
+def get_current_hr_df(hr_df):
+    most_recent_ts = hr_df[DATE_COL_NAME].max()
+    logging.debug(f"most_recent_ts.date()={most_recent_ts.date()}")
 
-    last_updated = most_recent_date.strftime(ISO_TIMESTAMP_FORMAT)
+    date_window_start = most_recent_ts.date() - datetime.timedelta(days=STATUS_WINDOW_LENGTH)
+    logging.debug(f"date_window_start={date_window_start}")
+
+    current_hr_df = hr_df[
+        hr_df[DATE_COL_NAME].dt.date >= date_window_start
+        ].sort_values(
+        by=[STAFF_NUMBER_COL_NAME, DATE_COL_NAME], ascending=False
+    ).drop_duplicates(
+        subset=[STAFF_NUMBER_COL_NAME]
+    )
+
+    return most_recent_ts, current_hr_df
+
+
+def get_latest_values_dict(hr_df, hr_master_df):
+    most_recent_ts, current_hr_df = get_current_hr_df(hr_df)
+
+    last_updated = most_recent_ts.strftime(ISO_TIMESTAMP_FORMAT)
     staff_reported = current_hr_df.shape[0]
 
     staff_at_work = (current_hr_df[SUCCINCT_STATUS_COL] == WORKING_STATUS).sum() if staff_reported > 0 else 0
