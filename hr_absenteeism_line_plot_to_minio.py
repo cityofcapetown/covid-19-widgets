@@ -1,5 +1,6 @@
 import datetime
 import json
+import math
 import logging
 import os
 import sys
@@ -136,13 +137,14 @@ def generate_plot(plot_df, sast_tz='Africa/Johannesburg'):
 
     # Line plots
     line_plot.line(x=DATE_COL_NAME, y=ABSENTEEISM_RATE_COL, color='red', source=plot_df, line_width=5)
-    line_plot.scatter(x=DATE_COL_NAME, y=ABSENTEEISM_RATE_COL, fill_color='red', source=plot_df, size=20, line_alpha=0)
+    line_plot.scatter(x=DATE_COL_NAME, y=ABSENTEEISM_RATE_COL, fill_color='red', source=plot_df, size=12, line_alpha=0)
 
     line_plot.line(x=DATE_COL_NAME, y=COVID_SICK_COL, color='orange', source=plot_df, line_width=5)
-    line_plot.scatter(x=DATE_COL_NAME, y=COVID_SICK_COL, fill_color='orange', source=plot_df, size=20, line_alpha=0)
+    line_plot.scatter(x=DATE_COL_NAME, y=COVID_SICK_COL, fill_color='orange', source=plot_df, size=12, line_alpha=0)
 
     # axis formatting
     line_plot.xaxis.formatter = DatetimeTickFormatter(days="%Y-%m-%d")
+    line_plot.xaxis.major_label_orientation = math.pi / 4
 
     line_plot.yaxis.formatter = NumeralTickFormatter(format="0 %")
     second_y_axis.formatter = NumeralTickFormatter(format="0 a")
