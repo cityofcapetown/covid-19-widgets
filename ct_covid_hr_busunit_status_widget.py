@@ -231,7 +231,7 @@ def generate_plot(status_df):
             row=index + 1, col=1)
 
     fig.update_layout(
-        height=1400,
+        
         plot_bgcolor=('#fff'),
         hoverlabel=dict(
             bgcolor='black',
