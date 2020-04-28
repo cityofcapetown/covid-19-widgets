@@ -23,6 +23,9 @@ HR_TRANSACTIONAL_FILENAME_PATH = "data/private/business_continuity_people_status
 HR_MASTER_FILENAME_PATH = "data/private/city_people.csv"
 HR_ORG_UNIT_STATUSES = "data/private/business_continuity_org_unit_statuses.csv"
 
+PRESENT_EMPLOYEES_SHEETNAME = "Assessed"
+MISSING_EMPLOYEES_SHEETNAME = "Not Assessed"
+
 HR_STAFFNUMBER = "StaffNumber"
 DATE_COL = "Date"
 DIRECTORATE_COL = "Directorate"
@@ -160,7 +163,7 @@ def get_today_directorate_df(data_df, directorate, filter_date=None, date_filter
     query_df = data_df.loc[
         (data_df[DIRECTORATE_COL] == directorate) &
         ((data_df[DATE_COL] == filter_date) if date_filter else True)
-    ]
+        ]
     logging.debug(f"query_df.head(5)=\n{query_df.head(5)}")
 
     return query_df
@@ -211,7 +214,7 @@ def get_missing_workers_df(directorate_merged_df, directorate_master_df):
     missing_ess_df = directorate_master_df.loc[
         directorate_master_df[ESSENTIAL_COL] &
         ~directorate_master_df[HR_STAFFNUMBER].isin(directorate_merged_df[HR_STAFFNUMBER])
-    ]
+        ]
     logging.debug(f"missing_ess_df.head(5)=\n{missing_ess_df.head(5)}")
     logging.debug(f"missing_ess_df.columns=\n{missing_ess_df.columns}")
 
@@ -220,12 +223,20 @@ def get_missing_workers_df(directorate_merged_df, directorate_master_df):
     return missing_ess_df
 
 
-def write_directorate_file(*dfs):
-    for data_df in dfs:
-        with tempfile.NamedTemporaryFile("rb", suffix=".xlsx") as df_tempfile:
-            data_df.fillna("").to_excel(df_tempfile.name, index=False)
+def write_employee_file(df_tuples):
+    with tempfile.NamedTemporaryFile("rb", suffix=".xlsx") as df_tempfile:
+        with pandas.ExcelWriter(df_tempfile.name) as excel_writer:
+            for sheet_name, data_df in df_tuples:
+                data_df.fillna("").to_excel(excel_writer, sheet_name=sheet_name, index=False)
 
-            yield df_tempfile
+        yield df_tempfile
+
+
+def write_org_file(org_df):
+    with tempfile.NamedTemporaryFile("rb", suffix=".xlsx") as df_tempfile:
+        org_df.fillna("").to_excel(df_tempfile.name, index=False)
+
+        yield df_tempfile
 
 
 def load_email_template(email_filename):
@@ -237,7 +248,7 @@ def load_email_template(email_filename):
 
 
 def render_email(email_template, receiver_dict, directorate,
-                 assessed_ess_workers, total_ess_workers, missing_approvers):
+                 assessed_ess_workers, total_ess_workers, missing_approvers, report_date):
     receiver_name = receiver_dict["receiver_name"]
     receiver_name_string = receiver_name[0]
 
@@ -250,24 +261,21 @@ def render_email(email_template, receiver_dict, directorate,
         receiver_name_string = receiver_name_string + f" and {receiver_name[-1]}"
 
     now = datetime.datetime.now()
-    iso8601_date = now.strftime(ISO8601_DATE_FORMAT)
     iso8601_timestamp = now.strftime("%Y-%m-%dT%H:%M:%S.%f%Z")
 
     directorate_filename = directorate.lower().replace(" ", "_")
-    directorate_employee_status_filename = f"{directorate_filename}_employee_status_{iso8601_date}.xls"
-    directorate_missing_employee_filename = f"{directorate_filename}_employee_not_approved_{iso8601_date}.xls"
-    directorate_org_unit_status_filename = f"{directorate_filename}_org_unit_status_{iso8601_date}.xls"
+    directorate_employee_status_filename = f"{directorate_filename}_employee_status_{report_date}.xls"
+    directorate_org_unit_status_filename = f"{directorate_filename}_org_unit_status_{report_date}.xls"
 
     message_id = str(uuid.uuid4())
 
     body_dict = dict(
         directorate=directorate,
         receiver_name=receiver_name_string,
-        iso8601_date=iso8601_date,
+        iso8601_date=report_date,
         iso8601_timestamp=iso8601_timestamp,
         directorate_employee_status_filename=directorate_employee_status_filename,
         directorate_org_unit_status_filename=directorate_org_unit_status_filename,
-        directorate_missing_employee_filename=directorate_missing_employee_filename,
         request_id=message_id,
         assessed_ess_workers=assessed_ess_workers,
         total_ess_workers=total_ess_workers,
@@ -276,17 +284,16 @@ def render_email(email_template, receiver_dict, directorate,
     logging.debug(f"template_dict=\n{pprint.pformat(body_dict)}")
     body = email_template.render(**body_dict)
 
-    subject = EMAIL_SUBJECT_TEMPLATE.format(directorate, iso8601_date)
+    subject = EMAIL_SUBJECT_TEMPLATE.format(directorate, report_date)
     message_dict = dict(subject=subject,
                         body=HTMLBody(body),
                         to_recipients=receiver_dict["receiver_email"],
                         cc_recipients=receiver_dict["cc_email"],
-                        reply_to=DATASCIENCE_CREW, )
+                        reply_to=DATASCIENCE_CREW,)
 
     return (message_id, message_dict,
             directorate_employee_status_filename,
-            directorate_org_unit_status_filename,
-            directorate_missing_employee_filename)
+            directorate_org_unit_status_filename)
 
 
 def send_email(account, email_message_dict, attachments, message_uuid, dry_run):
@@ -315,6 +322,7 @@ def send_email(account, email_message_dict, attachments, message_uuid, dry_run):
 
     logging.debug(f"Attaching data files")
     for attachment_name, attachment_file in attachments:
+        logging.debug(f"attachment_name='{attachment_name}'")
         message.attach(
             FileAttachment(name=attachment_name, content=attachment_file.read())
         )
@@ -355,6 +363,7 @@ if __name__ == "__main__":
 
     args, _ = parser.parse_known_args()
     report_date = pandas.to_datetime(args.report_date, format="%Y-%m-%d")
+    report_date_str = report_date.strftime(ISO8601_DATE_FORMAT)
 
     dry_run = not args.not_a_drill
     logging.warning(f"**This {'is' if dry_run else '*is not*'} a drill**")
@@ -407,13 +416,13 @@ if __name__ == "__main__":
         hr_combined_people_df[DATE_COL] = pandas.to_datetime(
             hr_combined_people_df[DATE_COL], format="%Y-%m-%dT%H:%M:%S"
         ).dt.strftime(ISO8601_DATE_FORMAT)
-        directorate_people_df = get_today_directorate_df(hr_combined_people_df, directorate, report_date)
+        directorate_people_df = get_today_directorate_df(hr_combined_people_df, directorate, report_date_str)
         directorate_master_people_df = get_today_directorate_df(hr_master_df, directorate, date_filter=False)
 
         hr_org_unit_df[DATE_COL] = pandas.to_datetime(
             hr_org_unit_df[DATE_COL], format=ISO8601_DATE_FORMAT
         ).dt.strftime(ISO8601_DATE_FORMAT)
-        directorate_org_df = get_today_directorate_df(hr_org_unit_df, directorate, report_date)
+        directorate_org_df = get_today_directorate_df(hr_org_unit_df, directorate, report_date_str)
 
         if directorate_people_df.shape[0] == 0 or directorate_org_df.shape[0] == 0:
             logging.debug("Skipping because one of the DFs is empty...")
@@ -427,9 +436,18 @@ if __name__ == "__main__":
         assessed_essential_workers, total_esseential_workers = get_email_stats(directorate_people_df,
                                                                                directorate_master_people_df)
 
-        directorate_files = write_directorate_file(directorate_people_df[HR_PEOPLE_SHARE_COLS],
-                                                   directorate_org_pivot_df,
-                                                   directorate_missing_people_df[HR_MISSING_PEOPLE_SHARE_COLS])
+        # Attachment file generator
+        directorate_files = (
+            filename
+            for data_files in (
+                write_employee_file((
+                    (PRESENT_EMPLOYEES_SHEETNAME, directorate_people_df[HR_PEOPLE_SHARE_COLS]),
+                    (MISSING_EMPLOYEES_SHEETNAME, directorate_missing_people_df[HR_MISSING_PEOPLE_SHARE_COLS])
+                )),
+                write_org_file(directorate_org_pivot_df)
+            )
+            for filename in data_files
+        )
 
         # Rendering email
         approvers_with_missing = directorate_missing_people_df[APPROVER_MASTER_COL].unique()
@@ -438,11 +456,12 @@ if __name__ == "__main__":
                                                                        directorate,
                                                                        assessed_essential_workers,
                                                                        total_esseential_workers,
-                                                                       approvers_with_missing)
+                                                                       approvers_with_missing,
+                                                                       report_date_str)
 
         # And finally, sending the email
         attachment_zip = zip(data_filenames, directorate_files)
-        result = send_email(exchange_account, email_message_dict, attachment_zip, message_id)
+        result = send_email(exchange_account, email_message_dict, attachment_zip, message_id, dry_run)
 
         assert result, f"Email {message_id} did not send successfully"
 
