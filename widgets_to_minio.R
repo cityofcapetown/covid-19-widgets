@@ -80,6 +80,8 @@ save_widget <- function(widg, destdir) {
     print(paste("Saved to", savepath))
   }
 }
+
+
 # CREATE DIRS =================================================================
 public_sourcedir <- "data/public"
 unlink(public_sourcedir, recursive = T )
@@ -715,19 +717,20 @@ every_nth = function(n) {
   return(function(x) {x[c(TRUE, rep(FALSE, n - 1))]})
 }
 
-cct_subdistrict_confirmed_cases_bar_chart <- ct_subdistrict_daily_confirmed_cases %>% 
-  ggplot(aes(fill=subdistrict, y=count, x=as.character(date))) +
-  geom_col(position = position_dodge2(width = 0.9, preserve = "single")) +
-  scale_color_manual(values=c(rep("white", 17)))+
-  theme(legend.position="none") + 
-  xlab("") +
-  ylab("Daily Confirmed Cases") +
-  theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
-  scale_x_discrete(breaks = every_nth(n = 5)) +
-  facet_wrap(~subdistrict, ncol = 4)
-  
-cct_subdistrict_confirmed_cases_bar_chart <- ggplotly(cct_subdistrict_confirmed_cases_bar_chart) %>% plotly::config(displayModeBar = F)  
-save_widget(cct_subdistrict_confirmed_cases_bar_chart, private_destdir)
+# cct_subdistrict_confirmed_cases_bar_chart <- ct_subdistrict_daily_confirmed_cases %>% 
+#   ggplot(aes(fill=subdistrict, y=count, x=as.character(date))) +
+#   geom_col(position = position_dodge2(width = 0.9, preserve = "single")) +
+#   scale_color_manual(values=c(rep("white", 17)))+
+#   theme(legend.position="none") + 
+#   xlab("") +
+#   ylab("Daily Confirmed Cases") +
+#   theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+#   scale_x_discrete(breaks = every_nth(n = 5)) +
+#   facet_wrap(~subdistrict, ncol = 4)
+#   
+# cct_subdistrict_confirmed_cases_bar_chart <- ggplotly(cct_subdistrict_confirmed_cases_bar_chart) %>% plotly::config(displayModeBar = F)  
+# save_widget(cct_subdistrict_confirmed_cases_bar_chart, private_destdir)
+
 
 # ct subdistrict presumed active -------------------
 ct_subdistrict_daily_active_cases  <- 
@@ -768,6 +771,20 @@ ct_subdistrict_cumulative_daily_counts <- left_join(ct_subdistrict_daily_active_
   mutate(presumed_recovered = cumulative_cases - cumulative_deaths - presumed_active) %>%
   ungroup() 
 
+# ct cumulative daily counts bar chart ----------------
+ct_cumulative_daily_counts_bar_chart <-  ct_subdistrict_cumulative_daily_counts %>%
+  plot_ly(.,  x = ~date, 
+          y = ~presumed_active, 
+          type = 'bar', 
+          name = 'Presumed Active',
+          marker = list(color = 'rgba(55, 128, 191, 0.7)')) %>%
+  add_trace(y = ~presumed_recovered, name = 'Presumed Recovered <br> * 14 days since diagnosis', 
+            marker = list(color = 'rgba(50, 171, 96, 0.7)')) %>%
+  add_trace(y = ~cumulative_deaths, name = 'Cumulative Deaths',
+            marker = list(color = 'rgba(219, 64, 82, 0.7)')) %>%
+  layout(barmode = 'stack', legend = list(orientation = 'h')) 
+
+save_widget(ct_cumulative_daily_counts_bar_chart, private_destdir)
 
 for (subdist in unique(ct_subdistrict_cumulative_daily_counts$subdistrict)) {
   subdist_cumulative_daily_counts <- ct_subdistrict_cumulative_daily_counts %>% filter(subdistrict == subdist) 
@@ -796,8 +813,6 @@ y_upper <- max(ct_subdistrict_cumulative_daily_counts$cumulative_cases)
 ct_subdistrict_cumulative_daily_counts_bar_chart <- ct_subdistrict_cumulative_daily_counts %>%
     group_by(subdistrict) %>%
     group_map(.f = ~{          
-          ## fill missing levels w/ displ = 0, cyl = first available value 
-          #complete(.x, trans, fill = list(displ = 0, cyl = head(.x$cyl, 1))) %>%
           plot_ly(.,  x = ~date, 
                y = ~presumed_active, 
                type = 'bar', 
@@ -823,31 +838,81 @@ ct_subdistrict_cumulative_daily_counts_bar_chart <- ct_subdistrict_cumulative_da
 
 save_widget(ct_subdistrict_cumulative_daily_counts_bar_chart, private_destdir)
 
-# ct_subdistrict_daily_counts -------------
-for (sub in unique(ct_subdistrict_cumulative_daily_counts$subdistrict)) {
-  plt <- ct_subdistrict_cumulative_daily_counts %>% 
-    filter(`subdistrict` == sub) %>%  ggplot(aes(fill=subdistrict, y=cases, as.character(x=date))) +
-    geom_col(position = position_dodge2(width = 0.9, preserve = "single")) +
-    scale_color_manual(values=c(rep("white", 17)))+
-    xlab("") +
-    ylab("Daily Confirmed Cases") +
-    theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
-    scale_x_discrete(breaks = every_nth(n = 5))
-  
-  plt <- ggplotly(plt) %>% plotly::config(displayModeBar = F)
-  plt$sizingPolicy$padding = 0
-  plt$sizingPolicy$browser$padding = 0
-  plt$sizingPolicy$viewer$padding = 0
-  
-  obj_name <- print(paste("cct_", sub, "_confirmed_timeseries", sep = ""))  
-  assign(obj_name, plt)
+
+# ct daily counts bar chart -------------------------------
+ct_daily_counts_bar_chart <-  ct_subdistrict_cumulative_daily_counts %>%
+  plot_ly(.,  x = ~date, 
+          y = ~cases, 
+          type = 'bar', 
+          name = 'New Cases',
+          marker = list(color = 'rgba(55, 128, 191, 0.7)')) %>%
+  add_trace(y = ~gen_admissions, name = 'General Hospital Admissions', 
+            marker = list(color = 'rgba(50, 171, 96, 0.7)')) %>%
+  add_trace(y = ~icu_admissions, name = 'ICU Admissions', 
+            marker = list(color = 'rgba(255,165,0, 0.7)')) %>%
+  add_trace(y = ~deaths, name = 'Deaths',
+            marker = list(color = 'rgba(219, 64, 82, 0.7)')) %>%
+  layout(barmode = 'stack', legend = list(orientation = 'h'))
+
+save_widget(ct_daily_counts_bar_chart, private_destdir)
+
+
+for (subdist in unique(ct_subdistrict_cumulative_daily_counts$subdistrict)) {
+  subdist_cumulative_daily_counts <- ct_subdistrict_cumulative_daily_counts %>% filter(subdistrict == subdist) 
+  p <- subdist_cumulative_daily_counts %>%
+    plot_ly(.,  x = ~date, 
+            y = ~cases, 
+            type = 'bar', 
+            name = 'New Cases',
+            marker = list(color = 'rgba(55, 128, 191, 0.7)')) %>%
+    add_trace(y = ~gen_admissions, name = 'General Hospital Admissions', 
+              marker = list(color = 'rgba(50, 171, 96, 0.7)')) %>%
+    add_trace(y = ~icu_admissions, name = 'ICU Admissions', 
+              marker = list(color = 'rgba(255,165,0, 0.7)')) %>%
+    add_trace(y = ~deaths, name = 'Deaths',
+              marker = list(color = 'rgba(219, 64, 82, 0.7)')) %>%
+    layout(barmode = 'stack')
+  obj_name <- print(paste("cct_", str_replace_all(str_replace_all(subdist, " ", "_"), "&", ""), "_daily_counts_bar_chart", sep = ""))  
+  assign(obj_name, p)
   savepath <- file.path(getwd(), private_destdir, 
                         paste(obj_name, "html", sep = "."))
   libdir <- file.path(getwd(), private_destdir, 
                       "libdir")
   saveWidget(get(obj_name), savepath, selfcontained = F, libdir = libdir)
-  rm(plt)
+  rm(p)
 }
+
+y_upper <- max(ct_subdistrict_cumulative_daily_counts$cases + 
+  ct_subdistrict_cumulative_daily_counts$deaths + 
+  ct_subdistrict_cumulative_daily_counts$gen_admissions + 
+  ct_subdistrict_cumulative_daily_counts$icu_admissions)
+ct_subdistrict_daily_counts_bar_chart <- ct_subdistrict_cumulative_daily_counts %>%
+  group_by(subdistrict) %>%
+  group_map(.f = ~{          
+    plot_ly(.,  x = ~date, 
+            y = ~cases, 
+            type = 'bar', 
+            name = 'New Cases',
+            marker = list(color = 'rgba(55, 128, 191, 0.7)'),
+      showlegend = (.y == "Eastern"), legendgroup = "group1") %>%
+      add_trace(y = ~gen_admissions, name = 'General Hospital Admissions', 
+                marker = list(color = 'rgba(50, 171, 96, 0.7)')) %>%
+      add_trace(y = ~icu_admissions, name = 'ICU Admissions', 
+                marker = list(color = 'rgba(255,165,0, 0.7)')) %>%
+      add_trace(y = ~deaths, name = 'Deaths',
+                marker = list(color = 'rgba(219, 64, 82, 0.7)')) %>%
+      layout(yaxis = list(range = c(0, y_upper)),
+             barmode = 'stack') %>%
+      add_annotations(text = as.character(.y), x = 0.05, y = 0.95, yref = "paper", xref = "paper",
+                      xanchor = "left", yanchor = "top", showarrow = FALSE, font = list(size = 14), align = "left")}) %>%
+  subplot(margin = 0.01, 
+          shareX = TRUE, 
+          shareY = TRUE, 
+          nrows = 4, 
+          titleX = F, 
+          titleY = F) %>% layout(legend = list(orientation = 'h'))
+
+save_widget(ct_subdistrict_daily_counts_bar_chart, private_destdir)
 
 # wc_daily_count_timeseries --------------
 wc_daily_confirmed_cases <- wc_all_cases %>% 
@@ -913,12 +978,7 @@ rsa_dem_pyramid <- ggplot(rsa_pop_genders_ages) +
   # Kludge, adapt the -3000 and 3000 according to the breaks
   scale_y_continuous(labels=abs, breaks=c(-5000, 0, 5000)) +
   theme(#axis.title.x=element_blank(),
-    axis.text.x=element_blank())#,
-#axis.ticks.x=element_blank())
-# Alternative with the values on the bars instead of on the X axis
-#geom_text(aes(label=Homens,   x=Idade, y=Homens  ),  position="dodge") +
-#geom_text(aes(label=Mulheres, x=Idade, y=Mulheres),  position="dodge") +
-#theme(axis.title.x=element_blank(), axis.text.x=element_blank(), axis.ticks.x=element_blank())
+    axis.text.x=element_blank())
 
 rsa_dem_pyramid <- ggplotly(rsa_dem_pyramid) %>% plotly::config(displayModeBar = F)  
 save_widget(rsa_dem_pyramid, public_destdir)
@@ -1405,6 +1465,65 @@ save_widget(ct_heatmap, public_destdir)
 #   popups <- append(popups, as.character(d5))
 #   
 # }
+
+# income data --------------------------------
+
+# income_totals_cash <- income_totals %>% 
+#   gather(key = "channel", value = "amount", -DateTimestamp) %>% 
+#   group_by(DateTimestamp) %>%
+#   summarise(daily_revenue = sum(amount)) %>% 
+#   ungroup() %>% mutate(year = year(DateTimestamp),
+#                          month = month(DateTimestamp)) %>% group_by(year, month) %>% summarise(mean_daily_revenue = mean(daily_revenue)) %>% ungroup()
+# 
+# income_totals_cash$month <- factor(income_totals_cash$month)
+# levels(income_totals_cash$month) <- month.abb
+# 
+# # plotting reference lines across each facet:
+# 
+# referenceLines <- income_totals_cash  # \/ Rename
+# colnames(referenceLines)[2] <- "groupVar"
+# zp <- ggplot(income_totals_cash,
+#              aes(x = year, y = mean_daily_revenue))
+# zp <- zp + geom_line(data = referenceLines,  # Plotting the "underlayer"
+#                      aes(x = year, y = mean_daily_revenue, group = groupVar),
+#                      colour = "GRAY", alpha = 1/2, size = 1/2)
+# zp <- zp + geom_line(size = 1)  # Drawing the "overlayer"
+# zp <- zp + facet_wrap(~ month)
+# zp <- zp + theme_bw()
+# 
+# ggplotly()
+# 
+# # Stacked category chart
+# latest_income_total_date <- max(income_totals$DateTimestamp)
+# date_window <- substr(seq(from = latest_income_total_date - 30, to = latest_income_total_date, by = "days"), start = 6, stop = 10)
+# income_totals_all <- income_totals %>%  
+#   mutate(filter_key = substr(DateTimestamp, start = 6, stop = 10)) %>% 
+#   filter(filter_key %in% date_window) %>% select(-filter_key)
+# 
+# income_totals_all <- income_totals_all %>% 
+#   gather(key = "channel", value = "amount", -DateTimestamp)  %>% 
+#   mutate(year = year(DateTimestamp),
+#                        day = yday(DateTimestamp)) %>%
+#   group_by(year, channel) %>%
+#   summarise(average_amount = mean(amount)) %>%
+#   ungroup() %>% 
+#   spread(key = channel, value = average_amount)
+# 
+# daily_ave_income_categories <- plot_ly(income_totals_all, x = ~year, y = ~Bank, name = 'Bank', type = 'bar')
+# daily_ave_income_categories <- daily_ave_income_categories %>% add_trace(y = ~Cash, name = 'Cash')
+# daily_ave_income_categories <- daily_ave_income_categories %>% add_trace(y = ~DebitOrders, name = 'Debit Orders')
+# daily_ave_income_categories <- daily_ave_income_categories %>% add_trace(y = ~EPortal, name = 'ePortal')
+# daily_ave_income_categories <- daily_ave_income_categories %>% add_trace(y = ~GroupAccounts, name = 'Group Accounts')
+# daily_ave_income_categories <- daily_ave_income_categories %>% add_trace(y = ~UnidentifiedCash, name = 'Unidentified Cash')
+# daily_ave_income_categories <- daily_ave_income_categories %>% layout(title = '',
+#                       xaxis = list(title = "",
+#                                    showgrid = FALSE),
+#                       yaxis = list(title = "Average Daily Income in the Last 30 Days (Rm)",
+#                                    showgrid = FALSE),
+#                       barmode = "stack")
+# 
+# daily_ave_income_categories
+
 
 # SEND TO MINIO =================================================================
 for (filename in list.files(public_destdir, recursive = T)) {
