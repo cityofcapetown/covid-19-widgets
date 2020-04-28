@@ -1,4 +1,6 @@
+import datetime
 import json
+import math
 import logging
 import os
 import sys
@@ -26,7 +28,6 @@ STATUS_COL = "Categories"
 SUCCINCT_STATUS_COL = "SuccinctStatus"
 COVID_SICK_COL = "CovidSick"
 ABSENTEEISM_RATE_COL = "Absent"
-COVID_SICK_COL = "CovidSick"
 DAY_COUNT_COL = "DayCount"
 
 TZ_STRING = "Africa/Johannesburg"
@@ -99,17 +100,21 @@ def get_plot_df(succinct_hr_df):
 
 
 def generate_plot(plot_df, sast_tz='Africa/Johannesburg'):
-    start_date = plot_df[DATE_COL_NAME].min()
-    end_date = pandas.Timestamp.now(tz=sast_tz).date()
+    start_date = datetime.datetime.combine(
+        plot_df[DATE_COL_NAME].min(), datetime.datetime.min.time()
+    )
+    end_date = datetime.datetime.combine(
+        pandas.Timestamp.now(tz=sast_tz).date(), datetime.datetime.min.time()
+    )
 
     TOOLTIPS = [
         ("Date", "@Date{%F}"),
-        ("Absenteeism Rate", f"@{ABSENTEEISM_RATE_COL}{{0.0 %}}"),
-        ("Covid-19 Related illness", f"@{COVID_SICK_COL}{{0.0 %}}"),
-        ("Number reported", f"@{DAY_COUNT_COL}{{0 a}}")
+        ("Essential Staff Absent", f"@{ABSENTEEISM_RATE_COL}{{0.0 %}}"),
+        ("Covid-19 Exposure", f"@{COVID_SICK_COL}{{0.0 %}}"),
+        ("Essential Staff Assessed", f"@{DAY_COUNT_COL}{{0 a}}")
     ]
     hover_tool = HoverTool(tooltips=TOOLTIPS,
-                           formatters={'Date': 'datetime'})
+                           formatters={'@Date': 'datetime'})
     # Main plot
     line_plot = figure(
         title=None,
@@ -123,7 +128,7 @@ def generate_plot(plot_df, sast_tz='Africa/Johannesburg'):
 
     # Adding count on the right
     line_plot.extra_y_ranges = {"count_range": Range1d(start=0, end=plot_df[DAY_COUNT_COL].max() * 1.1)}
-    second_y_axis = LinearAxis(y_range_name="count_range", axis_label="Number Assessed")
+    second_y_axis = LinearAxis(y_range_name="count_range", axis_label="Essential Staff Assessed")
     line_plot.add_layout(second_y_axis, 'right')
 
     # Bar plot for counts
@@ -132,13 +137,14 @@ def generate_plot(plot_df, sast_tz='Africa/Johannesburg'):
 
     # Line plots
     line_plot.line(x=DATE_COL_NAME, y=ABSENTEEISM_RATE_COL, color='red', source=plot_df, line_width=5)
-    line_plot.scatter(x=DATE_COL_NAME, y=ABSENTEEISM_RATE_COL, fill_color='red', source=plot_df, size=20, line_alpha=0)
+    line_plot.scatter(x=DATE_COL_NAME, y=ABSENTEEISM_RATE_COL, fill_color='red', source=plot_df, size=12, line_alpha=0)
 
     line_plot.line(x=DATE_COL_NAME, y=COVID_SICK_COL, color='orange', source=plot_df, line_width=5)
-    line_plot.scatter(x=DATE_COL_NAME, y=COVID_SICK_COL, fill_color='orange', source=plot_df, size=20, line_alpha=0)
+    line_plot.scatter(x=DATE_COL_NAME, y=COVID_SICK_COL, fill_color='orange', source=plot_df, size=12, line_alpha=0)
 
     # axis formatting
     line_plot.xaxis.formatter = DatetimeTickFormatter(days="%Y-%m-%d")
+    line_plot.xaxis.major_label_orientation = math.pi / 4
 
     line_plot.yaxis.formatter = NumeralTickFormatter(format="0 %")
     second_y_axis.formatter = NumeralTickFormatter(format="0 a")
@@ -146,7 +152,7 @@ def generate_plot(plot_df, sast_tz='Africa/Johannesburg'):
     # Legend Location
     line_plot.legend.location = "bottom_left"
 
-    plot_html = file_html(line_plot, CDN, "Business Continuity Absenteeism Time Series")
+    plot_html = file_html(line_plot, CDN, "Business Continuity HR Capacity Time Series")
 
     return plot_html
 

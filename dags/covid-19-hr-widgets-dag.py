@@ -83,3 +83,6 @@ latest_values_operator = covid_19_widget_task(LATEST_VALUES)
 
 ABSENTEEISM_LINE_PLOT = 'hr-absenteeism-plot'
 absenteeism_operator = covid_19_widget_task(ABSENTEEISM_LINE_PLOT)
+
+BUSUNIT_STATUS_PLOT = 'hr-busunit-status-plot'
+busunit_status_operator = covid_19_widget_task(BUSUNIT_STATUS_PLOT)

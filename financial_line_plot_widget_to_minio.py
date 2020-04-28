@@ -1,3 +1,4 @@
+import datetime
 import json
 import math
 import logging
@@ -106,15 +107,19 @@ def generate_plotting_datasource(income_df, payments_df):
 
 
 def generate_plot(plot_df, start_date="2020-03-01", sast_tz='Africa/Johannesburg'):
-    start_date = pandas.Timestamp(start_date, tz=sast_tz).date()
-    end_date = pandas.Timestamp.now(tz=sast_tz).date()
+    start_date = datetime.datetime.combine(
+        pandas.Timestamp(start_date, tz=sast_tz).date(), datetime.datetime.min.time()
+    )
+    end_date = datetime.datetime.combine(
+        pandas.Timestamp.now(tz=sast_tz).date(), datetime.datetime.min.time()
+    )
 
     TOOLTIPS = [
         ("Date", "@Date{%F}"),
-        *[(col, f"@{col}{{0.0 a}}") for col in plot_df.columns if col not in ("Date")]
+        *[(col, f"@{col}{{0.0 a}}") for col in plot_df.columns if col not in ["Date"]]
     ]
     hover_tool = HoverTool(tooltips=TOOLTIPS,
-                           formatters={'Date': 'datetime'})
+                           formatters={'@Date': 'datetime'})
 
     # Main plot
     line_plot = figure(

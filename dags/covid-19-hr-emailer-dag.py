@@ -4,7 +4,7 @@ from airflow.contrib.kubernetes.secret import Secret
 
 from datetime import datetime, timedelta
 
-DAG_STARTDATE = datetime(2020, 4, 1)
+DAG_STARTDATE = datetime(2020, 4, 23)
 default_args = {
     'owner': 'airflow',
     'depends_on_past': False,
@@ -23,8 +23,10 @@ startup_cmd = (
     "pip3 install $DB_UTILS_LOCATION/$DB_UTILS_PKG"
 )
 
-dag_interval = timedelta(hours=1)
-dag = DAG('covid-19-city-map-widgets',
+# At 6am, every weekday
+# NB because of Airflow's dag trigger semantics, the run at 6am will apply to the previous day
+dag_interval = "0 4 * * 1-5"
+dag = DAG('covid-19-hr-emailer',
           start_date=DAG_STARTDATE,
           catchup=False,
           default_args=default_args,
@@ -60,9 +62,9 @@ k8s_run_args = {
 
 def covid_19_widget_task(task_name, task_kwargs={}):
     """Factory for k8sPodOperator"""
-    name = "covid-19-city-map-widgets-{}".format(task_name)
+    name = "covid-19-hr-emailer-{}".format(task_name)
     run_args = {**k8s_run_args.copy(), **task_kwargs}
-    run_cmd = "bash -c '{} && \"$COVID_19_WIDGETS_DIR\"/bin/{}.sh'".format(startup_cmd, task_name)
+    run_cmd = "bash -c '{} && \"$COVID_19_WIDGETS_DIR\"/bin/{}.sh {{{{ ds }}}}'".format(startup_cmd, task_name)
 
     operator = KubernetesPodOperator(
         cmds=["bash", "-cx"],
@@ -78,11 +80,5 @@ def covid_19_widget_task(task_name, task_kwargs={}):
 
 
 # Defining tasks
-CITY_MAP_LAYERS_GENERATE = 'city-map-layers-generate'
-city_map_layers_generate_operator = covid_19_widget_task(CITY_MAP_LAYERS_GENERATE)
-
-CITY_MAP_PLOT = 'city-map-plot'
-city_map_plot_operator = covid_19_widget_task(CITY_MAP_PLOT)
-
-# Dependencies
-city_map_layers_generate_operator >> city_map_plot_operator
+EMAIL_TASK = 'hr-bp-emailer'
+email_operator = covid_19_widget_task(EMAIL_TASK)

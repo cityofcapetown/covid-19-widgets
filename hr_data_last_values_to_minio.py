@@ -1,3 +1,4 @@
+import datetime
 import json
 import logging
 import os
@@ -14,10 +15,13 @@ MINIO_CLASSIFICATION = minio_utils.DataClassification.EDGE
 DATA_RESTRICTED_PREFIX = "data/private/"
 HR_DATA_FILENAME = "business_continuity_people_status.csv"
 HR_MASTER_DATA_FILENAME = "city_people.csv"
+STAFF_NUMBER_COL_NAME = "StaffNumber"
 DATE_COL_NAME = "Date"
 STATUS_COL = "Categories"
 SUCCINCT_STATUS_COL = "SuccinctStatus"
+ESSENTIAL_COL = "EssentialStaff"
 
+STATUS_WINDOW_LENGTH = 3
 TZ_STRING = "Africa/Johannesburg"
 ISO_TIMESTAMP_FORMAT = "%Y-%m-%dT%H:%M"
 
@@ -62,7 +66,7 @@ COVID_STATUSES = {
 }
 
 WIDGETS_RESTRICTED_PREFIX = "widgets/private/business_continuity_"
-OUTPUT_VALUE_FILENAME = "values.json"
+OUTPUT_VALUE_FILENAME = "values_v2.json"
 
 
 def get_data(minio_key, minio_access, minio_secret):
@@ -78,12 +82,6 @@ def get_data(minio_key, minio_access, minio_secret):
 
         data_df = pandas.read_csv(temp_datafile.name)
 
-    data_df[DATE_COL_NAME] = pandas.to_datetime(data_df[DATE_COL_NAME])
-    logging.debug(f"data_df.columns=\n{data_df.columns}")
-    logging.debug(
-        f"data_df.columns=\n{pprint.pformat(data_df.dtypes.to_dict())}"
-    )
-
     return data_df
 
 
@@ -93,14 +91,28 @@ def make_statuses_succinct_again(hr_df):
     return hr_df
 
 
-def get_latest_values_dict(hr_df):
-    most_recent_date = hr_df[DATE_COL_NAME].max()
-    current_hr_df = hr_df[
-        hr_df[DATE_COL_NAME].dt.date == most_recent_date.date()
-        ]
-    logging.debug(f"most_recent_date.date()={most_recent_date.date()}")
+def get_current_hr_df(hr_df):
+    most_recent_ts = hr_df[DATE_COL_NAME].max()
+    logging.debug(f"most_recent_ts.date()={most_recent_ts.date()}")
 
-    last_updated = most_recent_date.strftime(ISO_TIMESTAMP_FORMAT)
+    date_window_start = most_recent_ts.date() - datetime.timedelta(days=STATUS_WINDOW_LENGTH)
+    logging.debug(f"date_window_start={date_window_start}")
+
+    current_hr_df = hr_df[
+        hr_df[DATE_COL_NAME].dt.date >= date_window_start
+        ].sort_values(
+        by=[STAFF_NUMBER_COL_NAME, DATE_COL_NAME], ascending=False
+    ).drop_duplicates(
+        subset=[STAFF_NUMBER_COL_NAME]
+    )
+
+    return most_recent_ts, current_hr_df
+
+
+def get_latest_values_dict(hr_df, hr_master_df):
+    most_recent_ts, current_hr_df = get_current_hr_df(hr_df)
+
+    last_updated = most_recent_ts.strftime(ISO_TIMESTAMP_FORMAT)
     staff_reported = current_hr_df.shape[0]
 
     staff_at_work = (current_hr_df[SUCCINCT_STATUS_COL] == WORKING_STATUS).sum() if staff_reported > 0 else 0
@@ -108,12 +120,16 @@ def get_latest_values_dict(hr_df):
     staff_sick = current_hr_df[STATUS_COL].isin(SICK_STATUSES).sum() if staff_reported > 0 else 0
     staff_covid = current_hr_df[STATUS_COL].isin(COVID_STATUSES).sum() if staff_reported > 0 else 0
 
+    staff_essential = hr_master_df[ESSENTIAL_COL].sum()
+
     business_continuity_dict = {
         "last_updated": last_updated,
-        "staff_at_work": f"{staff_at_work} / {staff_reported}",
+        "staff_at_work": str(staff_at_work),
+        "staff_reported": str(staff_reported),
         "staff_working_remotely": str(staff_working_remotely),
         "staff_sick": str(staff_sick),
         "staff_covid": str(staff_covid),
+        "staff_essential": str(staff_essential)
     }
     logging.debug(f"business_continuity_dict=\n{pprint.pformat(business_continuity_dict)}")
 
@@ -164,6 +180,15 @@ if __name__ == "__main__":
     hr_transactional_data_df = get_data(HR_DATA_FILENAME,
                                         secrets["minio"]["edge"]["access"],
                                         secrets["minio"]["edge"]["secret"])
+    hr_transactional_data_df[DATE_COL_NAME] = pandas.to_datetime(hr_transactional_data_df[DATE_COL_NAME])
+    logging.debug(f"data_df.columns=\n{hr_transactional_data_df.columns}")
+    logging.debug(
+        f"data_df.columns=\n{pprint.pformat(hr_transactional_data_df.dtypes.to_dict())}"
+    )
+
+    hr_master_data_df = get_data(HR_MASTER_DATA_FILENAME,
+                                 secrets["minio"]["edge"]["access"],
+                                 secrets["minio"]["edge"]["secret"])
     logging.info("...Fetch[ed] data.")
 
     logging.info("Add[ing] succinct status column...")
@@ -171,7 +196,7 @@ if __name__ == "__main__":
     logging.info("...Add[ed] succinct status column.")
 
     logging.info("Generat[ing] latest values...")
-    latest_values_dict = get_latest_values_dict(hr_transactional_data_df)
+    latest_values_dict = get_latest_values_dict(hr_transactional_data_df, hr_master_data_df)
     latest_values_json = to_json_data(latest_values_dict)
     logging.info("...Generat[ed] latest values")
 
