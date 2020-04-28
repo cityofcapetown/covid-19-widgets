@@ -23,8 +23,9 @@ startup_cmd = (
     "pip3 install $DB_UTILS_LOCATION/$DB_UTILS_PKG"
 )
 
-# At 10pm, every weekday
-dag_interval = "0 18 * * 1-5"
+# At 6am, every weekday
+# NB because of Airflow's dag trigger semantics, the run at 6am will apply to the previous day
+dag_interval = "0 6 * * 1-5"
 dag = DAG('covid-19-hr-emailer',
           start_date=DAG_STARTDATE,
           catchup=False,
