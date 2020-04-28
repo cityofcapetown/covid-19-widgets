@@ -63,7 +63,7 @@ def covid_19_widget_task(task_name, task_kwargs={}):
     """Factory for k8sPodOperator"""
     name = "covid-19-hr-emailer-{}".format(task_name)
     run_args = {**k8s_run_args.copy(), **task_kwargs}
-    run_cmd = "bash -c '{} && \"$COVID_19_WIDGETS_DIR\"/bin/{}.sh'".format(startup_cmd, task_name)
+    run_cmd = "bash -c '{} && \"$COVID_19_WIDGETS_DIR\"/bin/{}.sh {{{{ ds }}}}'".format(startup_cmd, task_name)
 
     operator = KubernetesPodOperator(
         cmds=["bash", "-cx"],

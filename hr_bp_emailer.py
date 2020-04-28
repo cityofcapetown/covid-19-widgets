@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import argparse
 import datetime
 import json
 import logging
@@ -12,6 +13,7 @@ import uuid
 from db_utils import minio_utils
 from exchangelib import DELEGATE, Account, Credentials, Configuration, NTLM, Build, Version, HTMLBody, Message, \
     FileAttachment
+import holidays
 import jinja2
 import pandas
 
@@ -152,14 +154,13 @@ def get_exchange_auth(username, password):
     return account
 
 
-def get_today_directorate_df(data_df, directorate, date_filter=True):
+def get_today_directorate_df(data_df, directorate, filter_date=None, date_filter=True):
     logging.debug(f"data_df.head(5)=\n{data_df.head(5)}")
-    today = datetime.datetime.now().strftime(ISO8601_DATE_FORMAT)
-    logging.debug(f"directorate={directorate}, today={today}")
+    logging.debug(f"directorate={directorate}, filter_date={filter_date}")
     query_df = data_df.loc[
         (data_df[DIRECTORATE_COL] == directorate) &
-        ((data_df[DATE_COL] == today) if date_filter else True)
-        ]
+        ((data_df[DATE_COL] == filter_date) if date_filter else True)
+    ]
     logging.debug(f"query_df.head(5)=\n{query_df.head(5)}")
 
     return query_df
@@ -288,7 +289,7 @@ def render_email(email_template, receiver_dict, directorate,
             directorate_missing_employee_filename)
 
 
-def send_email(account, email_message_dict, attachments, message_uuid):
+def send_email(account, email_message_dict, attachments, message_uuid, dry_run):
     logging.debug(f"Saving {message_uuid}.json to Minio")
     with tempfile.TemporaryDirectory() as tempdir:
         local_path = os.path.join(tempdir, f"{message_uuid}.json")
@@ -329,7 +330,10 @@ def send_email(account, email_message_dict, attachments, message_uuid):
     for logger in exchangelib_loggers:
         logger.setLevel(logging.INFO)
 
-    message.send(save_copy=True)
+    if not dry_run:
+        message.send(save_copy=True)
+    else:
+        logging.warning("**--not-a-drill flag not set, hence not sending emails...**")
 
     return True
 
@@ -337,6 +341,30 @@ def send_email(account, email_message_dict, attachments, message_uuid):
 if __name__ == "__main__":
     logging.basicConfig(level=logging.DEBUG,
                         format='%(asctime)s-%(module)s.%(funcName)s [%(levelname)s]: %(message)s')
+
+    # Getting date to run for
+    parser = argparse.ArgumentParser(
+        description="Pipeline script that emails HR Business Partners a report on essential workers assessed"
+    )
+
+    parser.add_argument('-r', '--report-date', required=True,
+                        help='''Date for which the report should run. Should be an ISO8601 date, e.g. 2020-04-28''')
+
+    parser.add_argument('-d', '--not-a-drill', required=False, default=False, action="store_true",
+                        help="""Boolean flag indicating the emails *should* actually be sent.""")
+
+    args, _ = parser.parse_known_args()
+    report_date = pandas.to_datetime(args.report_date, format="%Y-%m-%d")
+
+    dry_run = not args.not_a_drill
+    logging.warning(f"This {'is' if dry_run else '*is not*'} a drill")
+
+    za_holidays = holidays.CountryHoliday("ZA")
+    if report_date in za_holidays or report_date.weekday == 6:
+        logging.info(
+            f"'{report_date}' is a Sunday or South Africa public holiday, so exiting normally without doing anything..."
+        )
+        sys.exit(0)
 
     # Loading secrets
     SECRETS_PATH_VAR = "SECRETS_PATH"
@@ -377,13 +405,13 @@ if __name__ == "__main__":
         hr_combined_people_df[DATE_COL] = pandas.to_datetime(
             hr_combined_people_df[DATE_COL], format="%Y-%m-%dT%H:%M:%S"
         ).dt.strftime(ISO8601_DATE_FORMAT)
-        directorate_people_df = get_today_directorate_df(hr_combined_people_df, directorate)
+        directorate_people_df = get_today_directorate_df(hr_combined_people_df, directorate, report_date)
         directorate_master_people_df = get_today_directorate_df(hr_master_df, directorate, date_filter=False)
 
         hr_org_unit_df[DATE_COL] = pandas.to_datetime(
             hr_org_unit_df[DATE_COL], format=ISO8601_DATE_FORMAT
         ).dt.strftime(ISO8601_DATE_FORMAT)
-        directorate_org_df = get_today_directorate_df(hr_org_unit_df, directorate)
+        directorate_org_df = get_today_directorate_df(hr_org_unit_df, directorate, report_date)
 
         if directorate_people_df.shape[0] == 0 or directorate_org_df.shape[0] == 0:
             logging.debug("Skipping because one of the DFs is empty...")
@@ -394,7 +422,8 @@ if __name__ == "__main__":
         directorate_missing_people_df = get_missing_workers_df(directorate_people_df, directorate_master_people_df)
         directorate_org_pivot_df = get_pivot_df(directorate_org_df)
 
-        assessed_essential_workers, total_esseential_workers = get_email_stats(directorate_people_df, directorate_master_people_df)
+        assessed_essential_workers, total_esseential_workers = get_email_stats(directorate_people_df,
+                                                                               directorate_master_people_df)
 
         directorate_files = write_directorate_file(directorate_people_df[HR_PEOPLE_SHARE_COLS],
                                                    directorate_org_pivot_df,
