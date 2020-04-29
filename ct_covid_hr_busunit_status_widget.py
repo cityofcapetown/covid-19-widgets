@@ -199,16 +199,16 @@ def generate_plot(status_df):
         # Update xaxis properties
         fig.update_yaxes(
             title_text=abbrevated_directorate_label,
-            # title_text=dir,
+            
             title_font=dict(
-                size=9
+                size=12
             ),
             showline=False,
             showgrid=False,
             zeroline=False,
             tickmode='array',
             ticks='',
-            showticklabels=True,
+            showticklabels=False,
             tickfont=dict(
                 size=5
             ),
