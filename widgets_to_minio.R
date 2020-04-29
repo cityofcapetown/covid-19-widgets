@@ -213,13 +213,13 @@ rsa_latest_deaths <- nrow(covid19za_timeline_deaths)
 rsa_latest_tested <- covid19za_timeline_testing %>% summarise(val = max(cumulative_tests, na.rm = T)) %>% pull(val) %>% .[1]
 
 # Latest values WC ---------------------------------
-wc_latest_update <- max(wc_all_cases$date_of_diagnosis1)
+wc_latest_update <- max(wc_all_cases$Date.of.Diagnosis)
 wc_latest_confirmed <- nrow(wc_all_cases)
 
 # Latest values CT
 ct_latest_update <- wc_latest_update
 ct_latest_confirmed <- nrow(ct_all_cases)
-ct_latest_deaths <- ct_all_cases %>% filter(!is.na(date_of_death)) %>% nrow() 
+ct_latest_deaths <- ct_all_cases %>% filter(!is.na(Date.of.Death)) %>% nrow() 
 
 # expected_future_trajectory -----------------------
 countries_this_far <- global_ts_since_100 %>% 
@@ -290,22 +290,6 @@ rsa_raw_age_fatalities <- covid19za_timeline_deaths  %>%
   summarise(rsa_raw_age_fatalities = n()) %>%
   ungroup() 
 
-# rsa_raw_age_fatality_rate <- left_join(enframe(age_bracket_labels), 
-#                                    rsa_raw_age_fatality_rate, by = c("value" = "age_interval")) %>%
-#   mutate(rsa_raw_age_fatality_rate = replace_na(rsa_raw_age_fatality_rate, 0)) %>%
-#   mutate(rsa_raw_age_fatality_rate = rsa_raw_age_fatality_rate/sum(rsa_raw_age_fatality_rate)) %>%
-#   pull(rsa_raw_age_fatality_rate)*100
-
-# rsa_raw_age_confirmed_cases <- covid19za_timeline_confirmed %>%
-#   mutate(age_interval = findInterval(age, age_brackets, rightmost.closed = TRUE)) %>%
-#   mutate(age_interval = age_bracket_labels[age_interval]) %>%
-#   group_by(age_interval) %>%
-#   summarise(rsa_raw_age_confirmed_cases = n()) %>%
-#   ungroup() 
-# 
-# rsa_age_fatality_rate <- left_join(rsa_raw_age_confirmed_cases, rsa_raw_age_fatalities, by = "age_interval") %>%
-#   mutate(rsa_raw_age_fatalities = replace_na(rsa_raw_age_fatalities, 0)) %>% 
-#   mutate(rsa_age_fatality_rate = rsa_raw_age_fatalities / rsa_raw_age_confirmed)
 rsa_age_fatality_rate <- c(0, 0, 0, 0, 0, 0, 0, 0, 0)
 
 rsa_demographic <- rsa_pop_genders_ages %>% 
@@ -325,35 +309,19 @@ rsa_demographic <- rsa_demographic %>%
 
 # cape town confirmed cases pop pyramid ---------------
 ct_raw_age_confirmed_cases <- ct_all_cases  %>%
-    select(agegroup) %>%
-    separate(agegroup, sep = "[ ]", into = c("age"), extra = "drop") %>%
+    select(Agegroup) %>%
+    separate(Agegroup, sep = "[ ]", into = c("age"), extra = "drop") %>%
     mutate(age_interval = findInterval(age, age_brackets, rightmost.closed = TRUE)) %>%
   mutate(age_interval = age_bracket_labels[age_interval]) %>%
   group_by(age_interval) %>%
   summarise(ct_raw_age_confirmed_cases = n()) %>%
   ungroup()
-# 
-# ct_age_confirmed_case_pct <- ct_raw_age_confirmed_cases %>% 
-#   mutate(ct_age_confirmed_case_pct = ct_raw_age_confirmed_cases / sum(ct_raw_age_confirmed_cases)*100) %>% 
-#   select(age_interval, ct_age_confirmed_case_pct)
-# 
-# cct_demographic <- cct_mid_year_2019_pop_est %>% 
-#   mutate(age_interval = NORM_AGE_COHORT) %>%
-#   group_by(age_interval) %>% 
-#   summarise(cct_population = sum(AMOUNT)) %>% 
-#   ungroup() %>%
-#   mutate(population_pct = cct_population/sum(cct_population)*100) %>%
-#   select(-cct_population) %>%
-#   left_join(., ct_age_confirmed_case_pct, by = "age_interval") %>%
-#   rename(rate_pct = ct_age_confirmed_case_pct) %>%
-#   mutate(population = "CCT Pop %",
-#          fatal_label = "CCT Rate % of Confirmed Cases") 
 
 # cape town case fatality pop pyramid ---------------
 ct_raw_age_deaths <- ct_all_cases  %>%
-  filter(!is.na(date_of_death)) %>%
-  select(agegroup) %>% 
-  separate(agegroup, sep = "[ ]", into = c("age"), extra = "drop") %>%
+  filter(!is.na(Date.of.Death)) %>%
+  select(Agegroup) %>% 
+  separate(Agegroup, sep = "[ ]", into = c("age"), extra = "drop") %>%
   mutate(age_interval = findInterval(age, age_brackets, rightmost.closed = TRUE)) %>% 
   mutate(age_interval = age_bracket_labels[age_interval]) %>%
   group_by(age_interval) %>%
@@ -402,32 +370,6 @@ global_total_deaths <- global_ts_sorted_deaths %>%
   enframe(., value = "global_deaths") %>% 
   mutate(report_date = as_date(global_ts_sorted_deaths$report_date)) %>% 
   select(-name)
-
-# Prepare announcements data
-# covid_general_announcements <- covid_general_announcements %>% 
-#   mutate(Date = dmy(Date))
-# 
-# covid_general_announcements_pretty <- covid_general_announcements %>% mutate(pretty_text = paste("</br> Entity: ", Entity,
-#                                                                                                  "</br> Headline: ", Decision_Title,
-#                                                                                                  "</br> Detail: </br> ", Decision_Description,
-#                                                                                                  sep = "")) %>% select(Date, pretty_text)
-# covid_general_announcements_by_date <- covid_general_announcements_pretty %>% 
-#   group_by(Date) %>% 
-#   summarise(pretty_text = paste0(pretty_text, collapse = "</br> ---------------- </br>")) %>%
-#   ungroup()
-# 
-# announcements_timeseries <- left_join(rsa_total_confirmed, global_total_confirmed, by = "report_date") %>% 
-#   left_join(., wc_total_confirmed, by = "report_date") %>%
-#   left_join(., global_total_deaths, by = "report_date") %>% 
-#   left_join(., covid_general_announcements_by_date, by = c("report_date" = "Date"))
-
-# PULL IN AND PREPARE GEO DATA ==========================================
-# THis code moved to covid-19-data repo
-
-# Enrich with other spatial data
-
-# Add COVID data ----
-# TODO ADD REAL WARD LEVEL COVID STATS
 
 # VALUEBOXES =============================================================
 latest_values <- listN(ct_latest_update,
@@ -657,61 +599,62 @@ save_widget(rsa_provincial_confirmed_timeseries_log, public_destdir)
 
 
 # ct_daily_count_timeseries --------------
-ct_all_cases_parsed <- ct_all_cases %>% mutate_at(vars(Admission_date, Date_of_ICU_admission, date_of_death), dmy)
+ct_all_cases_parsed <- ct_all_cases #%>% mutate_at(vars(Date.of.Diagnosis, Admission.Date, Date.of.ICU.Admission, Discharge.Date, Date.of.Death), dmy)
 
-ct_daily_counts <- ct_all_cases_parsed %>% 
-  group_by(date_of_diagnosis1) %>% 
-  summarise(cases = sum(!is.na(date_of_diagnosis1)),
-            deaths = sum(!is.na(date_of_death)),
-            gen_admissions = sum(!is.na(Admission_date)),
-            icu_admissions = sum(!is.na(Date_of_ICU_admission))) %>% 
-  ungroup() %>% 
-  rename(date = date_of_diagnosis1)
-
-ct_cumulative_daily_counts <- ct_daily_counts %>% 
-  mutate(cumulative_cases = cumsum(cases),
-         cumulative_gen_admissions = cumsum(gen_admissions),
-         cumulative_icu_admissions = cumsum(icu_admissions),
-         cumulative_deaths = cumsum(deaths)) %>% 
-  mutate(cases_under_14_days = rollsum(cases, 14, fill = NA, align = "right")) %>% 
-  mutate(cases_under_14_days = ifelse(is.na(cases_under_14_days), cumulative_cases, cases_under_14_days))
+# ct_daily_counts <- ct_all_cases_parsed %>% 
+#   group_by(Date.of.Diagnosis) %>% 
+#   summarise(cases = sum(!is.na(Date.of.Diagnosis)),
+#             deaths = sum(!is.na(Date.of.Death)),
+#             gen_admissions = sum(!is.na(Admission.Date)),
+#             icu_admissions = sum(!is.na(Date.of.ICU.Admission))) %>% 
+#   ungroup() %>% 
+#   rename(date = Date.of.Diagnosis)
+# 
+# ct_cumulative_daily_counts <- ct_daily_counts %>% 
+#   mutate(cumulative_cases = cumsum(cases),
+#          cumulative_gen_admissions = cumsum(gen_admissions),
+#          cumulative_icu_admissions = cumsum(icu_admissions),
+#          cumulative_deaths = cumsum(deaths)) %>% 
+#   mutate(cases_under_14_days = rollsum(cases, 14, fill = NA, align = "right")) %>% 
+#   mutate(cases_under_14_days = ifelse(is.na(cases_under_14_days), cumulative_cases, cases_under_14_days))
   
 # ct_cumulative count_timeseries plot ------------
-ct_confirmed_timeseries <- ct_cumulative_daily_counts %>% 
-  select(-cases, -deaths, -gen_admissions, -icu_admissions) %>%
-  rename(`Cumulative Cases` = cumulative_cases,
-         `Cumulative General Admissions` = cumulative_gen_admissions,
-         `Cumulative ICU Admissions` = cumulative_icu_admissions,
-         `Cumulative Deaths` = cumulative_deaths,
-         `Cases less than 14 days old` = cases_under_14_days) %>%
-  df_as_xts("date") %>% 
-  dygraph() %>%
-  dyLegend(show = "follow") %>%
-  dyCSS(textConnection("
-    .dygraph-legend > span { display: none; }
-    .dygraph-legend > span.highlight { display: inline; }
-  ")) %>%
-  dyHighlight(highlightCircleSize = 5, 
-              highlightSeriesBackgroundAlpha = 0.5,
-              hideOnMouseOut = FALSE) %>%
-  dyRangeSelector(height = 20) %>%
-  dyOptions(stackedGraph = FALSE, connectSeparatedPoints = TRUE) 
-save_widget(ct_confirmed_timeseries, private_destdir)
-
-ct_confirmed_timeseries_log <- ct_confirmed_timeseries %>% dyOptions(logscale = TRUE)
-save_widget(ct_confirmed_timeseries_log, private_destdir)
+# NOTE: REMOVED IN FAVOUR OF PLOTLY BAR CHART
+# ct_confirmed_timeseries <- ct_cumulative_daily_counts %>% 
+#   select(-cases, -deaths, -gen_admissions, -icu_admissions) %>%
+#   rename(`Cumulative Cases` = cumulative_cases,
+#          `Cumulative General Admissions` = cumulative_gen_admissions,
+#          `Cumulative ICU Admissions` = cumulative_icu_admissions,
+#          `Cumulative Deaths` = cumulative_deaths,
+#          `Cases less than 14 days old` = cases_under_14_days) %>%
+#   df_as_xts("date") %>% 
+#   dygraph() %>%
+#   dyLegend(show = "follow") %>%
+#   dyCSS(textConnection("
+#     .dygraph-legend > span { display: none; }
+#     .dygraph-legend > span.highlight { display: inline; }
+#   ")) %>%
+#   dyHighlight(highlightCircleSize = 5, 
+#               highlightSeriesBackgroundAlpha = 0.5,
+#               hideOnMouseOut = FALSE) %>%
+#   dyRangeSelector(height = 20) %>%
+#   dyOptions(stackedGraph = FALSE, connectSeparatedPoints = TRUE) 
+# save_widget(ct_confirmed_timeseries, private_destdir)
+# 
+# ct_confirmed_timeseries_log <- ct_confirmed_timeseries %>% dyOptions(logscale = TRUE)
+# save_widget(ct_confirmed_timeseries_log, private_destdir)
 
 # ct subdistrict count time series -----------------------------
 ct_subdistrict_daily_confirmed_cases  <- ct_all_cases_parsed %>% 
-  rename(date = date_of_diagnosis1) %>%
-  group_by(date, subdistrict) %>% 
+  rename(date = Date.of.Diagnosis) %>%
+  group_by(date, Subdistrict) %>% 
   summarise(count = n()) %>% 
   ungroup() 
 
 # Make sure all dates are included in the melted dataframe
-spread_ct_subdistrict_daily_confirmed_cases <-  ct_subdistrict_daily_confirmed_cases %>% spread(key = subdistrict, value = count) 
+spread_ct_subdistrict_daily_confirmed_cases <-  ct_subdistrict_daily_confirmed_cases %>% spread(key = Subdistrict, value = count) 
 spread_ct_subdistrict_daily_confirmed_cases[is.na(spread_ct_subdistrict_daily_confirmed_cases)] <- 0
-ct_subdistrict_daily_confirmed_cases <- spread_ct_subdistrict_daily_confirmed_cases %>% gather(key = "subdistrict", value = count, -date)
+ct_subdistrict_daily_confirmed_cases <- spread_ct_subdistrict_daily_confirmed_cases %>% gather(key = "Subdistrict", value = count, -date)
 
 every_nth = function(n) {
   return(function(x) {x[c(TRUE, rep(FALSE, n - 1))]})
@@ -720,33 +663,33 @@ every_nth = function(n) {
 # ct subdistrict presumed active
 ct_subdistrict_daily_active_cases  <- 
   ct_all_cases_parsed %>% 
-  rename(date = date_of_diagnosis1) %>%
-  group_by(date, subdistrict) %>% 
+  rename(date = Date.of.Diagnosis) %>%
+  group_by(date, Subdistrict) %>% 
   summarise(cases = n()) %>% 
   ungroup() %>% 
-  spread(key = subdistrict, value = cases) %>% 
+  spread(key = Subdistrict, value = cases) %>% 
   replace(is.na(.), 0) %>% 
-  gather(key = "subdistrict", value = "cases", -date) %>%
-  group_by(subdistrict) %>% 
+  gather(key = "Subdistrict", value = "cases", -date) %>%
+  group_by(Subdistrict) %>% 
   arrange(date) %>% 
   mutate(cumulative_cases = cumsum(cases)) %>%
   mutate(cases_under_14_days = rollsum(cases, 14, fill = NA, align = "right")) %>% 
-  mutate(cases_under_14_days = ifelse(is.na(cases_under_14_days), cumulative_cases, cases_under_14_days)) %>% ungroup() %>% select(date, subdistrict, cases_under_14_days)
+  mutate(cases_under_14_days = ifelse(is.na(cases_under_14_days), cumulative_cases, cases_under_14_days)) %>% ungroup() %>% select(date, Subdistrict, cases_under_14_days)
 
 ct_subdistrict_cumulative_daily_counts <- ct_all_cases_parsed %>%   
-  rename(date = date_of_diagnosis1) %>%
-  group_by(date, subdistrict)  %>% 
+  rename(date = Date.of.Diagnosis) %>%
+  group_by(date, Subdistrict)  %>% 
   summarise(cases = sum(!is.na(date)),
-            deaths = sum(!is.na(date_of_death)),
-            gen_admissions = sum(!is.na(Admission_date)),
-            icu_admissions = sum(!is.na(Date_of_ICU_admission))) %>% 
+            deaths = sum(!is.na(Date.of.Death)),
+            gen_admissions = sum(!is.na(Admission.Date)),
+            icu_admissions = sum(!is.na(Date.of.ICU.Admission))) %>% 
   ungroup() 
 
 ct_subdistrict_cumulative_daily_counts <- left_join(ct_subdistrict_daily_active_cases, 
                                                     ct_subdistrict_cumulative_daily_counts, 
-                                                    by = c("date" = "date",  "subdistrict" = "subdistrict")) %>%   
+                                                    by = c("date" = "date",  "Subdistrict" = "Subdistrict")) %>%   
   replace(is.na(.), 0) %>%
-  group_by(subdistrict) %>% 
+  group_by(Subdistrict) %>% 
   arrange(date) %>% 
   mutate(cumulative_cases = cumsum(cases),
          cumulative_gen_admissions = cumsum(gen_admissions),
@@ -771,8 +714,8 @@ ct_cumulative_daily_counts_bar_chart <-  ct_subdistrict_cumulative_daily_counts 
 
 save_widget(ct_cumulative_daily_counts_bar_chart, private_destdir)
 
-for (subdist in unique(ct_subdistrict_cumulative_daily_counts$subdistrict)) {
-  subdist_cumulative_daily_counts <- ct_subdistrict_cumulative_daily_counts %>% filter(subdistrict == subdist) 
+for (subdist in unique(ct_subdistrict_cumulative_daily_counts$Subdistrict)) {
+  subdist_cumulative_daily_counts <- ct_subdistrict_cumulative_daily_counts %>% filter(Subdistrict == subdist) 
   p <- plot_ly(subdist_cumulative_daily_counts, 
                x = ~date, 
                y = ~presumed_active, 
@@ -796,7 +739,7 @@ for (subdist in unique(ct_subdistrict_cumulative_daily_counts$subdistrict)) {
 
 y_upper <- max(ct_subdistrict_cumulative_daily_counts$cumulative_cases)
 ct_subdistrict_cumulative_daily_counts_bar_chart <- ct_subdistrict_cumulative_daily_counts %>%
-    group_by(subdistrict) %>%
+    group_by(Subdistrict) %>%
     group_map(.f = ~{          
           plot_ly(.,  x = ~date, 
                y = ~presumed_active, 
@@ -842,8 +785,8 @@ ct_daily_counts_bar_chart <-  ct_subdistrict_cumulative_daily_counts %>%
 save_widget(ct_daily_counts_bar_chart, private_destdir)
 
 
-for (subdist in unique(ct_subdistrict_cumulative_daily_counts$subdistrict)) {
-  subdist_cumulative_daily_counts <- ct_subdistrict_cumulative_daily_counts %>% filter(subdistrict == subdist) 
+for (subdist in unique(ct_subdistrict_cumulative_daily_counts$Subdistrict)) {
+  subdist_cumulative_daily_counts <- ct_subdistrict_cumulative_daily_counts %>% filter(Subdistrict == subdist) 
   p <- subdist_cumulative_daily_counts %>%
     plot_ly(.,  x = ~date, 
             y = ~cases, 
@@ -872,7 +815,7 @@ y_upper <- max(ct_subdistrict_cumulative_daily_counts$cases +
   ct_subdistrict_cumulative_daily_counts$gen_admissions + 
   ct_subdistrict_cumulative_daily_counts$icu_admissions)
 ct_subdistrict_daily_counts_bar_chart <- ct_subdistrict_cumulative_daily_counts %>%
-  group_by(subdistrict) %>%
+  group_by(Subdistrict) %>%
   group_map(.f = ~{          
     plot_ly(.,  x = ~date, 
             y = ~cases, 
@@ -901,14 +844,14 @@ save_widget(ct_subdistrict_daily_counts_bar_chart, private_destdir)
 
 # wc_daily_count_timeseries --------------
 wc_daily_confirmed_cases <- wc_all_cases %>% 
-  select(date_of_diagnosis1) %>% 
-  group_by(date_of_diagnosis1) %>% 
+  select(Date.of.Diagnosis) %>% 
+  group_by(Date.of.Diagnosis) %>% 
   summarise(count = n()) %>% ungroup()
 
 # wc_cumulative_count_timeseries --------------
 wc_confirmed_timeseries <- wc_daily_confirmed_cases %>% 
   mutate(WC = cumsum(count)) %>% 
-  rename(date = date_of_diagnosis1) %>% 
+  rename(date = Date.of.Diagnosis) %>% 
   select(date, WC)
 
 wc_confirmed_timeseries <- wc_confirmed_timeseries %>% 
@@ -1118,7 +1061,6 @@ global_ranked_fatalities_per_1m  <- ggplot(global_top_fatalities_per_1m, aes(cou
 
 global_ranked_fatalities_per_1m <- ggplotly(global_ranked_fatalities_per_1m) %>% plotly::config(displayModeBar = F)
 save_widget(global_ranked_fatalities_per_1m, public_destdir)
-
 
 # WC MODEL OUTPUT ==============================================================
 
