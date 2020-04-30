@@ -323,8 +323,26 @@ def send_email(account, email_message_dict, attachments, message_uuid, dry_run):
     logging.debug(f"Attaching data files")
     for attachment_name, attachment_file in attachments:
         logging.debug(f"attachment_name='{attachment_name}'")
+        attachment_content = attachment_file.read()
+
+        logging.debug("Backing up attachment file to Minio...")
+        with tempfile.TemporaryDirectory() as tempdir:
+            local_path = os.path.join(tempdir, attachment_name)
+            with open(local_path, "wb") as attachment_temp_file:
+                attachment_temp_file.write(attachment_content)
+
+            minio_utils.file_to_minio(
+                filename=local_path,
+                filename_prefix_override=message_uuid + "/",
+                minio_bucket="covid-19-dash-hr-bp-emails",
+                minio_key=secrets["minio"]["edge"]["access"],
+                minio_secret=secrets["minio"]["edge"]["secret"],
+                data_classification=minio_utils.DataClassification.EDGE,
+            )
+
+        logging.debug("Attaching the content")
         message.attach(
-            FileAttachment(name=attachment_name, content=attachment_file.read())
+            FileAttachment(name=attachment_name, content=attachment_content)
         )
 
     logging.debug(f"Sending {message_uuid} email")
