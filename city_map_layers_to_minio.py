@@ -21,10 +21,10 @@ WARD_COUNT_FILENAME = "ward_case_count.geojson"
 HEX_COUNT_FILENAME = "hex_case_count.geojson"
 CHOROPLETH_LAYERS = (
     WARD_COUNT_FILENAME,
-#     HEX_COUNT_FILENAME,
+    HEX_COUNT_FILENAME,
 )
 CHOROPLETH_SOURCE_LAYERS = {
-#     HEX_COUNT_FILENAME: "cct_hex_polygons_7.geojson",
+    HEX_COUNT_FILENAME: "cct_hex_polygons_7.geojson",
     WARD_COUNT_FILENAME: "ct_wards.geojson"
 }
 
@@ -42,7 +42,7 @@ CHOROPLETH_COL_LOOKUP = {
         "WardID", "Ward.Number",
         lambda ward: (str(int(ward)) if pandas.notna(ward) else None)
     ),
-#     HEX_COUNT_FILENAME: (HEX_COUNT_INDEX_PROPERTY, "hex_l7", lambda hex: hex)
+    HEX_COUNT_FILENAME: (HEX_COUNT_INDEX_PROPERTY, "hex_l7", lambda hex: hex)
 }
 
 CASE_COUNT_COL_OLD = "Date.of.Diagnosis"
