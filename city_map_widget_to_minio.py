@@ -34,12 +34,6 @@ LAYER_PROPERTIES_LOOKUP = collections.OrderedDict((
     (city_map_layers_to_minio.HEX_COUNT_FILENAME, (
         (HEX_COUNT_INDEX_PROPERTY, CASE_COUNT_COL), ("Hex ID", "Case Count"), "OrRd", "Covid-19 Cases by L7 Hex", False
     )),
-    ("ct_wards.geojson", (
-        (WARD_COUNT_NAME_PROPERTY,), ("Ward Name",), "BuPu", "City of Cape Town Wards", False
-    )),
-    ("cct_hex_polygons_7.geojson", (
-        (HEX_COUNT_INDEX_PROPERTY,), ("Hex ID",), "OrRd", "City of Cape Town L7 Hexes", False
-    )),
     ("informal_settlements.geojson", (
         ("INF_STLM_NAME",), ("Informal Settlement Name",), None, "Informal Settlements", False
     )),
