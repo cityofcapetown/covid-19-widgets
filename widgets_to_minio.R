@@ -1106,6 +1106,50 @@ wc_model_latest_hospital_figures <- wc_model_latest_default %>%
   layout(legend = list(orientation = 'h'), xaxis = list(title = ""), yaxis = list(title = ""))
 save_widget(wc_model_latest_hospital_figures, private_destdir)
 
+# USA COUNTY DEATHS SINCE 25 ============================================
+
+usa_county_deaths_per_million_trajectory <-   usa_county_deaths_since_25 %>% 
+  rownames_to_column(var = "day") %>% mutate(day = as.numeric(day)) %>%
+  select(-days_since_passed_25) %>% gather(key = "county", value = "deaths", -day)
+
+usa_county_deaths_per_million_trajectory <- left_join(usa_county_deaths_per_million_trajectory, 
+                                                      usa_county_populations, by = c("county" = "Combined_Key")) %>% 
+  filter(Population > 100000) %>%
+  mutate(deaths_per_million = deaths / Population * 10^6) %>% select(day, county, deaths_per_million) %>% 
+  spread(key = "county", value = "deaths_per_million") %>% arrange(day) %>% select(-day)
+
+ct_deaths_since_25 <- ct_subdistrict_cumulative_daily_counts %>% 
+  group_by(date) %>% 
+  summarize(`Cape Town, WC`= sum(cumulative_deaths)) %>% 
+  ungroup() %>% arrange(date) %>% filter(`Cape Town, WC` >= 25) %>%
+  pull(`Cape Town, WC`) 
+
+ct_deaths_per_million <- ct_deaths_since_25 / sum(cct_mid_year_2019_pop_est$AMOUNT) * 10^6
+
+ct_deaths_per_million <- c(ct_deaths_per_million, rep(NA, nrow(usa_county_deaths_per_million_trajectory) - length(ct_deaths_per_million) ))
+
+usa_county_deaths_per_million_trajectory$`Cape Town, WC` <- ct_deaths_per_million
+
+usa_county_deaths_per_million_trajectory <- usa_county_deaths_per_million_trajectory %>%
+  ts(., start =1, end = nrow(.), frequency = 1) %>%
+  dygraph() %>%
+  dyLegend(show = "follow") %>%
+  dyCSS(textConnection("
+    .dygraph-legend > span { display: none; }
+    .dygraph-legend > span.highlight { display: inline; }
+  ")) %>%
+  dyHighlight(highlightCircleSize = 5, 
+              highlightSeriesBackgroundAlpha = 0.4,
+              hideOnMouseOut = TRUE) %>%
+  dyRangeSelector(height = 20) %>%
+  dyOptions(stackedGraph = FALSE, connectSeparatedPoints = TRUE) %>%
+  dyAxis(name="x", label = "Days since 25 deaths") %>%
+  dySeries(name = "Cape Town, WC",  color = "red", label = "Cape Town, WC", strokeWidth = 5)
+save_widget(usa_county_deaths_per_million_trajectory, public_destdir)
+
+usa_county_deaths_per_million_trajectory_log <- usa_county_deaths_per_million_trajectory %>% dyOptions(logscale = TRUE)
+save_widget(usa_county_deaths_per_million_trajectory_log, public_destdir)
+
 # MAPS =========================================================================
 
 # income data --------------------------------
