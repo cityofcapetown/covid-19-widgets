@@ -39,13 +39,13 @@ HEX_COUNT_INDEX_PROPERTY = "index"
 CHOROPLETH_COL_LOOKUP = {
     # filename: (col name in gdf, col name in case count df)
     WARD_COUNT_FILENAME: (
-        "WardID", "ward_number",
+        "WardID", "Ward.Number",
         lambda ward: (str(int(ward)) if pandas.notna(ward) else None)
     ),
     HEX_COUNT_FILENAME: (HEX_COUNT_INDEX_PROPERTY, "hex_l7", lambda hex: hex)
 }
 
-CASE_COUNT_COL_OLD = "date_of_diagnosis1"
+CASE_COUNT_COL_OLD = "Date.of.Diagnosis"
 CASE_COUNT_COL = "CaseCount"
 
 
@@ -155,6 +155,7 @@ if __name__ == "__main__":
             logging.info(f"Count[ing] cases for '{layer_filename}'")
             source_layer = CHOROPLETH_SOURCE_LAYERS[layer_filename]
             _, data_gdf = map_layers_dict[source_layer]
+            logging.debug(f"cases_df.columns=\n{cases_df.columns}")
             cases_df[df_col] = cases_df[df_col].apply(sanitise_func)
             case_count_gdf = spatialise_case_data(cases_df, df_col,
                                                   data_gdf, gdf_property)
