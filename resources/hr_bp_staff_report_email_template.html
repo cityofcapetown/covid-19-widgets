@@ -12,13 +12,12 @@
         {{ directorate }} were assessed today.
     </p>
     <p>
-        The following are listed as approvers for essential service workers that weren't assessed today:
-    <ul>
-        {% for approver_name in missing_names %}
-        <li>{{approver_name}}</li>
-        {% endfor %}
-    </ul>
-    Please follow up with them.
+        The following is a breakdown of approvers for essential service workers that missed some yesterday, sorted by
+        the number of essential workers <strong>not assessed</strong>:
+        {{ approver_details_df.to_html(index=False) }}
+    </p>
+    <p>
+        Please follow up with them.
     </p>
     <h4>The Files Attached</h4>
     <p>

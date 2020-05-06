@@ -34,14 +34,16 @@ EVALUATION_COL = "Evaluation"
 ORG_HIERACHY = ["Directorate", "Department", "Branch", "Section", "Division", "Div Sub Area", "Unit", "Subunit"]
 ESSENTIAL_COL = "EssentialStaff"
 APPROVER_COL = "Approver"
+APPROVER_STAFF_NO_COL = "ApproverStaffNumber"
 HR_PEOPLE_SHARE_COLS = [HR_STAFFNUMBER, DATE_COL, "Position", "First name", "Last name", "Org Unit Name",
-                        APPROVER_COL, "ApproverStaffNumber",
+                        APPROVER_COL, APPROVER_STAFF_NO_COL,
                         CATEGORY_COL, EVALUATION_COL,
                         *ORG_HIERACHY,
                         "FebMostCommonClockingLocation", ]
 APPROVER_MASTER_COL = "Approver Name"
+APPROVER_MASTER_STAFF_NO_COL = "Approver Staff No"
 HR_MISSING_PEOPLE_SHARE_COLS = [HR_STAFFNUMBER, "Position", "First name", "Last name", "Org Unit Name",
-                                APPROVER_MASTER_COL, "Approver Staff No",
+                                APPROVER_MASTER_COL, APPROVER_MASTER_STAFF_NO_COL,
                                 *ORG_HIERACHY,
                                 "FebMostCommonClockingLocation"]
 COUNT_COL = "StatusCount"
@@ -203,13 +205,6 @@ def merge_df(hr_df, hr_master_df):
     return combined_df
 
 
-def get_email_stats(directorate_merged_df, directorate_master_df):
-    assessed_ess_workers = directorate_merged_df[ESSENTIAL_COL].sum()
-    total_ess_workers = directorate_master_df[ESSENTIAL_COL].sum()
-
-    return assessed_ess_workers, total_ess_workers
-
-
 def get_missing_workers_df(directorate_merged_df, directorate_master_df):
     missing_ess_df = directorate_master_df.loc[
         directorate_master_df[ESSENTIAL_COL] &
@@ -221,6 +216,40 @@ def get_missing_workers_df(directorate_merged_df, directorate_master_df):
     missing_ess_df.sort_values([APPROVER_MASTER_COL, *ORG_HIERACHY], inplace=True)
 
     return missing_ess_df
+
+
+def get_email_stats(directorate_merged_df, directorate_master_df):
+    assessed_ess_workers = directorate_merged_df[ESSENTIAL_COL].sum()
+    missing_ess_workers = get_missing_workers_df(directorate_merged_df, directorate_master_df)
+
+    assessed_counts = directorate_merged_df[APPROVER_STAFF_NO_COL].value_counts()
+    not_assessed_counts = missing_ess_workers[APPROVER_MASTER_STAFF_NO_COL].value_counts()
+
+    # Forming approver stats table
+    approver_stats_df = pandas.DataFrame([
+        assessed_counts.rename("Assessed").astype(int),
+        not_assessed_counts.rename("Not Assessed").astype(int),
+    ]).transpose().fillna(0)
+    approver_stats_df["Total"] = approver_stats_df.sum(axis=1)
+
+    approver_stats_df.index = approver_stats_df.index.astype(int).astype(str)
+    logging.debug(f"approver_stats_df.head(10)=\n{approver_stats_df.head(10)}")
+
+    # Merging in approver name and sorting
+    directorate_master_df[HR_STAFFNUMBER] = directorate_master_df[HR_STAFFNUMBER].astype(str)
+    approver_stats_df = approver_stats_df.merge(
+        directorate_master_df[["First name", "Last name", HR_STAFFNUMBER]],
+        left_index=True, right_on=HR_STAFFNUMBER,
+        validate="one_to_one"
+    ).sort_values(
+        by=["Not Assessed", "Last name"],
+        ascending=False
+    )
+    logging.debug(f"approver_stats_df.head(10)=\n{approver_stats_df.head(10)}")
+
+    total_ess_workers = directorate_master_df[ESSENTIAL_COL].sum()
+
+    return assessed_ess_workers, total_ess_workers, approver_stats_df
 
 
 def write_employee_file(df_tuples):
@@ -248,7 +277,7 @@ def load_email_template(email_filename):
 
 
 def render_email(email_template, receiver_dict, directorate,
-                 assessed_ess_workers, total_ess_workers, missing_approvers, report_date):
+                 assessed_ess_workers, total_ess_workers, approver_details_df, report_date):
     receiver_name = receiver_dict["receiver_name"]
     receiver_name_string = receiver_name[0]
 
@@ -269,6 +298,10 @@ def render_email(email_template, receiver_dict, directorate,
 
     message_id = str(uuid.uuid4())
 
+    approver_details_df = approver_details_df[approver_details_df["Not Assessed"] > 0][
+        ["First name", "Last name", "StaffNumber", "Not Assessed", "Assessed", "Total"]
+    ]
+
     body_dict = dict(
         directorate=directorate,
         receiver_name=receiver_name_string,
@@ -279,7 +312,7 @@ def render_email(email_template, receiver_dict, directorate,
         request_id=message_id,
         assessed_ess_workers=assessed_ess_workers,
         total_ess_workers=total_ess_workers,
-        missing_names=missing_approvers,
+        approver_details_df=approver_details_df,
     )
     logging.debug(f"template_dict=\n{pprint.pformat(body_dict)}")
     body = email_template.render(**body_dict)
@@ -451,8 +484,8 @@ if __name__ == "__main__":
         directorate_missing_people_df = get_missing_workers_df(directorate_people_df, directorate_master_people_df)
         directorate_org_pivot_df = get_pivot_df(directorate_org_df)
 
-        assessed_essential_workers, total_esseential_workers = get_email_stats(directorate_people_df,
-                                                                               directorate_master_people_df)
+        assessed_essential_workers, total_essential_workers, approver_details = get_email_stats(directorate_people_df,
+                                                                                                directorate_master_people_df)
 
         # Attachment file generator
         directorate_files = (
@@ -468,13 +501,13 @@ if __name__ == "__main__":
         )
 
         # Rendering email
-        approvers_with_missing = directorate_missing_people_df[APPROVER_MASTER_COL].unique()
+
         message_id, email_message_dict, *data_filenames = render_email(hr_email_template,
                                                                        directorate_dict,
                                                                        directorate,
                                                                        assessed_essential_workers,
-                                                                       total_esseential_workers,
-                                                                       approvers_with_missing,
+                                                                       total_essential_workers,
+                                                                       approver_details,
                                                                        report_date_str)
 
         # And finally, sending the email
