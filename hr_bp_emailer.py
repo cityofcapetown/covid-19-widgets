@@ -33,6 +33,7 @@ CATEGORY_COL = "Categories"
 EVALUATION_COL = "Evaluation"
 ORG_HIERACHY = ["Directorate", "Department", "Branch", "Section", "Division", "Div Sub Area", "Unit", "Subunit"]
 ESSENTIAL_COL = "EssentialStaff"
+ASSESSED_COL = "AssessedStaff"
 APPROVER_COL = "Approver"
 APPROVER_STAFF_NO_COL = "ApproverStaffNumber"
 HR_PEOPLE_SHARE_COLS = [HR_STAFFNUMBER, DATE_COL, "Position", "First name", "Last name", "Org Unit Name",
@@ -89,33 +90,37 @@ DIRECTORATE_DETAILS_DICT = {
     #      "receiver_email": ["Tembekile.Solanga@capetown.gov.za"],
     #      "cc_email": HR_CREW + ["Lele.Sithole@capetown.gov.za"]},
     "CORPORATE SERVICES":
-        {"receiver_name": ["Phindile"],
-         "receiver_email": ["PreciousPhindile.Dlamini@capetown.gov.za"],
-         "cc_email": HR_CREW + ["Lele.Sithole@capetown.gov.za"]},
-    "TRANSPORT":
-        {"receiver_name": ["Louise"],
-         "receiver_email": ["Louise.Burger@capetown.gov.za"],
-         "cc_email": HR_CREW + ["Lele.Sithole@capetown.gov.za"]},
-    "ECONOMIC OPPORTUNITIES &ASSET MANAGEMENT":
-        {"receiver_name": ["Roline"],
-         "receiver_email": ["Roline.Henning@capetown.gov.za"],
-         "cc_email": HR_CREW + ["Lele.Sithole@capetown.gov.za"]},
-    "SPATIAL PLANNING AND ENVIRONMENT":
-        {"receiver_name": ["Leonie"],
-         "receiver_email": ["Leonie.Kroese@capetown.gov.za"],
-         "cc_email": HR_CREW + ["Lele.Sithole@capetown.gov.za"]},
-    "HUMAN SETTLEMENTS":
-        {"receiver_name": ["Gerard"],
-         "receiver_email": ["Gerard.Joyce@capetown.gov.za"],
-         "cc_email": HR_CREW + ["Lele.Sithole@capetown.gov.za"]},
-    "URBAN MANAGEMENT":
-        {"receiver_name": ["Sibusiso"],
-         "receiver_email": ["Sibusiso.Mayekiso@capetown.gov.za"],
-         "cc_email": HR_CREW + ["Lele.Sithole@capetown.gov.za"]},
-    "CITY MANAGER":
-        {"receiver_name": ["Phindile"],
-         "receiver_email": ["PreciousPhindile.Dlamini@capetown.gov.za"],
-         "cc_email": HR_CREW + ["Lele.Sithole@capetown.gov.za"]},
+        {"receiver_name": ["Gordon"],
+         "receiver_email": ["gordon.inggs@capetown.gov.za"],
+         "cc_email": ["gordon.inggs@capetown.gov.za"]},
+    # "CORPORATE SERVICES":
+    #     {"receiver_name": ["Phindile"],
+    #      "receiver_email": ["PreciousPhindile.Dlamini@capetown.gov.za"],
+    #      "cc_email": HR_CREW + ["Lele.Sithole@capetown.gov.za"]},
+    # "TRANSPORT":
+    #     {"receiver_name": ["Louise"],
+    #      "receiver_email": ["Louise.Burger@capetown.gov.za"],
+    #      "cc_email": HR_CREW + ["Lele.Sithole@capetown.gov.za"]},
+    # "ECONOMIC OPPORTUNITIES &ASSET MANAGEMENT":
+    #     {"receiver_name": ["Roline"],
+    #      "receiver_email": ["Roline.Henning@capetown.gov.za"],
+    #      "cc_email": HR_CREW + ["Lele.Sithole@capetown.gov.za"]},
+    # "SPATIAL PLANNING AND ENVIRONMENT":
+    #     {"receiver_name": ["Leonie"],
+    #      "receiver_email": ["Leonie.Kroese@capetown.gov.za"],
+    #      "cc_email": HR_CREW + ["Lele.Sithole@capetown.gov.za"]},
+    # "HUMAN SETTLEMENTS":
+    #     {"receiver_name": ["Gerard"],
+    #      "receiver_email": ["Gerard.Joyce@capetown.gov.za"],
+    #      "cc_email": HR_CREW + ["Lele.Sithole@capetown.gov.za"]},
+    # "URBAN MANAGEMENT":
+    #     {"receiver_name": ["Sibusiso"],
+    #      "receiver_email": ["Sibusiso.Mayekiso@capetown.gov.za"],
+    #      "cc_email": HR_CREW + ["Lele.Sithole@capetown.gov.za"]},
+    # "CITY MANAGER":
+    #     {"receiver_name": ["Phindile"],
+    #      "receiver_email": ["PreciousPhindile.Dlamini@capetown.gov.za"],
+    #      "cc_email": HR_CREW + ["Lele.Sithole@capetown.gov.za"]},
 }
 
 EXCHANGE_VERSION = Version(build=Build(15, 0, 1395, 4000))
@@ -206,24 +211,24 @@ def merge_df(hr_df, hr_master_df):
 
 
 def get_missing_workers_df(directorate_merged_df, directorate_master_df):
-    missing_ess_df = directorate_master_df.loc[
-        directorate_master_df[ESSENTIAL_COL] &
+    missing_df = directorate_master_df.loc[
+        directorate_master_df[ASSESSED_COL] &
         ~directorate_master_df[HR_STAFFNUMBER].isin(directorate_merged_df[HR_STAFFNUMBER])
         ]
-    logging.debug(f"missing_ess_df.head(5)=\n{missing_ess_df.head(5)}")
-    logging.debug(f"missing_ess_df.columns=\n{missing_ess_df.columns}")
+    logging.debug(f"missing_df.head(5)=\n{missing_df.head(5)}")
+    logging.debug(f"missing_df.columns=\n{missing_df.columns}")
 
-    missing_ess_df.sort_values([APPROVER_MASTER_COL, *ORG_HIERACHY], inplace=True)
+    missing_df.sort_values([APPROVER_MASTER_COL, *ORG_HIERACHY], inplace=True)
 
-    return missing_ess_df
+    return missing_df
 
 
 def get_email_stats(directorate_merged_df, directorate_master_df):
-    assessed_ess_workers = directorate_merged_df[ESSENTIAL_COL].sum()
-    missing_ess_workers = get_missing_workers_df(directorate_merged_df, directorate_master_df)
+    assessed_workers = directorate_merged_df[ASSESSED_COL].sum()
+    missing_workers = get_missing_workers_df(directorate_merged_df, directorate_master_df)
 
     assessed_counts = directorate_merged_df[APPROVER_STAFF_NO_COL].value_counts()
-    not_assessed_counts = missing_ess_workers[APPROVER_MASTER_STAFF_NO_COL].value_counts()
+    not_assessed_counts = missing_workers[APPROVER_MASTER_STAFF_NO_COL].value_counts()
 
     # Forming approver stats table
     approver_stats_df = pandas.DataFrame([
@@ -247,9 +252,9 @@ def get_email_stats(directorate_merged_df, directorate_master_df):
     )
     logging.debug(f"approver_stats_df.head(10)=\n{approver_stats_df.head(10)}")
 
-    total_ess_workers = directorate_master_df[ESSENTIAL_COL].sum()
+    total_assessed_workers = directorate_master_df[ASSESSED_COL].sum()
 
-    return assessed_ess_workers, total_ess_workers, approver_stats_df
+    return assessed_workers, total_assessed_workers, approver_stats_df
 
 
 def write_employee_file(df_tuples):
@@ -403,7 +408,7 @@ if __name__ == "__main__":
 
     # Getting date to run for
     parser = argparse.ArgumentParser(
-        description="Pipeline script that emails HR Business Partners a report on essential workers assessed"
+        description="Pipeline script that emails HR Business Partners a report on workers assessed"
     )
 
     parser.add_argument('-r', '--report-date', required=True,
@@ -484,8 +489,8 @@ if __name__ == "__main__":
         directorate_missing_people_df = get_missing_workers_df(directorate_people_df, directorate_master_people_df)
         directorate_org_pivot_df = get_pivot_df(directorate_org_df)
 
-        assessed_essential_workers, total_essential_workers, approver_details = get_email_stats(directorate_people_df,
-                                                                                                directorate_master_people_df)
+        assessed_workers, total_workers, approver_details = get_email_stats(directorate_people_df,
+                                                                            directorate_master_people_df)
 
         # Attachment file generator
         directorate_files = (
@@ -505,8 +510,8 @@ if __name__ == "__main__":
         message_id, email_message_dict, *data_filenames = render_email(hr_email_template,
                                                                        directorate_dict,
                                                                        directorate,
-                                                                       assessed_essential_workers,
-                                                                       total_essential_workers,
+                                                                       assessed_workers,
+                                                                       total_workers,
                                                                        approver_details,
                                                                        report_date_str)
 
