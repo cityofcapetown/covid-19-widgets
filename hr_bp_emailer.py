@@ -89,38 +89,38 @@ DIRECTORATE_DETAILS_DICT = {
     #     {"receiver_name": ["Tembekile"],
     #      "receiver_email": ["Tembekile.Solanga@capetown.gov.za"],
     #      "cc_email": HR_CREW + ["Lele.Sithole@capetown.gov.za"]},
-    "CORPORATE SERVICES":
-        {"receiver_name": ["Gordon"],
-         "receiver_email": ["gordon.inggs@capetown.gov.za"],
-         "cc_email": ["gordon.inggs@capetown.gov.za"]},
     # "CORPORATE SERVICES":
-    #     {"receiver_name": ["Phindile"],
-    #      "receiver_email": ["PreciousPhindile.Dlamini@capetown.gov.za"],
-    #      "cc_email": HR_CREW + ["Lele.Sithole@capetown.gov.za"]},
-    # "TRANSPORT":
-    #     {"receiver_name": ["Louise"],
-    #      "receiver_email": ["Louise.Burger@capetown.gov.za"],
-    #      "cc_email": HR_CREW + ["Lele.Sithole@capetown.gov.za"]},
-    # "ECONOMIC OPPORTUNITIES &ASSET MANAGEMENT":
-    #     {"receiver_name": ["Roline"],
-    #      "receiver_email": ["Roline.Henning@capetown.gov.za"],
-    #      "cc_email": HR_CREW + ["Lele.Sithole@capetown.gov.za"]},
-    # "SPATIAL PLANNING AND ENVIRONMENT":
-    #     {"receiver_name": ["Leonie"],
-    #      "receiver_email": ["Leonie.Kroese@capetown.gov.za"],
-    #      "cc_email": HR_CREW + ["Lele.Sithole@capetown.gov.za"]},
-    # "HUMAN SETTLEMENTS":
-    #     {"receiver_name": ["Gerard"],
-    #      "receiver_email": ["Gerard.Joyce@capetown.gov.za"],
-    #      "cc_email": HR_CREW + ["Lele.Sithole@capetown.gov.za"]},
-    # "URBAN MANAGEMENT":
-    #     {"receiver_name": ["Sibusiso"],
-    #      "receiver_email": ["Sibusiso.Mayekiso@capetown.gov.za"],
-    #      "cc_email": HR_CREW + ["Lele.Sithole@capetown.gov.za"]},
-    # "CITY MANAGER":
-    #     {"receiver_name": ["Phindile"],
-    #      "receiver_email": ["PreciousPhindile.Dlamini@capetown.gov.za"],
-    #      "cc_email": HR_CREW + ["Lele.Sithole@capetown.gov.za"]},
+    #     {"receiver_name": ["Gordon"],
+    #      "receiver_email": ["gordon.inggs@capetown.gov.za"],
+    #      "cc_email": ["gordon.inggs@capetown.gov.za"]},
+    "CORPORATE SERVICES":
+        {"receiver_name": ["Phindile"],
+         "receiver_email": ["PreciousPhindile.Dlamini@capetown.gov.za"],
+         "cc_email": HR_CREW + ["Lele.Sithole@capetown.gov.za"]},
+    "TRANSPORT":
+        {"receiver_name": ["Louise"],
+         "receiver_email": ["Louise.Burger@capetown.gov.za"],
+         "cc_email": HR_CREW + ["Lele.Sithole@capetown.gov.za"]},
+    "ECONOMIC OPPORTUNITIES &ASSET MANAGEMENT":
+        {"receiver_name": ["Roline"],
+         "receiver_email": ["Roline.Henning@capetown.gov.za"],
+         "cc_email": HR_CREW + ["Lele.Sithole@capetown.gov.za"]},
+    "SPATIAL PLANNING AND ENVIRONMENT":
+        {"receiver_name": ["Leonie"],
+         "receiver_email": ["Leonie.Kroese@capetown.gov.za"],
+         "cc_email": HR_CREW + ["Lele.Sithole@capetown.gov.za"]},
+    "HUMAN SETTLEMENTS":
+        {"receiver_name": ["Gerard"],
+         "receiver_email": ["Gerard.Joyce@capetown.gov.za"],
+         "cc_email": HR_CREW + ["Lele.Sithole@capetown.gov.za"]},
+    "URBAN MANAGEMENT":
+        {"receiver_name": ["Sibusiso"],
+         "receiver_email": ["Sibusiso.Mayekiso@capetown.gov.za"],
+         "cc_email": HR_CREW + ["Lele.Sithole@capetown.gov.za"]},
+    "CITY MANAGER":
+        {"receiver_name": ["Phindile"],
+         "receiver_email": ["PreciousPhindile.Dlamini@capetown.gov.za"],
+         "cc_email": HR_CREW + ["Lele.Sithole@capetown.gov.za"]},
 }
 
 EXCHANGE_VERSION = Version(build=Build(15, 0, 1395, 4000))
@@ -282,7 +282,7 @@ def load_email_template(email_filename):
 
 
 def render_email(email_template, receiver_dict, directorate,
-                 assessed_ess_workers, total_ess_workers, approver_details_df, report_date):
+                 total_assessed_workers, total_hr_workers, approver_details_df, report_date):
     receiver_name = receiver_dict["receiver_name"]
     receiver_name_string = receiver_name[0]
 
@@ -315,8 +315,8 @@ def render_email(email_template, receiver_dict, directorate,
         directorate_employee_status_filename=directorate_employee_status_filename,
         directorate_org_unit_status_filename=directorate_org_unit_status_filename,
         request_id=message_id,
-        assessed_ess_workers=assessed_ess_workers,
-        total_ess_workers=total_ess_workers,
+        assessed_workers=total_assessed_workers,
+        total_workers=total_hr_workers,
         approver_details_df=approver_details_df,
     )
     logging.debug(f"template_dict=\n{pprint.pformat(body_dict)}")
