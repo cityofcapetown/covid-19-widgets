@@ -31,6 +31,8 @@ library(sf)
 library(leafpop)
 library(bpexploder)
 library(sparkline)
+library(zoo)
+
 
 # LOAD SECRETS ==========================================================================
 # Credentials
@@ -141,6 +143,16 @@ for (i in seq_along(1:length(datasets))) {
 rm(datasets)
 rm(dataset_names)
 
+# read in service requests ----------------
+# minio_to_file("service-requests-full.parquet",
+#               "service-requests-full",
+#               minio_key,
+#               minio_secret,
+#               "EDGE")
+# 
+# service_requests <- read_parquet("service-requests-full.parquet")
+# unlink("service-requests-full.parquet")
+
 # pull in private dataset ---------------
 datasets <- covid_assets %>% 
   filter(grepl("data/private",object_name) ) %>% 
@@ -209,7 +221,7 @@ global_last_deaths_val <- sum(global_latest_data$deaths)
 # Latest Values RSA --------------------------
 rsa_latest_update <-  max(rsa_provincial_ts_confirmed$YYYYMMDD)
 rsa_latest_confirmed <- rsa_provincial_ts_confirmed %>% filter(YYYYMMDD == max(YYYYMMDD)) %>%  pull(total) %>% .[1]
-rsa_latest_deaths <- nrow(covid19za_timeline_deaths)
+rsa_latest_deaths <- covid19za_provincial_timeline_deaths %>% filter(YYYYMMDD == max(YYYYMMDD)) %>%  pull(total) %>% .[1]
 rsa_latest_tested <- covid19za_timeline_testing %>% summarise(val = max(cumulative_tests, na.rm = T)) %>% pull(val) %>% .[1]
 
 # Latest values WC ---------------------------------
@@ -283,13 +295,6 @@ china_demographic<- china_demographic %>%
          fatal_label = "China Case Fatality Rate %") 
 
 # RSA demographic -----------
-rsa_raw_age_fatalities <- covid19za_timeline_deaths  %>%
-  mutate(age_interval = findInterval(age, age_brackets, rightmost.closed = TRUE)) %>%
-  mutate(age_interval = age_bracket_labels[age_interval]) %>%
-  group_by(age_interval) %>%
-  summarise(rsa_raw_age_fatalities = n()) %>%
-  ungroup() 
-
 rsa_age_fatality_rate <- c(0, 0, 0, 0, 0, 0, 0, 0, 0)
 
 rsa_demographic <- rsa_pop_genders_ages %>% 
@@ -768,7 +773,12 @@ save_widget(ct_subdistrict_cumulative_daily_counts_bar_chart, private_destdir)
 
 
 # ct daily counts bar chart -------------------------------
-ct_daily_counts_bar_chart <-  ct_subdistrict_cumulative_daily_counts %>%
+ct_daily_counts_bar_chart <-  ct_subdistrict_cumulative_daily_counts %>% 
+  group_by(date) %>%
+  summarise(gen_admissions = sum(gen_admissions),
+            cases = sum(cases),
+            deaths = sum(deaths),
+            icu_admissions = sum(icu_admissions)) %>%
   plot_ly(.,  x = ~date, 
           y = ~cases, 
           type = 'bar', 
@@ -1150,14 +1160,16 @@ save_widget(usa_county_deaths_per_million_trajectory, public_destdir)
 usa_county_deaths_per_million_trajectory_log <- usa_county_deaths_per_million_trajectory %>% dyOptions(logscale = TRUE)
 save_widget(usa_county_deaths_per_million_trajectory_log, public_destdir)
 
-# MAPS =========================================================================
 
 # income data --------------------------------
-
-# income_totals_cash <- income_totals %>% 
-#   gather(key = "channel", value = "amount", -DateTimestamp) %>% 
+# Filter out zero days in the future
+# latest_income_total_date <- min(Sys.Date(), max(income_totals$DateTimestamp))
+# income_totals <- income_totals %>% filter(DateTimestamp <= latest_income_total_date)
+# 
+# income_totals_cash <- income_totals %>%
+#   gather(key = "channel", value = "amount", -DateTimestamp) %>%
 #   group_by(DateTimestamp) %>%
-#   summarise(daily_revenue = sum(amount)) %>% 
+#   summarise(daily_revenue = sum(amount)) %>%
 #   ungroup() %>% mutate(year = year(DateTimestamp),
 #                          month = month(DateTimestamp)) %>% group_by(year, month) %>% summarise(mean_daily_revenue = mean(daily_revenue)) %>% ungroup()
 # 
@@ -1180,19 +1192,18 @@ save_widget(usa_county_deaths_per_million_trajectory_log, public_destdir)
 # ggplotly()
 # 
 # # Stacked category chart
-# latest_income_total_date <- max(income_totals$DateTimestamp)
 # date_window <- substr(seq(from = latest_income_total_date - 30, to = latest_income_total_date, by = "days"), start = 6, stop = 10)
-# income_totals_all <- income_totals %>%  
-#   mutate(filter_key = substr(DateTimestamp, start = 6, stop = 10)) %>% 
+# income_totals_all <- income_totals %>%
+#   mutate(filter_key = substr(DateTimestamp, start = 6, stop = 10)) %>%
 #   filter(filter_key %in% date_window) %>% select(-filter_key)
 # 
-# income_totals_all <- income_totals_all %>% 
-#   gather(key = "channel", value = "amount", -DateTimestamp)  %>% 
+# income_totals_all <- income_totals_all %>%
+#   gather(key = "channel", value = "amount", -DateTimestamp)  %>%
 #   mutate(year = year(DateTimestamp),
 #                        day = yday(DateTimestamp)) %>%
 #   group_by(year, channel) %>%
 #   summarise(average_amount = mean(amount)) %>%
-#   ungroup() %>% 
+#   ungroup() %>%
 #   spread(key = channel, value = average_amount)
 # 
 # daily_ave_income_categories <- plot_ly(income_totals_all, x = ~year, y = ~Bank, name = 'Bank', type = 'bar')
