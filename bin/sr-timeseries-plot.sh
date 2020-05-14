@@ -1,4 +1,4 @@
 #!/usr/bin/env bash
 set -e
 
-python3 ./hr_data_last_values_to_minio.py
+python3 ./service_request_timeseries_plot_widget_to_minio.py $1 $2
