@@ -7,7 +7,7 @@ import sys
 import tempfile
 
 from bokeh.embed import file_html
-from bokeh.models import HoverTool, Range1d, NumeralTickFormatter, DatetimeTickFormatter
+from bokeh.models import HoverTool, Range1d, NumeralTickFormatter, DatetimeTickFormatter, Legend
 from bokeh.plotting import figure
 from bokeh.resources import CDN
 from db_utils import minio_utils
@@ -132,15 +132,15 @@ def generate_plot(plot_df, start_date="2020-03-01", sast_tz='Africa/Johannesburg
     line_plot.add_tools(hover_tool)
 
     # Adding Income
-    line_plot.vbar(x="Date", top="TotalIncome", color="black", source=plot_df,
+    income_vbar = line_plot.vbar(x="Date", top="TotalIncome", color="black", source=plot_df,
                    legend_label="Cash Income", width=5e7)
     # Adding Payments
-    line_plot.vbar(x="Date", top="TotalPayments", color="red", source=plot_df,
+    expenditure_vbar = line_plot.vbar(x="Date", top="TotalPayments", color="red", source=plot_df,
                    legend_label="Payments", width=5e7)
 
     # Adding Nett Spend
-    line_plot.line(x="Date", y="NettSpend", color="purple", source=plot_df,
-                   legend_label="Nett Spend (7 Day Average)", line_width=3, line_dash="dashed")
+    nett_spend_line = line_plot.line(x="Date", y="NettSpend", color="purple", source=plot_df,
+                   legend_label="c (7 Day Average)", line_width=3, line_dash="dashed")
 
     # X-axis
     line_plot.xaxis.formatter = DatetimeTickFormatter(days="%Y-%m-%d")
@@ -154,6 +154,15 @@ def generate_plot(plot_df, start_date="2020-03-01", sast_tz='Africa/Johannesburg
     max_value = plot_df[["TotalIncome", "TotalPayments"]].abs().quantile(0.99).max()
     line_plot.y_range = Range1d(-max_value * 1.1, max_value * 1.1)
     line_plot.yaxis.formatter = NumeralTickFormatter(format="0 a")
+
+    # Legend
+    legend_items = [
+        ("Income", [income_vbar]),
+        ("Expenditure", [expenditure_vbar]),
+        ("Nett Spend", [nett_spend_line])
+    ]
+    legend = Legend(items=legend_items, location="center", orientation="horizontal", padding=2, margin=2)
+    line_plot.add_layout(legend, "below")
 
     plot_html = file_html(line_plot, CDN, "Business Continuity Financial Time Series")
 
