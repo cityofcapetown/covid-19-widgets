@@ -17,18 +17,14 @@ import pandas
 import pytz
 from tqdm.auto import tqdm
 
+tqdm.pandas()
+
 MINIO_BUCKET = "covid"
 MINIO_CLASSIFICATION = minio_utils.DataClassification.EDGE
 
 DATA_BUCKET_NAME = "service-standards-tool.citizen-notifications"
-DATA_START_DATE = pandas.Timestamp("2020-03-01", pytz=pytz.FixedOffset(120))
-
-DATA_DIRECTORATE_QUERIES = {
-    "city": lambda df: df,
-    "corporate_services": lambda df: df.query("directorate == 'Corporate Services'"),
-    "water_and_waste": lambda df: df.query("directorate == 'Water and Waste Services'"),
-    "energy_and_climate_change": lambda df: df.query("directorate == 'Energy and Climate Change'"),
-}
+SAST_TZ = pytz.FixedOffset(120)
+DATA_START_DATE = pandas.Timestamp("2020-03-01", tz=SAST_TZ)
 
 DATE_COL = "Date"
 OPENED_COL = "Opened"
@@ -60,6 +56,7 @@ def get_service_request_data(minio_access, minio_secret):
         minio_key=minio_access,
         minio_secret=minio_secret,
         data_classification=minio_utils.DataClassification.CONFIDENTIAL,
+        use_cache=True
     )
 
     return service_request_df
@@ -71,8 +68,12 @@ def filter_sr_data(sr_df, start_date, end_date=None, offset_length=0):
         start_date -= offset
         end_date -= offset
 
-    filter_string = "(CreationTimestamp >= @start_date)"
-    filter_string += " & (CreationTimestamp < @end_date)" if end_date is not None else ""
+    filter_string = "(CreationTimestamp.dt.date >= @start_date)"
+    filter_string += " & (CreationTimestamp.dt.date < @end_date)" if end_date is not None else ""
+    logging.debug(f"Resulting filter string: '{filter_string}'")
+    logging.debug(f"start_date='{start_date}'")
+    if end_date is not None:
+        logging.debug(f"end_date='{end_date}'")
 
     return sr_df.query(filter_string)
 
@@ -91,7 +92,7 @@ def get_daily_totals_df(sr_df, data_start_date=DATA_START_DATE):
 
     # Getting rid of everything scooped in before start date
     daily_count_df.drop(
-        daily_count_df.query("Date < @data_start_date").index, inplace=True
+        daily_count_df.query(f"{DATE_COL} < @data_start_date").index, inplace=True
     )
 
     return daily_count_df
@@ -119,11 +120,11 @@ def get_p80_window(start_date, sr_df, quantile=DURATION_QUANTILE, window_length=
 def get_previous_year_counts(sr_df, previous_window_start, window_length=PREVIOUS_TOTAL_WINDOW):
     previous_df = get_daily_totals_df(sr_df, previous_window_start)
 
-    rolling_df = previous_df.rolling(window_length, on="Date").mean()
+    rolling_df = previous_df.rolling(window_length, on="Date").mean().round(0)
     previous_values_dict = {
-        PREVIOUS_OPEN_COL: rolling_df.dropna()[OPENED_COL].values,
-        PREVIOUS_CLOSED_COL: rolling_df.dropna()[CLOSED_COL].values,
-        PREVIOUS_TOTAL_COL: rolling_df.dropna()[TOTAL_COL].values
+        PREVIOUS_OPEN_COL: rolling_df[OPENED_COL].fillna(0).values,
+        PREVIOUS_CLOSED_COL: rolling_df[CLOSED_COL].fillna(0).values,
+        PREVIOUS_TOTAL_COL: rolling_df[TOTAL_COL].fillna(0).values
     }
 
     return previous_values_dict
@@ -131,7 +132,7 @@ def get_previous_year_counts(sr_df, previous_window_start, window_length=PREVIOU
 
 def generate_plot_timeseries(sr_df):
     filtered_df = filter_sr_data(sr_df, DATA_START_DATE)
-    logging.debug(f"filtered_df['{DATE_COL}'].unique()=\n{filtered_df[DATE_COL].unique()}")
+    logging.debug(f"filtered_df.CreationTimestamp.describe()=\n{filtered_df.CreationTimestamp.describe()}")
 
     logging.debug("Getting daily totals")
     timeseries_df = get_daily_totals_df(filtered_df)
@@ -143,13 +144,13 @@ def generate_plot_timeseries(sr_df):
     )
 
     logging.debug("Getting previous year's totals")
-    previous_window_start = DATA_START_DATE - pandas.Timedelta(PREVIOUS_TOTAL_WINDOW)
+    previous_window_start = DATA_START_DATE - pandas.Timedelta(days=PREVIOUS_TOTAL_WINDOW)
     previous_filtered_df = filter_sr_data(sr_df, previous_window_start, sr_df.CompletionTimestamp.max(),
                                           offset_length=PREVIOUS_OFFSET)
-    previous_timeseries_counts = get_previous_year_counts(previous_filtered_df, previous_window_start)
+    previous_window_start -= pandas.Timedelta(days=PREVIOUS_OFFSET)
 
-    for col, values in previous_timeseries_counts:
-        timeseries_df[col] = values
+    for col, values in get_previous_year_counts(previous_filtered_df, previous_window_start).items():
+        timeseries_df[col] = values[:timeseries_df.shape[0]]
 
     logging.debug("Getting previous year's duration")
     timeseries_df[PREVIOUS_DURATION_COL] = timeseries_df[DATE_COL].progress_apply(
@@ -211,11 +212,11 @@ def generate_plot(plot_df):
     legend = Legend(items=legend_items, location="center", orientation="horizontal", margin=2, padding=2)
     plot.add_layout(legend, 'below')
 
-    TOOLTIPS = [
-        (DATE_COL, "@CreationDate{%F}"),
+    tooltips = [
+        (DATE_COL, f"@{DATE_COL}{{%F}}"),
         *[(col, f"@{col}{{0.0 a}}") for col in HOVER_COLS if col not in [DATE_COL]]
     ]
-    hover_tool = HoverTool(tooltips=TOOLTIPS, renderers=[line], mode="vline",
+    hover_tool = HoverTool(tooltips=tooltips, renderers=[line], mode="vline",
                            formatters={f'@{DATE_COL}': 'datetime'})
     plot.add_tools(hover_tool)
 
@@ -258,30 +259,36 @@ if __name__ == "__main__":
     secrets_path = os.environ["SECRETS_PATH"]
     secrets = json.load(open(secrets_path))
 
-    logging.info("Fetch[ing] data...")
-    service_request_df = get_service_request_data(secrets["minio"]["edge"]["access"],
-                                                  secrets["minio"]["edge"]["secret"])
-    logging.info("...Fetch[ed] data.")
+    directorate_file_prefix = sys.argv[1]
+    directorate_title = sys.argv[2]
 
-    for directorate_file_prefix, directate_filter_func in DATA_DIRECTORATE_QUERIES.items:
-        logging.info(f"Generat[ing] plot for '{directorate_file_prefix}'")
+    logging.info(f"Generat[ing] plot for '{directorate_title}'")
 
-        logging.debug(f"service_request_df.shape={service_request_df.shape}")
-        logging.info(f"Filter[ing] data...")
-        directorate_df = directate_filter_func(service_request_df)
-        logging.info(f"...Filter[ed] data")
-        logging.debug(f"directorate_df.shape={directorate_df.shape}")
+    logging.info("Fetch[ing] SR data...")
+    service_request_df = get_service_request_data(secrets["minio"]["confidential"]["access"],
+                                                  secrets["minio"]["confidential"]["secret"])
+    logging.info("...Fetch[ed] SR data.")
 
-        logging.info("Mung[ing] data for plotting...")
-        plot_df = generate_plot_timeseries(directorate_df)
-        logging.info("...Mung[ed] data")
+    logging.debug(f"service_request_df.shape={service_request_df.shape}")
+    logging.info(f"Filter[ing] data...")
+    directorate_df = (
+        service_request_df.query(f"directorate == @directorate_title")
+        if directorate_title != "*"
+        else service_request_df
+    )
+    logging.info(f"...Filter[ed] data")
+    logging.debug(f"directorate_df.shape={directorate_df.shape}")
 
-        logging.info("Generat[ing] Plot...")
-        plot_html = generate_plot(plot_df)
-        logging.info("...Generat[ed] Plot")
+    logging.info("Mung[ing] data for plotting...")
+    plot_df = generate_plot_timeseries(directorate_df)
+    logging.info("...Mung[ed] data")
 
-        logging.info("Writ[ing] to Minio...")
-        plot_filename = f"{directorate_file_prefix}_{PLOT_FILENAME_SUFFIX}"
-        write_to_minio(plot_html, PLOT_FILENAME_SUFFIX,
-                       secrets["minio"]["edge"]["access"], secrets["minio"]["edge"]["secret"])
-        logging.info("...Wr[ote] to Minio")
+    logging.info("Generat[ing] Plot...")
+    plot_html = generate_plot(plot_df)
+    logging.info("...Generat[ed] Plot")
+
+    logging.info("Writ[ing] to Minio...")
+    plot_filename = f"{directorate_file_prefix}_{PLOT_FILENAME_SUFFIX}"
+    write_to_minio(plot_html, plot_filename,
+                   secrets["minio"]["edge"]["access"], secrets["minio"]["edge"]["secret"])
+    logging.info("...Wr[ote] to Minio")
