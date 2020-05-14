@@ -189,7 +189,7 @@ def generate_plot(plot_df):
     plot.add_layout(LinearAxis(y_range_name="duration", axis_label="Duration (Days)"), 'right')
 
     line_2019 = plot.line(x=DATE_COL, y=PREVIOUS_DURATION_COL,
-                          source=plot_df, y_range_name="duration", color="Grey", line_width=2, alpha=0.5)
+                          source=plot_df, y_range_name="duration", color="Grey", line_width=4, alpha=0.5)
 
     vbar_stacked = plot.vbar_stack(
         [OPENED_COL, CLOSED_COL], x=dodge(DATE_COL, 1.5e7, plot.x_range), width=2.5e7, source=plot_df,
@@ -198,13 +198,13 @@ def generate_plot(plot_df):
     previous_vbar_stacked = plot.vbar_stack(
         [PREVIOUS_OPEN_COL, PREVIOUS_CLOSED_COL], x=dodge(DATE_COL, -1.5e7, plot.x_range),
         width=2.5e7, source=plot_df,
-        fill_color=["Grey", "DarkGrey"], alpha=0.5, line_alpha=0
+        fill_color=["DarkGrey", "Grey"], alpha=0.5, line_alpha=0
     )
 
     line = plot.line(x=DATE_COL, y=DURATION_COL,
-                     source=plot_df, y_range_name="duration", color="Red", line_width=2)
+                     source=plot_df, y_range_name="duration", color="Red", line_width=4)
     circle = plot.circle(x=DATE_COL, y=DURATION_COL,
-                         source=plot_df, y_range_name="duration", color="Red", size=5)
+                         source=plot_df, y_range_name="duration", color="Red", size=6)
 
     plot.xaxis.major_label_orientation = math.pi / 2
     plot.xaxis.formatter = DatetimeTickFormatter(days="%Y-%m-%d")
