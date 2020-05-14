@@ -7,7 +7,7 @@ import sys
 import tempfile
 
 from bokeh.embed import file_html
-from bokeh.models import HoverTool, NumeralTickFormatter, DatetimeTickFormatter, Range1d, LinearAxis
+from bokeh.models import HoverTool, NumeralTickFormatter, DatetimeTickFormatter, Range1d, LinearAxis, Legend
 from bokeh.plotting import figure
 from bokeh.resources import CDN
 from db_utils import minio_utils
@@ -132,15 +132,15 @@ def generate_plot(plot_df, sast_tz='Africa/Johannesburg'):
     line_plot.add_layout(second_y_axis, 'right')
 
     # Bar plot for counts
-    line_plot.vbar(x=DATE_COL_NAME, top=DAY_COUNT_COL, width=5e7, color="blue", source=plot_df,
+    count_vbar = line_plot.vbar(x=DATE_COL_NAME, top=DAY_COUNT_COL, width=5e7, color="blue", source=plot_df,
                    y_range_name="count_range", alpha=0.4)
 
     # Line plots
-    line_plot.line(x=DATE_COL_NAME, y=ABSENTEEISM_RATE_COL, color='red', source=plot_df, line_width=5)
-    line_plot.scatter(x=DATE_COL_NAME, y=ABSENTEEISM_RATE_COL, fill_color='red', source=plot_df, size=12, line_alpha=0)
+    absent_line = line_plot.line(x=DATE_COL_NAME, y=ABSENTEEISM_RATE_COL, color='red', source=plot_df, line_width=5)
+    absent_scatter = line_plot.scatter(x=DATE_COL_NAME, y=ABSENTEEISM_RATE_COL, fill_color='red', source=plot_df, size=12, line_alpha=0)
 
-    line_plot.line(x=DATE_COL_NAME, y=COVID_SICK_COL, color='orange', source=plot_df, line_width=5)
-    line_plot.scatter(x=DATE_COL_NAME, y=COVID_SICK_COL, fill_color='orange', source=plot_df, size=12, line_alpha=0)
+    covid_line = line_plot.line(x=DATE_COL_NAME, y=COVID_SICK_COL, color='orange', source=plot_df, line_width=5)
+    covid_scatter = line_plot.scatter(x=DATE_COL_NAME, y=COVID_SICK_COL, fill_color='orange', source=plot_df, size=12, line_alpha=0)
 
     # axis formatting
     line_plot.xaxis.formatter = DatetimeTickFormatter(days="%Y-%m-%d")
@@ -149,8 +149,14 @@ def generate_plot(plot_df, sast_tz='Africa/Johannesburg'):
     line_plot.yaxis.formatter = NumeralTickFormatter(format="0 %")
     second_y_axis.formatter = NumeralTickFormatter(format="0 a")
 
-    # Legend Location
-    line_plot.legend.location = "bottom_left"
+    # Legend
+    legend_items = [
+        ("Assessed", [count_vbar]),
+        ("Not at Work", [absent_line, absent_scatter]),
+        ("Covid-19 Exposure", [covid_line, covid_scatter])
+    ]
+    legend = Legend(items=legend_items, location="center", orientation="horizontal", padding=2, margin=2)
+    line_plot.add_layout(legend, "below")
 
     plot_html = file_html(line_plot, CDN, "Business Continuity HR Capacity Time Series")
 
