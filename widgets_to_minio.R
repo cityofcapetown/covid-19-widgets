@@ -773,13 +773,17 @@ save_widget(ct_subdistrict_cumulative_daily_counts_bar_chart, private_destdir)
 
 
 # ct daily counts bar chart -------------------------------
-ct_daily_counts_bar_chart <-  ct_subdistrict_cumulative_daily_counts %>% 
+ct_daily_counts <-  ct_subdistrict_cumulative_daily_counts %>% 
   group_by(date) %>%
   summarise(gen_admissions = sum(gen_admissions),
             cases = sum(cases),
             deaths = sum(deaths),
-            icu_admissions = sum(icu_admissions)) %>%
-  plot_ly(.,  x = ~date, 
+            icu_admissions = sum(icu_admissions)) %>% 
+  ungroup() %>% 
+  mutate(rolling_death_5_days = rollmean(deaths, 5, na.pad=TRUE, align="right"))
+
+
+ct_daily_counts_bar_chart <- ct_daily_counts %>%   plot_ly(.,  x = ~date, 
           y = ~cases, 
           type = 'bar', 
           name = 'New Cases',
@@ -790,13 +794,21 @@ ct_daily_counts_bar_chart <-  ct_subdistrict_cumulative_daily_counts %>%
             marker = list(color = 'rgba(255,165,0, 0.7)')) %>%
   add_trace(y = ~deaths, name = 'Deaths',
             marker = list(color = 'rgba(219, 64, 82, 0.7)')) %>%
+  add_trace(y = ~rolling_death_5_days, name = 'Deaths 5 Day Average',
+            type = "scatter", 
+            mode = "line", 
+            line = list(color = 'rgba(219, 64, 82, 1)'), 
+            marker = list(color = 'rgba(219, 64, 82, 1)')) %>%
   layout(barmode = 'stack', legend = list(x = 0.1, y = 0.9))
 
 save_widget(ct_daily_counts_bar_chart, private_destdir)
 
 
 for (subdist in unique(ct_subdistrict_cumulative_daily_counts$Subdistrict)) {
-  subdist_cumulative_daily_counts <- ct_subdistrict_cumulative_daily_counts %>% filter(Subdistrict == subdist) 
+  subdist_cumulative_daily_counts <- ct_subdistrict_cumulative_daily_counts %>% 
+    filter(Subdistrict == subdist) %>%  
+    mutate(rolling_death_5_days = rollmean(deaths, 5, na.pad=TRUE, align="right"))
+
   p <- subdist_cumulative_daily_counts %>%
     plot_ly(.,  x = ~date, 
             y = ~cases, 
@@ -809,6 +821,11 @@ for (subdist in unique(ct_subdistrict_cumulative_daily_counts$Subdistrict)) {
               marker = list(color = 'rgba(255,165,0, 0.7)')) %>%
     add_trace(y = ~deaths, name = 'Deaths',
               marker = list(color = 'rgba(219, 64, 82, 0.7)')) %>%
+    add_trace(y = ~rolling_death_5_days, name = 'Deaths 5 Day Average',
+              type = "scatter", 
+              mode = "line", 
+              line = list(color = 'rgba(219, 64, 82, 1)'), 
+              marker = list(color = 'rgba(219, 64, 82, 1)')) %>%
     layout(barmode = 'stack')
   obj_name <- print(paste("cct_", str_replace_all(str_replace_all(subdist, " ", "_"), "&", ""), "_daily_counts_bar_chart", sep = ""))  
   assign(obj_name, p)
