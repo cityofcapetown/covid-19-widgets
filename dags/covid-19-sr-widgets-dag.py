@@ -4,7 +4,7 @@ from airflow.contrib.kubernetes.secret import Secret
 
 from datetime import datetime, timedelta
 
-DAG_STARTDATE = datetime(2020, 3, 31)
+DAG_STARTDATE = datetime(2020, 5, 14)
 default_args = {
     'owner': 'airflow',
     'depends_on_past': False,
@@ -29,7 +29,7 @@ dag = DAG('covid-19-sr-widgets',
           catchup=False,
           default_args=default_args,
           schedule_interval=dag_interval,
-          concurrency=1)
+          concurrency=4)
 
 # env variables for inside the k8s pod
 k8s_run_env = {
