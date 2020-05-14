@@ -107,7 +107,9 @@ def get_p80_window(start_date, sr_df, quantile=DURATION_QUANTILE, window_length=
 
     # Thresholding completion timestamps to start_date
     threshold_mask = filtered_df.CompletionTimestamp.isna()
-    threshold_mask |= filtered_df.CompletionTimestamp.dt.date > start_date
+    if threshold_mask.sum() < filtered_df.shape[0]:
+        threshold_mask |= (filtered_df.CompletionTimestamp.dt.date > start_date)
+
     duration_series[threshold_mask] = pandas.Timestamp(start_date, tz=pytz.FixedOffset(120))
 
     duration_series -= filtered_df.CreationTimestamp
@@ -145,7 +147,8 @@ def generate_plot_timeseries(sr_df):
 
     logging.debug("Getting previous year's totals")
     previous_window_start = DATA_START_DATE - pandas.Timedelta(days=PREVIOUS_TOTAL_WINDOW)
-    previous_filtered_df = filter_sr_data(sr_df, previous_window_start, sr_df.CompletionTimestamp.max(),
+    previous_window_end = max(sr_df.CompletionTimestamp.max(), pandas.Timestamp.now(tz=SAST_TZ))
+    previous_filtered_df = filter_sr_data(sr_df, previous_window_start, previous_window_end,
                                           offset_length=PREVIOUS_OFFSET)
     previous_window_start -= pandas.Timedelta(days=PREVIOUS_OFFSET)
 

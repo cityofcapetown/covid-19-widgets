@@ -88,7 +88,7 @@ DIRECTORATE_LIST = {
     ("corporate_services", 'Corporate Services'),
     ("human_settlements", 'Human Settlements'),
     ("community_services_and_health", 'Community Services and Health'),
-    ("enterprise_opportunities_and_asset_management", 'Enterprise Opportunities and Asset Management'),
+    ("economic_opportunities_and_asset_management", 'Economic Opportunities and Asset Management'),
     ("spatial_planning_and_environment", 'Spatial Planning and Environment')
 }
 
