@@ -58,11 +58,19 @@ k8s_run_args = {
 }
 
 
-def covid_19_widget_task(task_name, task_kwargs={}):
+def covid_19_widget_task(task_name, task_kwargs={}, task_cmdline_args=()):
     """Factory for k8sPodOperator"""
-    name = "covid-19-hr-widgets-{}".format(task_name)
+    if len(task_cmdline_args) == 0:
+        name_template = "covid-19-hr-widgets-{}"
+        name = name_template.format(task_name)
+    else:
+        name_template = "covid-19-hr-widgets-{}-{}"
+        name = name_template.format(task_name, task_cmdline_args[0].replace("_", "-"))
+
     run_args = {**k8s_run_args.copy(), **task_kwargs}
-    run_cmd = "bash -c '{} && \"$COVID_19_WIDGETS_DIR\"/bin/{}.sh'".format(startup_cmd, task_name)
+    run_cmd = "bash -c '{} && \"$COVID_19_WIDGETS_DIR\"/bin/{}.sh \"{}\"'".format(
+        startup_cmd, task_name, '" "'.join(task_cmdline_args)
+    )
 
     operator = KubernetesPodOperator(
         cmds=["bash", "-cx"],
@@ -81,8 +89,29 @@ def covid_19_widget_task(task_name, task_kwargs={}):
 LATEST_VALUES = 'hr-latest-values'
 latest_values_operator = covid_19_widget_task(LATEST_VALUES)
 
+DIRECTORATE_LIST = {
+    ("city", "*"),
+    ("city_manager", 'CITY MANAGER'),
+    # ("water_and_waste", 'WATER AND WASTE'),
+    # ("energy_and_climate_change", 'ENERGY AND CLIMATE CHANGE'),
+    # ("finance", 'FINANCE'),
+    # ("safety_and_security", "SAFETY AND SECURITY"),
+    # ("community_services_and_health", 'COMMUNITY SERVICES and HEALTH'),
+    ("transport", "TRANSPORT"),
+    ("corporate_services", "CORPORATE SERVICES"),
+    ("urban_management", "URBAN MANAGEMENT"),
+    ("human_settlements", "HUMAN SETTLEMENTS"),
+    ("economic_opportunities_and_asset_management", "ECONOMIC OPPORTUNITIES &ASSET MANAGEMENT"),
+    ("spatial_planning_and_environment", "SPATIAL PLANNING AND ENVIRONMENT")
+}
+
 ABSENTEEISM_LINE_PLOT = 'hr-absenteeism-plot'
-absenteeism_operator = covid_19_widget_task(ABSENTEEISM_LINE_PLOT)
+absenteeism_operators = [
+    covid_19_widget_task(
+        ABSENTEEISM_LINE_PLOT,
+        task_cmdline_args=directorate_args
+    ) for directorate_args in DIRECTORATE_LIST
+]
 
 BUSUNIT_STATUS_PLOT = 'hr-busunit-status-plot'
 busunit_status_operator = covid_19_widget_task(BUSUNIT_STATUS_PLOT)
