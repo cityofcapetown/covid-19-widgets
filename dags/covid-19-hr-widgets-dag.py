@@ -89,7 +89,7 @@ def covid_19_widget_task(task_name, task_kwargs={}, task_cmdline_args=()):
 DIRECTORATE_LIST = {
     ("city", "*"),
     ("city_manager", 'CITY MANAGER'),
-    # ("water_and_waste", 'WATER AND WASTE'),
+    ("water_and_waste", 'WATER AND WASTE'),
     # ("energy_and_climate_change", 'ENERGY AND CLIMATE CHANGE'),
     # ("finance", 'FINANCE'),
     # ("safety_and_security", "SAFETY AND SECURITY"),
