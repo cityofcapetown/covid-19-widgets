@@ -5,9 +5,11 @@ import os
 import sys
 import tempfile
 
+import branca
 from db_utils import minio_utils
 import folium
 import geopandas
+import jinja2
 
 import city_map_layers_to_minio
 
@@ -15,10 +17,6 @@ MINIO_BUCKET = "covid"
 MINIO_CLASSIFICATION = minio_utils.DataClassification.EDGE
 
 WIDGETS_RESTRICTED_PREFIX = "widgets/private/city_map_"
-
-CITY_CASE_DATA_FILENAME = "ct_all_cases.csv"
-WARD_COUNT_FILENAME = "ward_case_count.geojson"
-HEX_COUNT_FILENAME = "hex_case_count.geojson"
 
 WARD_COUNT_NAME_PROPERTY = "WardNo"
 HEX_COUNT_INDEX_PROPERTY = "index"
@@ -28,17 +26,17 @@ CITY_CENTRE = (-33.9715, 18.6021)
 LAYER_PROPERTIES_LOOKUP = collections.OrderedDict((
     (city_map_layers_to_minio.HEX_COUNT_FILENAME, (
         (HEX_COUNT_INDEX_PROPERTY, city_map_layers_to_minio.CASE_COUNT_COL), ("Hex ID", "Case Count"),
-        "OrRd", "Covid-19 Cases by L7 Hex", True
+        "OrRd", "Covid-19 Cases by L7 Hex", True, True
     )),
     (city_map_layers_to_minio.WARD_COUNT_FILENAME, (
         (WARD_COUNT_NAME_PROPERTY, city_map_layers_to_minio.CASE_COUNT_COL), ("Ward Name", "Case Count"),
-        "BuPu", "Covid-19 Cases by Ward", False
+        "BuPu", "Covid-19 Cases by Ward", False, True
     )),
     ("informal_settlements.geojson", (
-        ("INF_STLM_NAME",), ("Informal Settlement Name",), None, "Informal Settlements", False
+        ("INF_STLM_NAME",), ("Informal Settlement Name",), None, "Informal Settlements", False, False
     )),
     ("health_care_facilities.geojson", (
-        ("NAME", "ADR",), ("Healthcare Facility Name", "Address",), None, "Healthcare Facilities", False
+        ("NAME", "ADR",), ("Healthcare Facility Name", "Address",), None, "Healthcare Facilities", False, False
     )),
 ))
 MAP_FILENAME = "widget.html"
@@ -48,9 +46,10 @@ def get_layers(tempdir, minio_access, minio_secret):
     for layer in LAYER_PROPERTIES_LOOKUP.keys():
         local_path = os.path.join(tempdir, layer)
 
+        layer_minio_path = WIDGETS_RESTRICTED_PREFIX + layer
         minio_utils.minio_to_file(
             filename=local_path,
-            minio_filename_override=WIDGETS_RESTRICTED_PREFIX + layer,
+            minio_filename_override=layer_minio_path,
             minio_bucket=MINIO_BUCKET,
             minio_key=minio_access,
             minio_secret=minio_secret,
@@ -59,7 +58,53 @@ def get_layers(tempdir, minio_access, minio_secret):
 
         layer_gdf = geopandas.read_file(local_path)
 
-        yield layer, local_path, layer_gdf
+        *_, has_metadata = LAYER_PROPERTIES_LOOKUP[layer]
+        if has_metadata:
+            metadata_filename = os.path.splitext(layer)[0] + ".json"
+            metadata_local_path = os.path.join(tempdir, metadata_filename)
+            metadata_minio_path = WIDGETS_RESTRICTED_PREFIX + metadata_filename
+
+            minio_utils.minio_to_file(
+                filename=metadata_local_path,
+                minio_filename_override=metadata_minio_path,
+                minio_bucket=MINIO_BUCKET,
+                minio_key=minio_access,
+                minio_secret=minio_secret,
+                data_classification=MINIO_CLASSIFICATION,
+            )
+            with open(metadata_local_path, "r") as metadata_file:
+                layer_metadata = json.load(metadata_file)
+        else:
+            layer_metadata = {}
+
+        yield layer, local_path, layer_gdf, layer_metadata
+
+
+class FloatDiv(branca.element.MacroElement):
+    """Adds a floating div in HTML canvas on top of the map."""
+    _template = jinja2.Template("""
+            {% macro header(this,kwargs) %}
+                <style>
+                    #{{this.get_name()}} {
+                        position:absolute;
+                        top:{{this.top}}%;
+                        left:{{this.left}}%;
+                        }
+                </style>
+            {% endmacro %}
+            {% macro html(this,kwargs) %}
+            <div id="{{this.get_name()}}" alt="float_div" style="z-index: 999999">
+              {{this.content}}
+            </div
+            {% endmacro %}
+            """)
+
+    def __init__(self, content, top=10, left=0):
+        super(FloatDiv, self).__init__()
+        self._name = 'FloatDiv'
+        self.content = content
+        self.top = top
+        self.left = left
 
 
 def generate_map(layers_dict):
@@ -80,9 +125,9 @@ def generate_map(layers_dict):
     )
 
     # Going layer by layer
-    for layer_filename, (layer_path, count_gdf, is_choropleth) in layers_dict.items():
+    for layer_filename, (layer_path, count_gdf, is_choropleth, layer_metadata) in layers_dict.items():
         (layer_lookup_fields, layer_lookup_aliases,
-         colour_scheme, title, visible_by_default) = LAYER_PROPERTIES_LOOKUP[layer_filename]
+         colour_scheme, title, visible_by_default, has_metadata) = LAYER_PROPERTIES_LOOKUP[layer_filename]
 
         layer_lookup_key, *_ = layer_lookup_fields
         choropleth = folium.features.Choropleth(
@@ -112,6 +157,16 @@ def generate_map(layers_dict):
             aliases=layer_lookup_aliases
         )
         choropleth.geojson.add_child(layer_tooltip)
+
+        # Adding missing count from metadata
+        if city_map_layers_to_minio.NOT_SPATIAL_CASE_COUNT in layer_metadata:
+            div = FloatDiv(content=f"""
+                <span style="font-size: 20px; color:#FF0000"> 
+                    Cases not displayed: {layer_metadata[city_map_layers_to_minio.NOT_SPATIAL_CASE_COUNT]} 
+                </span>
+            """, top=95)
+
+            choropleth.geojson.add_child(div)
 
         choropleth.add_to(m)
 
@@ -156,10 +211,10 @@ if __name__ == "__main__":
         logging.info("G[etting] layers")
         map_layers_dict = {
             # layername: (location, data, choropleth flag?)
-            layer: (local_path, layer_gdf, layer in city_map_layers_to_minio.CHOROPLETH_LAYERS)
-            for layer, local_path, layer_gdf in get_layers(tempdir,
-                                                           secrets["minio"]["edge"]["access"],
-                                                           secrets["minio"]["edge"]["secret"])
+            layer: (local_path, layer_gdf, layer in city_map_layers_to_minio.CHOROPLETH_LAYERS, layer_metadata)
+            for layer, local_path, layer_gdf, layer_metadata in get_layers(tempdir,
+                                                                           secrets["minio"]["edge"]["access"],
+                                                                           secrets["minio"]["edge"]["secret"])
         }
         logging.info("G[ot] layers")
 

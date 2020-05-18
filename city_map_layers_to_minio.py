@@ -48,7 +48,7 @@ CHOROPLETH_COL_LOOKUP = {
 
 CASE_COUNT_COL_OLD = "Date.of.Diagnosis"
 CASE_COUNT_COL = "CaseCount"
-NOT_SPATIAL_CASE_COUNT = "NotSpatial"
+NOT_SPATIAL_CASE_COUNT = "not_spatial_count"
 
 
 def get_layers(tempdir, minio_access, minio_secret):
