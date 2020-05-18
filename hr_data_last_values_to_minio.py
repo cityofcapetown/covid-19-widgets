@@ -22,9 +22,9 @@ SUCCINCT_STATUS_COL = "SuccinctStatus"
 ESSENTIAL_COL = "EssentialStaff"
 ASSESSED_COL = "AssessedStaff"
 
+ISO_TIMESTAMP_FORMAT = "%Y-%m-%dT%H:%M"
 STATUS_WINDOW_LENGTH = 3
 TZ_STRING = "Africa/Johannesburg"
-ISO_TIMESTAMP_FORMAT = "%Y-%m-%dT%H:%M"
 
 WORKING_STATUS = "working"
 NOT_WORKING_STATUS = "not-working"
@@ -135,7 +135,7 @@ def get_current_hr_df(hr_df):
     return most_recent_ts, current_hr_df
 
 
-def get_latest_values_dict(hr_df, prefix="city"):
+def get_latest_values_dict(hr_df, hr_master_df, prefix="city"):
     most_recent_ts, current_hr_df = get_current_hr_df(hr_df)
 
     last_updated = most_recent_ts.strftime(ISO_TIMESTAMP_FORMAT)
@@ -146,9 +146,8 @@ def get_latest_values_dict(hr_df, prefix="city"):
     staff_sick = current_hr_df[STATUS_COL].isin(SICK_STATUSES).sum() if staff_reported > 0 else 0
     staff_covid = current_hr_df[STATUS_COL].isin(COVID_STATUSES).sum() if staff_reported > 0 else 0
 
-    master_df = hr_df.drop_duplicates(subset=[STAFF_NUMBER_COL_NAME])
-    staff_essential = master_df[ESSENTIAL_COL].sum()
-    staff_assessed = master_df[ASSESSED_COL].sum()
+    staff_essential = hr_master_df[ESSENTIAL_COL].sum()
+    staff_assessed = hr_master_df[ASSESSED_COL].sum()
 
     business_continuity_dict = {
         f"{prefix}_last_updated": last_updated,
@@ -237,7 +236,7 @@ if __name__ == "__main__":
     logging.info("...Add[ed] succinct status column.")
 
     logging.info("Generat[ing] latest values...")
-    latest_values_dict = get_latest_values_dict(hr_filtered_df, directorate_file_prefix)
+    latest_values_dict = get_latest_values_dict(hr_filtered_df, hr_master_data_df, directorate_file_prefix)
     latest_values_json = to_json_data(latest_values_dict)
     logging.info("...Generat[ed] latest values")
 
