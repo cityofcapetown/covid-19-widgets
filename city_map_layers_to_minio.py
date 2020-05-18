@@ -9,7 +9,8 @@ from db_utils import minio_utils
 import geopandas
 import pandas
 
-MINIO_BUCKET = "covid"
+MINIO_COVID_BUCKET = "covid"
+MINIO_HEX_BUCKET = "city-hex-polygons"
 MINIO_CLASSIFICATION = minio_utils.DataClassification.EDGE
 
 DATA_PUBLIC_PREFIX = "data/public/"
@@ -25,16 +26,18 @@ CHOROPLETH_LAYERS = (
     WARD_COUNT_FILENAME,
     HEX_COUNT_FILENAME,
 )
+CT_HEX_L7_FILENAME = "city-hex-polygons-7.geojson"
+CT_WARD_FILENAME = "ct_wards.geojson"
 CHOROPLETH_SOURCE_LAYERS = {
-    HEX_COUNT_FILENAME: "cct_hex_polygons_7.geojson",
-    WARD_COUNT_FILENAME: "ct_wards.geojson"
+    HEX_COUNT_FILENAME: CT_HEX_L7_FILENAME,
+    WARD_COUNT_FILENAME: CT_WARD_FILENAME
 }
 
 LAYER_FILES = (
-    "informal_settlements.geojson",
-    "health_care_facilities.geojson",
-    *CHOROPLETH_SOURCE_LAYERS.values(),
-    *CHOROPLETH_LAYERS
+    ("informal_settlements.geojson", MINIO_COVID_BUCKET, DATA_PUBLIC_PREFIX),
+    ("health_care_facilities.geojson", MINIO_COVID_BUCKET, DATA_PUBLIC_PREFIX),
+    (CT_HEX_L7_FILENAME, MINIO_HEX_BUCKET, ""),
+    (CT_WARD_FILENAME, MINIO_COVID_BUCKET, DATA_PUBLIC_PREFIX),
 )
 
 HEX_COUNT_INDEX_PROPERTY = "index"
@@ -53,22 +56,21 @@ NOT_SPATIAL_CASE_COUNT = "not_spatial_count"
 
 
 def get_layers(tempdir, minio_access, minio_secret):
-    for layer in LAYER_FILES:
-        if layer not in CHOROPLETH_LAYERS:
-            local_path = os.path.join(tempdir, layer)
+    for layer, layer_bucket, layer_minio_prefix in LAYER_FILES:
+        local_path = os.path.join(tempdir, layer)
 
-            minio_utils.minio_to_file(
-                filename=local_path,
-                minio_filename_override=DATA_PUBLIC_PREFIX + layer,
-                minio_bucket=MINIO_BUCKET,
-                minio_key=minio_access,
-                minio_secret=minio_secret,
-                data_classification=MINIO_CLASSIFICATION,
-            )
+        minio_utils.minio_to_file(
+            filename=local_path,
+            minio_filename_override=layer_minio_prefix + layer,
+            minio_bucket=layer_bucket,
+            minio_key=minio_access,
+            minio_secret=minio_secret,
+            data_classification=MINIO_CLASSIFICATION,
+        )
 
-            layer_gdf = geopandas.read_file(local_path)
+        layer_gdf = geopandas.read_file(local_path)
 
-            yield layer, local_path, layer_gdf
+        yield layer, local_path, layer_gdf
 
 
 def get_case_data(minio_access, minio_secret):
@@ -76,7 +78,7 @@ def get_case_data(minio_access, minio_secret):
         minio_utils.minio_to_file(
             filename=temp_datafile.name,
             minio_filename_override=DATA_RESTRICTED_PREFIX + CITY_CASE_DATA_FILENAME,
-            minio_bucket=MINIO_BUCKET,
+            minio_bucket=MINIO_COVID_BUCKET,
             minio_key=minio_access,
             minio_secret=minio_secret,
             data_classification=MINIO_CLASSIFICATION,
@@ -123,7 +125,7 @@ def write_metadata_to_minio(metadata_dict, tempdir, metadata_filename, minio_acc
     result = minio_utils.file_to_minio(
         filename=local_path,
         filename_prefix_override=WIDGETS_RESTRICTED_PREFIX + CITY_MAP_PREFIX,
-        minio_bucket=MINIO_BUCKET,
+        minio_bucket=MINIO_COVID_BUCKET,
         minio_key=minio_access,
         minio_secret=minio_secret,
         data_classification=MINIO_CLASSIFICATION,
@@ -137,7 +139,7 @@ def write_layers_to_minio(layers_dict, minio_access, minio_secret):
         result = minio_utils.file_to_minio(
             filename=layer_local_path,
             filename_prefix_override=WIDGETS_RESTRICTED_PREFIX + CITY_MAP_PREFIX,
-            minio_bucket=MINIO_BUCKET,
+            minio_bucket=MINIO_COVID_BUCKET,
             minio_key=minio_access,
             minio_secret=minio_secret,
             data_classification=MINIO_CLASSIFICATION,
