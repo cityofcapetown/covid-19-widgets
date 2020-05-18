@@ -86,9 +86,6 @@ def covid_19_widget_task(task_name, task_kwargs={}, task_cmdline_args=()):
 
 
 # Defining tasks
-LATEST_VALUES = 'hr-latest-values'
-latest_values_operator = covid_19_widget_task(LATEST_VALUES)
-
 DIRECTORATE_LIST = {
     ("city", "*"),
     ("city_manager", 'CITY MANAGER'),
@@ -104,6 +101,14 @@ DIRECTORATE_LIST = {
     ("economic_opportunities_and_asset_management", "ECONOMIC OPPORTUNITIES &ASSET MANAGEMENT"),
     ("spatial_planning_and_environment", "SPATIAL PLANNING AND ENVIRONMENT")
 }
+
+LATEST_VALUES = 'hr-latest-values'
+latest_values_operators = [
+    covid_19_widget_task(
+        LATEST_VALUES,
+        task_cmdline_args=directorate_args
+    ) for directorate_args in DIRECTORATE_LIST
+]
 
 ABSENTEEISM_LINE_PLOT = 'hr-absenteeism-plot'
 absenteeism_operators = [

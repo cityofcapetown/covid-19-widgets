@@ -67,7 +67,7 @@ COVID_STATUSES = {
 }
 
 WIDGETS_RESTRICTED_PREFIX = "widgets/private/business_continuity_"
-OUTPUT_VALUE_FILENAME = "values_v2.json"
+OUTPUT_VALUE_FILENAME = "values.json"
 
 
 def get_data(minio_key, minio_access, minio_secret):
@@ -86,6 +86,29 @@ def get_data(minio_key, minio_access, minio_secret):
     return data_df
 
 
+def merge_df(hr_df, hr_master_df):
+    combined_df = hr_df.merge(
+        hr_master_df,
+        left_on=STAFF_NUMBER_COL_NAME,
+        right_on=STAFF_NUMBER_COL_NAME,
+        how='left',
+        validate="many_to_one",
+    )
+    logging.debug(f"combined_df.head(5)=\n{combined_df.head(5)}")
+
+    return combined_df
+
+
+def directorate_filter_df(hr_df, directorate_title):
+    filtered_df = (
+        hr_df.query(
+            f"Directorate.str.lower() == '{directorate_title.lower()}'"
+        ) if directorate_title != "*" else hr_df
+    )
+
+    return filtered_df
+
+
 def make_statuses_succinct_again(hr_df):
     hr_df[SUCCINCT_STATUS_COL] = hr_df[STATUS_COL].apply(STATUSES_TO_SUCCINCT_MAP.get)
 
@@ -99,9 +122,11 @@ def get_current_hr_df(hr_df):
     date_window_start = most_recent_ts.date() - datetime.timedelta(days=STATUS_WINDOW_LENGTH)
     logging.debug(f"date_window_start={date_window_start}")
 
+    # select everyone inside the time window
+    # then, sort, drop duplicates to only keep the most recent one
     current_hr_df = hr_df[
         hr_df[DATE_COL_NAME].dt.date >= date_window_start
-        ].sort_values(
+    ].sort_values(
         by=[STAFF_NUMBER_COL_NAME, DATE_COL_NAME], ascending=False
     ).drop_duplicates(
         subset=[STAFF_NUMBER_COL_NAME]
@@ -110,7 +135,7 @@ def get_current_hr_df(hr_df):
     return most_recent_ts, current_hr_df
 
 
-def get_latest_values_dict(hr_df, hr_master_df):
+def get_latest_values_dict(hr_df, prefix="city"):
     most_recent_ts, current_hr_df = get_current_hr_df(hr_df)
 
     last_updated = most_recent_ts.strftime(ISO_TIMESTAMP_FORMAT)
@@ -121,18 +146,19 @@ def get_latest_values_dict(hr_df, hr_master_df):
     staff_sick = current_hr_df[STATUS_COL].isin(SICK_STATUSES).sum() if staff_reported > 0 else 0
     staff_covid = current_hr_df[STATUS_COL].isin(COVID_STATUSES).sum() if staff_reported > 0 else 0
 
-    staff_essential = hr_master_df[ESSENTIAL_COL].sum()
-    staff_assessed = hr_master_df[ASSESSED_COL].sum()
+    master_df = hr_df.drop_duplicates(subset=[STAFF_NUMBER_COL_NAME])
+    staff_essential = master_df[ESSENTIAL_COL].sum()
+    staff_assessed = master_df[ASSESSED_COL].sum()
 
     business_continuity_dict = {
-        "last_updated": last_updated,
-        "staff_at_work": str(staff_at_work),
-        "staff_reported": str(staff_reported),
-        "staff_working_remotely": str(staff_working_remotely),
-        "staff_sick": str(staff_sick),
-        "staff_covid": str(staff_covid),
-        "staff_essential": str(staff_essential),
-        "staff_assessed": str(staff_assessed)
+        f"{prefix}_last_updated": last_updated,
+        f"{prefix}_staff_at_work": str(staff_at_work),
+        f"{prefix}_staff_reported": str(staff_reported),
+        f"{prefix}_staff_working_remotely": str(staff_working_remotely),
+        f"{prefix}_staff_sick": str(staff_sick),
+        f"{prefix}_staff_covid": str(staff_covid),
+        f"{prefix}_staff_essential": str(staff_essential),
+        f"{prefix}_staff_assessed": str(staff_assessed)
     }
     logging.debug(f"business_continuity_dict=\n{pprint.pformat(business_continuity_dict)}")
 
@@ -179,6 +205,10 @@ if __name__ == "__main__":
     secrets_path = os.environ["SECRETS_PATH"]
     secrets = json.load(open(secrets_path))
 
+    directorate_file_prefix = sys.argv[1]
+    directorate_title = sys.argv[2]
+    logging.debug(f"directorate_file_prefix={directorate_file_prefix}, directorate_title={directorate_title}")
+
     logging.info("Fetch[ing] data...")
     hr_transactional_data_df = get_data(HR_DATA_FILENAME,
                                         secrets["minio"]["edge"]["access"],
@@ -194,18 +224,26 @@ if __name__ == "__main__":
                                  secrets["minio"]["edge"]["secret"])
     logging.info("...Fetch[ed] data.")
 
+    logging.info("Merg[ing] data...")
+    hr_combined_df = merge_df(hr_transactional_data_df, hr_master_data_df)
+    logging.info("...Merg[ed] data")
+
+    logging.info("Filter[ing] data...")
+    hr_filtered_df = directorate_filter_df(hr_combined_df, directorate_title)
+    logging.info("Filter[ed] data...")
+
     logging.info("Add[ing] succinct status column...")
-    hr_transactional_data_df = make_statuses_succinct_again(hr_transactional_data_df)
+    hr_transactional_data_df = make_statuses_succinct_again(hr_filtered_df)
     logging.info("...Add[ed] succinct status column.")
 
     logging.info("Generat[ing] latest values...")
-    latest_values_dict = get_latest_values_dict(hr_transactional_data_df, hr_master_data_df)
+    latest_values_dict = get_latest_values_dict(hr_filtered_df, directorate_file_prefix)
     latest_values_json = to_json_data(latest_values_dict)
     logging.info("...Generat[ed] latest values")
 
     logging.info("Writ[ing] everything to Minio...")
     for content, filename in (
-            (latest_values_json, OUTPUT_VALUE_FILENAME),
+            (latest_values_json, f"{directorate_file_prefix}_{OUTPUT_VALUE_FILENAME}"),
     ):
         write_to_minio(content, filename,
                        secrets["minio"]["edge"]["access"], secrets["minio"]["edge"]["secret"])
