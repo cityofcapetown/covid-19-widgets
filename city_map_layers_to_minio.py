@@ -1,6 +1,7 @@
 import json
 import logging
 import os
+import pprint
 import sys
 import tempfile
 
@@ -47,6 +48,7 @@ CHOROPLETH_COL_LOOKUP = {
 
 CASE_COUNT_COL_OLD = "Date.of.Diagnosis"
 CASE_COUNT_COL = "CaseCount"
+NOT_SPATIAL_CASE_COUNT = "NotSpatial"
 
 
 def get_layers(tempdir, minio_access, minio_secret):
@@ -99,11 +101,34 @@ def spatialise_case_data(case_data_df, case_data_groupby_index, data_gdf, data_g
     return case_count_gdf
 
 
+def count_non_spatial_data(case_data_df, case_data_groupby_index):
+    case_count_groupby_nas = case_data_df[case_data_groupby_index].isna().sum()
+
+    return case_count_groupby_nas
+
+
 def write_case_count_gdf_to_disk(case_count_data_gdf, tempdir, case_count_filename):
     local_path = os.path.join(tempdir, case_count_filename)
     case_count_data_gdf.reset_index().to_file(local_path, driver='GeoJSON')
 
     return local_path, case_count_data_gdf
+
+
+def write_metadata_to_minio(metadata_dict, tempdir, metadata_filename, minio_access, minio_secret):
+    local_path = os.path.join(tempdir, metadata_filename)
+    with open(local_path, "w") as not_spatial_case_count_file:
+        json.dump(metadata_dict, not_spatial_case_count_file)
+
+    result = minio_utils.file_to_minio(
+        filename=local_path,
+        filename_prefix_override=WIDGETS_RESTRICTED_PREFIX,
+        minio_bucket=MINIO_BUCKET,
+        minio_key=minio_access,
+        minio_secret=minio_secret,
+        data_classification=MINIO_CLASSIFICATION,
+    )
+
+    assert result
 
 
 def write_layers_to_minio(layers_dict, minio_access, minio_secret):
@@ -161,12 +186,25 @@ if __name__ == "__main__":
             cases_df[df_col] = cases_df[df_col].apply(sanitise_func)
             case_count_gdf = spatialise_case_data(cases_df, df_col,
                                                   data_gdf, gdf_property)
+            case_count_not_gdf = count_non_spatial_data(cases_df, df_col)
             logging.info(f"Count[ed] cases for '{layer_filename}'")
 
             logging.info(f"Writ[ing] geojson for '{layer_filename}'")
             count_layer_values = write_case_count_gdf_to_disk(case_count_gdf, tempdir, layer_filename)
             map_layers_dict[layer_filename] = count_layer_values
             logging.info(f"Wr[ote] geojson for '{layer_filename}'")
+
+            logging.info(f"Writ[ing] metadata for '{layer_filename}'")
+            layer_metadata = {
+                NOT_SPATIAL_CASE_COUNT: int(case_count_not_gdf)
+            }
+            logging.debug(f"layer_metadata=\n{pprint.pformat(layer_metadata)}")
+            layer_stem, layer_ext = os.path.splitext(layer_filename)
+            metadata_filename = layer_stem + ".json"
+            write_metadata_to_minio(layer_metadata, tempdir, metadata_filename,
+                                    secrets["minio"]["edge"]["access"],
+                                    secrets["minio"]["edge"]["secret"])
+            logging.info(f"Wr[ote] metadata for '{layer_filename}'")
 
         logging.info("Writ[ing] layers to Minio")
         write_layers_to_minio(map_layers_dict,
