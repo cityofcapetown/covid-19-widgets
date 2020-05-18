@@ -16,8 +16,6 @@ import city_map_layers_to_minio
 MINIO_BUCKET = "covid"
 MINIO_CLASSIFICATION = minio_utils.DataClassification.EDGE
 
-WIDGETS_RESTRICTED_PREFIX = "widgets/private/city_map_"
-
 WARD_COUNT_NAME_PROPERTY = "WardNo"
 HEX_COUNT_INDEX_PROPERTY = "index"
 
@@ -46,7 +44,10 @@ def get_layers(tempdir, minio_access, minio_secret):
     for layer in LAYER_PROPERTIES_LOOKUP.keys():
         local_path = os.path.join(tempdir, layer)
 
-        layer_minio_path = WIDGETS_RESTRICTED_PREFIX + layer
+        layer_minio_path = (
+            f"{city_map_layers_to_minio.WIDGETS_RESTRICTED_PREFIX}{city_map_layers_to_minio.CITY_MAP_PREFIX}"
+            f"{layer}"
+        )
         minio_utils.minio_to_file(
             filename=local_path,
             minio_filename_override=layer_minio_path,
@@ -62,7 +63,10 @@ def get_layers(tempdir, minio_access, minio_secret):
         if has_metadata:
             metadata_filename = os.path.splitext(layer)[0] + ".json"
             metadata_local_path = os.path.join(tempdir, metadata_filename)
-            metadata_minio_path = WIDGETS_RESTRICTED_PREFIX + metadata_filename
+            metadata_minio_path = (
+                f"{city_map_layers_to_minio.WIDGETS_RESTRICTED_PREFIX}{city_map_layers_to_minio.CITY_MAP_PREFIX}"
+                f"{metadata_filename}"
+            )
 
             minio_utils.minio_to_file(
                 filename=metadata_local_path,
@@ -149,7 +153,9 @@ def generate_map(layers_dict):
         # Styling them there choropleths.
         # Monkey patching the choropleth GeoJSON to *not* embed
         choropleth.geojson.embed = False
-        choropleth.geojson.embed_link = "city_" + layer_filename
+        choropleth.geojson.embed_link = (
+            f"{city_map_layers_to_minio.CITY_MAP_PREFIX}{layer_filename}"
+        )
 
         # Adding the hover-over tooltip
         layer_tooltip = folium.features.GeoJsonTooltip(
@@ -183,7 +189,10 @@ def write_map_to_minio(city_map, tempdir, minio_access, minio_secret):
 
     result = minio_utils.file_to_minio(
         filename=local_path,
-        filename_prefix_override=WIDGETS_RESTRICTED_PREFIX,
+        filename_prefix_override=(
+            f"{city_map_layers_to_minio.WIDGETS_RESTRICTED_PREFIX}"
+            f"{city_map_layers_to_minio.CITY_MAP_PREFIX}"
+        ),
         minio_bucket=MINIO_BUCKET,
         minio_key=minio_access,
         minio_secret=minio_secret,

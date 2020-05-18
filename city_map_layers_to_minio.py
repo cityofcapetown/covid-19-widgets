@@ -14,7 +14,8 @@ MINIO_CLASSIFICATION = minio_utils.DataClassification.EDGE
 
 DATA_PUBLIC_PREFIX = "data/public/"
 DATA_RESTRICTED_PREFIX = "data/private/"
-WIDGETS_RESTRICTED_PREFIX = "widgets/private/city_map_"
+CITY_MAP_PREFIX = "city_map_"
+WIDGETS_RESTRICTED_PREFIX = "widgets/private/"
 
 CITY_CASE_DATA_FILENAME = "ct_all_cases.csv"
 
@@ -121,7 +122,7 @@ def write_metadata_to_minio(metadata_dict, tempdir, metadata_filename, minio_acc
 
     result = minio_utils.file_to_minio(
         filename=local_path,
-        filename_prefix_override=WIDGETS_RESTRICTED_PREFIX,
+        filename_prefix_override=WIDGETS_RESTRICTED_PREFIX + CITY_MAP_PREFIX,
         minio_bucket=MINIO_BUCKET,
         minio_key=minio_access,
         minio_secret=minio_secret,
@@ -135,7 +136,7 @@ def write_layers_to_minio(layers_dict, minio_access, minio_secret):
     for layer_name, (layer_local_path, _) in layers_dict.items():
         result = minio_utils.file_to_minio(
             filename=layer_local_path,
-            filename_prefix_override=WIDGETS_RESTRICTED_PREFIX,
+            filename_prefix_override=WIDGETS_RESTRICTED_PREFIX + CITY_MAP_PREFIX,
             minio_bucket=MINIO_BUCKET,
             minio_key=minio_access,
             minio_secret=minio_secret,
