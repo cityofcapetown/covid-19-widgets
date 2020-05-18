@@ -15,8 +15,8 @@ import holidays
 import pandas
 
 import hr_data_last_values_to_minio
-from hr_data_last_values_to_minio import WORKING_STATUS, NOT_WORKING_STATUS
-from hr_bp_emailer import get_data_df, HR_MASTER_FILENAME_PATH, HR_TRANSACTIONAL_FILENAME_PATH, merge_df
+from hr_data_last_values_to_minio import WORKING_STATUS, NOT_WORKING_STATUS, directorate_filter_df, merge_df
+from hr_bp_emailer import get_data_df, HR_MASTER_FILENAME_PATH, HR_TRANSACTIONAL_FILENAME_PATH
 
 MINIO_BUCKET = "covid"
 MINIO_CLASSIFICATION = minio_utils.DataClassification.EDGE
@@ -205,13 +205,7 @@ if __name__ == "__main__":
     logging.info("...Merg[ed] data")
 
     logging.info("Filter[ing] data...")
-    hr_filtered_df = (
-        filter_df(
-            hr_combined_df,
-            f"Directorate.str.lower() == '{directorate_title.lower()}'"
-        ) if directorate_title != "*" else
-        hr_combined_df
-    )
+    hr_filtered_df = directorate_filter_df(hr_combined_df, directorate_title)
     logging.info("...Filter[ing] data")
 
     logging.info("Add[ing] succinct status column...")
