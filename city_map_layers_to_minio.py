@@ -92,7 +92,9 @@ def spatialise_case_data(case_data_df, case_data_groupby_index, data_gdf, data_g
     case_count_gdf = data_gdf.copy().set_index(data_gdf_index)
     case_count_gdf[CASE_COUNT_COL] = case_counts
     case_count_gdf[CASE_COUNT_COL].fillna(0, inplace=True)
-    logging.debug(f"case_count_gdf.head(5)=\n{case_count_gdf.head(5)}")
+    logging.debug(
+        f"case_count_gdf.sort_values(by=CASE_COUNT_COL, ascending=False).head(5)=\n{case_count_gdf.sort_values(by=CASE_COUNT_COL, ascending=False).head(5)}"
+    )
 
     return case_count_gdf
 

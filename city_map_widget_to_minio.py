@@ -23,16 +23,16 @@ HEX_COUNT_FILENAME = "hex_case_count.geojson"
 WARD_COUNT_NAME_PROPERTY = "WardNo"
 HEX_COUNT_INDEX_PROPERTY = "index"
 
-CASE_COUNT_COL_OLD = "date_of_diagnosis1"
-CASE_COUNT_COL = "CaseCount"
 CITY_CENTRE = (-33.9715, 18.6021)
 
 LAYER_PROPERTIES_LOOKUP = collections.OrderedDict((
     (city_map_layers_to_minio.HEX_COUNT_FILENAME, (
-        (HEX_COUNT_INDEX_PROPERTY, CASE_COUNT_COL), ("Hex ID", "Case Count"), "OrRd", "Covid-19 Cases by L7 Hex", True
+        (HEX_COUNT_INDEX_PROPERTY, city_map_layers_to_minio.CASE_COUNT_COL), ("Hex ID", "Case Count"),
+        "OrRd", "Covid-19 Cases by L7 Hex", True
     )),
     (city_map_layers_to_minio.WARD_COUNT_FILENAME, (
-        (WARD_COUNT_NAME_PROPERTY, CASE_COUNT_COL), ("Ward Name", "Case Count"), "BuPu", "Covid-19 Cases by Ward", False
+        (WARD_COUNT_NAME_PROPERTY, city_map_layers_to_minio.CASE_COUNT_COL), ("Ward Name", "Case Count"),
+        "BuPu", "Covid-19 Cases by Ward", False
     )),
     ("informal_settlements.geojson", (
         ("INF_STLM_NAME",), ("Informal Settlement Name",), None, "Informal Settlements", False
@@ -90,7 +90,7 @@ def generate_map(layers_dict):
             data=count_gdf.reset_index(),
             name=title,
             key_on=f"feature.properties.{layer_lookup_key}",
-            columns=[layer_lookup_key, CASE_COUNT_COL],
+            columns=[layer_lookup_key, city_map_layers_to_minio.CASE_COUNT_COL],
             fill_color=colour_scheme,
             highlight=True,
             show=visible_by_default,
