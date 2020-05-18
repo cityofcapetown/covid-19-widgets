@@ -28,11 +28,11 @@ CASE_COUNT_COL = "CaseCount"
 CITY_CENTRE = (-33.9715, 18.6021)
 
 LAYER_PROPERTIES_LOOKUP = collections.OrderedDict((
-    (city_map_layers_to_minio.WARD_COUNT_FILENAME, (
-        (WARD_COUNT_NAME_PROPERTY, CASE_COUNT_COL), ("Ward Name", "Case Count"), "BuPu", "Covid-19 Cases by Ward", True
-    )),
     (city_map_layers_to_minio.HEX_COUNT_FILENAME, (
-        (HEX_COUNT_INDEX_PROPERTY, CASE_COUNT_COL), ("Hex ID", "Case Count"), "OrRd", "Covid-19 Cases by L7 Hex", False
+        (HEX_COUNT_INDEX_PROPERTY, CASE_COUNT_COL), ("Hex ID", "Case Count"), "OrRd", "Covid-19 Cases by L7 Hex", True
+    )),
+    (city_map_layers_to_minio.WARD_COUNT_FILENAME, (
+        (WARD_COUNT_NAME_PROPERTY, CASE_COUNT_COL), ("Ward Name", "Case Count"), "BuPu", "Covid-19 Cases by Ward", False
     )),
     ("informal_settlements.geojson", (
         ("INF_STLM_NAME",), ("Informal Settlement Name",), None, "Informal Settlements", False
@@ -93,7 +93,8 @@ def generate_map(layers_dict):
             columns=[layer_lookup_key, CASE_COUNT_COL],
             fill_color=colour_scheme,
             highlight=True,
-            show=visible_by_default
+            show=visible_by_default,
+            line_opacity=0
         ) if is_choropleth else folium.features.Choropleth(
             layer_path,
             name=title,
@@ -115,7 +116,7 @@ def generate_map(layers_dict):
         choropleth.add_to(m)
 
     # Layer Control
-    layer_control = folium.LayerControl()
+    layer_control = folium.LayerControl(collapsed=False)
     layer_control.add_to(m)
 
     return m
