@@ -23,7 +23,7 @@ ESSENTIAL_COL = "EssentialStaff"
 ASSESSED_COL = "AssessedStaff"
 
 ISO_TIMESTAMP_FORMAT = "%Y-%m-%dT%H:%M"
-STATUS_WINDOW_LENGTH = 3
+STATUS_WINDOW_LENGTH = 4
 TZ_STRING = "Africa/Johannesburg"
 
 WORKING_STATUS = "working"
@@ -229,6 +229,7 @@ if __name__ == "__main__":
 
     logging.info("Filter[ing] data...")
     hr_filtered_df = directorate_filter_df(hr_combined_df, directorate_title)
+    hr_filtered_master_df = directorate_filter_df(hr_master_data_df, directorate_title)
     logging.info("Filter[ed] data...")
 
     logging.info("Add[ing] succinct status column...")
@@ -236,7 +237,7 @@ if __name__ == "__main__":
     logging.info("...Add[ed] succinct status column.")
 
     logging.info("Generat[ing] latest values...")
-    latest_values_dict = get_latest_values_dict(hr_filtered_df, hr_master_data_df, directorate_file_prefix)
+    latest_values_dict = get_latest_values_dict(hr_filtered_df, hr_filtered_master_df, directorate_file_prefix)
     latest_values_json = to_json_data(latest_values_dict)
     logging.info("...Generat[ed] latest values")
 
