@@ -100,3 +100,23 @@ timeseries_operators = [
         task_cmdline_args=[directorate_filename_prefix, directorate_title, ]
     ) for directorate_filename_prefix, directorate_title in DIRECTORATE_LIST
 ]
+
+MAP_LAYER_TASK = 'sr-map-layers-generate'
+map_layer_operators = [
+    covid_19_widget_task(
+        MAP_LAYER_TASK,
+        task_cmdline_args=[directorate_filename_prefix, directorate_title, ]
+    ) for directorate_filename_prefix, directorate_title in DIRECTORATE_LIST
+]
+
+MAP_WIDGET_TASK = 'sr-maps-generate'
+map_widget_operators = [
+    covid_19_widget_task(
+        MAP_WIDGET_TASK,
+        task_cmdline_args=[directorate_filename_prefix, directorate_title, ]
+    ) for directorate_filename_prefix, directorate_title in DIRECTORATE_LIST
+]
+
+# Dependencies
+for layer_gen, widget_gen in zip(map_layer_operators, map_widget_operators):
+    layer_gen >> widget_gen
