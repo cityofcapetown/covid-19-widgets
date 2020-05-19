@@ -206,7 +206,7 @@ def generate_plot(plot_df):
     circle = plot.circle(x=DATE_COL, y=DURATION_COL,
                          source=plot_df, y_range_name="duration", color="Red", size=6)
 
-    plot.xaxis.major_label_orientation = math.pi / 2
+    plot.xaxis.major_label_orientation = math.pi / 4
     plot.xaxis.formatter = DatetimeTickFormatter(days="%Y-%m-%d")
 
     legend_items = (list(zip(("Opened", "Closed"), map(lambda x: [x], vbar_stacked))) +

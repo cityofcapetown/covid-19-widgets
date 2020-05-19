@@ -15,13 +15,13 @@ import holidays
 import pandas
 
 import hr_data_last_values_to_minio
-from hr_data_last_values_to_minio import WORKING_STATUS, NOT_WORKING_STATUS
+from hr_data_last_values_to_minio import WORKING_STATUS, NOT_WORKING_STATUS, directorate_filter_df, merge_df
+from hr_bp_emailer import get_data_df, HR_MASTER_FILENAME_PATH, HR_TRANSACTIONAL_FILENAME_PATH
 
 MINIO_BUCKET = "covid"
 MINIO_CLASSIFICATION = minio_utils.DataClassification.EDGE
 
 DATA_RESTRICTED_PREFIX = "data/private/"
-HR_DATA_FILENAME = "business_continuity_people_status.csv"
 
 DATE_COL_NAME = "Date"
 STATUS_COL = "Categories"
@@ -34,25 +34,11 @@ TZ_STRING = "Africa/Johannesburg"
 ISO_TIMESTAMP_FORMAT = "%Y-%m-%dT%H:%M"
 
 WIDGETS_RESTRICTED_PREFIX = "widgets/private/business_continuity_"
-PLOT_FILENAME = "hr_absenteeism_plot.html"
+PLOT_FILENAME_SUFFIX = "hr_absenteeism_plot.html"
 
 
-def get_data(minio_key, minio_access, minio_secret):
-    with tempfile.NamedTemporaryFile() as temp_datafile:
-        minio_utils.minio_to_file(
-            filename=temp_datafile.name,
-            minio_filename_override=DATA_RESTRICTED_PREFIX + minio_key,
-            minio_bucket=MINIO_BUCKET,
-            minio_key=minio_access,
-            minio_secret=minio_secret,
-            data_classification=MINIO_CLASSIFICATION,
-        )
-
-        data_df = pandas.read_csv(temp_datafile.name)
-
-    data_df[DATE_COL_NAME] = pandas.to_datetime(data_df[DATE_COL_NAME])
-
-    return data_df
+def filter_df(hr_df, query_string):
+    return hr_df.query(query_string)
 
 
 def make_statuses_succinct_again(hr_df):
@@ -81,7 +67,7 @@ def get_plot_df(succinct_hr_df):
                     if data_df[SUCCINCT_STATUS_COL].str.contains(NOT_WORKING_STATUS).any() else 0
                 ],
                 COVID_SICK_COL: [
-                    data_df[COVID_SICK_COL].sum()/data_df[COVID_SICK_COL].shape[0]
+                    data_df[COVID_SICK_COL].sum() / data_df[COVID_SICK_COL].shape[0]
                     if data_df[COVID_SICK_COL].shape[0] > 0 else 0
                 ],
                 DAY_COUNT_COL: data_df.shape[0]
@@ -133,14 +119,16 @@ def generate_plot(plot_df, sast_tz='Africa/Johannesburg'):
 
     # Bar plot for counts
     count_vbar = line_plot.vbar(x=DATE_COL_NAME, top=DAY_COUNT_COL, width=5e7, color="blue", source=plot_df,
-                   y_range_name="count_range", alpha=0.4)
+                                y_range_name="count_range", alpha=0.4)
 
     # Line plots
     absent_line = line_plot.line(x=DATE_COL_NAME, y=ABSENTEEISM_RATE_COL, color='red', source=plot_df, line_width=5)
-    absent_scatter = line_plot.scatter(x=DATE_COL_NAME, y=ABSENTEEISM_RATE_COL, fill_color='red', source=plot_df, size=12, line_alpha=0)
+    absent_scatter = line_plot.scatter(x=DATE_COL_NAME, y=ABSENTEEISM_RATE_COL, fill_color='red', source=plot_df,
+                                       size=12, line_alpha=0)
 
     covid_line = line_plot.line(x=DATE_COL_NAME, y=COVID_SICK_COL, color='orange', source=plot_df, line_width=5)
-    covid_scatter = line_plot.scatter(x=DATE_COL_NAME, y=COVID_SICK_COL, fill_color='orange', source=plot_df, size=12, line_alpha=0)
+    covid_scatter = line_plot.scatter(x=DATE_COL_NAME, y=COVID_SICK_COL, fill_color='orange', source=plot_df, size=12,
+                                      line_alpha=0)
 
     # axis formatting
     line_plot.xaxis.formatter = DatetimeTickFormatter(days="%Y-%m-%d")
@@ -197,13 +185,31 @@ if __name__ == "__main__":
     secrets_path = os.environ["SECRETS_PATH"]
     secrets = json.load(open(secrets_path))
 
+    directorate_file_prefix = sys.argv[1]
+    directorate_title = sys.argv[2]
+    logging.debug(f"directorate_file_prefix={directorate_file_prefix}, directorate_title={directorate_title}")
+
     logging.info("Fetch[ing] data...")
-    hr_transactional_data_df = get_data(HR_DATA_FILENAME,
-                                        secrets["minio"]["edge"]["access"], secrets["minio"]["edge"]["secret"])
+    hr_transactional_data_df = get_data_df(HR_TRANSACTIONAL_FILENAME_PATH,
+                                           secrets["minio"]["edge"]["access"],
+                                           secrets["minio"]["edge"]["secret"])
+    hr_transactional_data_df[DATE_COL_NAME] = pandas.to_datetime(hr_transactional_data_df[DATE_COL_NAME])
+
+    hr_master_df = get_data_df(HR_MASTER_FILENAME_PATH,
+                               secrets["minio"]["edge"]["access"],
+                               secrets["minio"]["edge"]["secret"])
     logging.info("...Fetch[ed] data.")
 
+    logging.info("Merg[ing] data...")
+    hr_combined_df = merge_df(hr_transactional_data_df, hr_master_df)
+    logging.info("...Merg[ed] data")
+
+    logging.info("Filter[ing] data...")
+    hr_filtered_df = directorate_filter_df(hr_combined_df, directorate_title)
+    logging.info("...Filter[ing] data")
+
     logging.info("Add[ing] succinct status column...")
-    hr_succinct_df = make_statuses_succinct_again(hr_transactional_data_df)
+    hr_succinct_df = make_statuses_succinct_again(hr_filtered_df)
     logging.info("...Add[ed] succinct status column.")
 
     logging.info("Generat[ing] absenteeism plot...")
@@ -212,7 +218,8 @@ if __name__ == "__main__":
     logging.info("...Generat[ed] absenteeism plot")
 
     logging.info("Writ[ing] everything to Minio...")
-    write_to_minio(plot_html, PLOT_FILENAME,
+    plot_filename = f"{directorate_file_prefix}_{PLOT_FILENAME_SUFFIX}"
+    write_to_minio(plot_html, plot_filename,
                    secrets["minio"]["edge"]["access"], secrets["minio"]["edge"]["secret"])
     logging.info("...Wr[ote] everything to Minio")
 
