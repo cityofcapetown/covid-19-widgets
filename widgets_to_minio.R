@@ -814,7 +814,8 @@ save_widget(ct_daily_counts_bar_chart, private_destdir)
 for (subdist in unique(ct_subdistrict_cumulative_daily_counts$Subdistrict)) {
   subdist_cumulative_daily_counts <- ct_subdistrict_cumulative_daily_counts %>% 
     filter(Subdistrict == subdist) %>%  
-    mutate(rolling_death_5_days = rollmean(deaths, 5, na.pad=TRUE, align="right"))
+    mutate(rolling_death_5_days = rollmean(deaths, 5, na.pad=TRUE, align="right"),
+           rolling_cases_5_days = rollmean(cases, 5, na.pad=TRUE, align="right"))
 
   p <- subdist_cumulative_daily_counts %>%
     plot_ly(.,  x = ~date, 
