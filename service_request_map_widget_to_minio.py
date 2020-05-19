@@ -183,12 +183,12 @@ def generate_map(layer_tuples):
 
         # Adding missing count from metadata
         if service_request_map_layers_to_minio.METADATA_OPENED_NON_SPATIAL in layer_metadata:
-            opened_non_spatial = layer_metadata[service_request_map_layers_to_minio.METADATA_OPENED_NON_SPATIAL]
-            opened_total = layer_metadata[service_request_map_layers_to_minio.METADATA_OPENED_TOTAL]
+            opened_non_spatial = int(layer_metadata[service_request_map_layers_to_minio.METADATA_OPENED_NON_SPATIAL])
+            opened_total = int(layer_metadata[service_request_map_layers_to_minio.METADATA_OPENED_TOTAL])
 
             div = FloatDiv(content=f"""
                 <span style="font-size: 20px; color:#FF0000"> 
-                    Requests not displayed: {opened_non_spatial} ({opened_non_spatial / opened_total:.1%} %) 
+                    Requests not displayed: {opened_non_spatial} ({(opened_non_spatial / opened_total):.1%} %) 
                 </span>
             """, top=95)
 
