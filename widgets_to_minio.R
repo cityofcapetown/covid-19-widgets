@@ -833,6 +833,12 @@ for (subdist in unique(ct_subdistrict_cumulative_daily_counts$Subdistrict)) {
               mode = "line", 
               line = list(color = 'rgba(219, 64, 82, 1)'), 
               marker = list(color = 'rgba(219, 64, 82, 1)')) %>%
+    add_trace(y = ~rolling_cases_5_days, name = 'New Cases 5 Day Average  <br> * recent dates are underreported',
+              type = "scatter", 
+              mode = "line", 
+              line = list(color = 'rgba(55, 128, 191, 1)'), 
+              marker = list(color = 'rgba(55, 128, 191, 1)')) %>%
+    
     layout(barmode = 'stack')
   obj_name <- print(paste("cct_", str_replace_all(str_replace_all(subdist, " ", "_"), "&", ""), "_daily_counts_bar_chart", sep = ""))  
   assign(obj_name, p)
@@ -1118,14 +1124,31 @@ wc_model_latest_cumulative <- wc_model_latest %>%
   mutate(CaseFatalityRate = TotalDeaths / TotalInfections)
 
 wc_model_latest_default <- wc_model_latest_cumulative %>% 
-  filter(Scenario == "default")
+  filter(Scenario == "default") %>% 
+  mutate(TimeInterval = as.Date(TimeInterval))
+
+wc_cumulative_deaths <- wc_all_cases %>% 
+  select(Date.of.Death) %>% 
+  drop_na() %>% 
+  group_by(Date.of.Death) %>% 
+  summarise(daily_deaths = n()) %>% 
+  ungroup() %>% 
+  arrange(Date.of.Death) %>% 
+  mutate(cumulative_deaths = cumsum(daily_deaths))
+
+wc_model_latest_default <- left_join(wc_model_latest_default, wc_cumulative_deaths, by = c("TimeInterval" = "Date.of.Death"))
 
 wc_model_latest_disease_figures <- plot_ly(wc_model_latest_default,
                                            x = ~TimeInterval,
                                            y = ~NewInfections, type = 'bar',
                                            name = 'Daily New Infections') %>%
   add_trace(y = ~TotalDeaths, name = 'Modeled Cumulative Deaths') %>%
-  layout(legend = list(orientation = 'h'), xaxis = list(title = ""))
+  add_trace(y = ~cumulative_deaths, name = 'Actual Cumulative Deaths',
+            type = "scatter", 
+            mode = "line", 
+            line = list(color = 'rgba(219, 64, 82, 1)'), 
+            marker = list(color = 'rgba(219, 64, 82, 1)')) %>%
+  layout(legend = list(orientation = 'h'), xaxis = list(title = ""), yaxis = list(title = ""))
 
 save_widget(wc_model_latest_disease_figures, private_destdir)
 
