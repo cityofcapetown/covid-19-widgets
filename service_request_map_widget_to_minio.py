@@ -5,17 +5,22 @@ import os
 import pprint
 import sys
 import tempfile
+from urllib.parse import urlparse
 
 import branca
 from db_utils import minio_utils
 import folium
 import geopandas
 import jinja2
+import requests
 
 import service_request_map_layers_to_minio
 
 MINIO_BUCKET = "covid"
 MINIO_CLASSIFICATION = minio_utils.DataClassification.EDGE
+
+CITY_PROXY_DOMAIN = "internet.capetown.gov.za:8080"
+DEP_DIR = "libdir"
 
 HEX_COUNT_INDEX_PROPERTY = "index"
 
@@ -203,9 +208,67 @@ def generate_map(layer_tuples):
     return m
 
 
-def write_map_to_minio(map, directorate_file_prefix, time_period_prefix, tempdir, minio_access, minio_secret):
+def get_leaflet_dep_file(url, tempdir, http_session, minio_access, minio_secret):
+    filename = os.path.basename(
+        urlparse(url).path
+    )
+
+    local_path = os.path.join(tempdir, filename)
+    resp = http_session.get(url)
+
+    with open(local_path, "wb") as dep_file:
+        dep_file.write(resp.content)
+
+    minio_utils.file_to_minio(
+        filename=local_path,
+        filename_prefix_override=(
+            f"{service_request_map_layers_to_minio.WIDGETS_RESTRICTED_PREFIX}"
+            f"{service_request_map_layers_to_minio.SERVICE_REQUEST_MAP_PREFIX}"
+            f"{DEP_DIR}/"
+        ),
+        minio_bucket=MINIO_BUCKET,
+        minio_key=minio_access,
+        minio_secret=minio_secret,
+        data_classification=MINIO_CLASSIFICATION,
+    )
+
+    new_path = (
+        f"{DEP_DIR}/{filename}"
+    )
+
+    return new_path
+
+
+def pull_out_leaflet_deps(tempdir, proxy_username, proxy_password, minio_access, minio_secret):
+    http_session = requests.Session()
+
+    proxy_string = f'http://{proxy_username}:{proxy_password}@{CITY_PROXY_DOMAIN}/'
+    http_session.proxies = {
+        "http": proxy_string,
+        "https": proxy_string
+    }
+
+    js_libs = [
+        (key, get_leaflet_dep_file(url, tempdir, http_session, minio_access, minio_secret))
+        for key, url in folium.folium._default_js
+    ]
+
+    css_libs = [
+        (key, get_leaflet_dep_file(url, tempdir, http_session, minio_access, minio_secret))
+        for key, url in folium.folium._default_css
+    ]
+
+    return js_libs, css_libs
+
+
+def write_map_to_minio(map, directorate_file_prefix, time_period_prefix, tempdir,
+                       minio_access, minio_secret, js_libs, css_libs):
     map_filename = f"{time_period_prefix}_{directorate_file_prefix}_{MAP_SUFFIX}"
     local_path = os.path.join(tempdir, map_filename)
+
+    folium.folium._default_js = js_libs
+    folium.folium._default_css = css_libs
+
     map.save(local_path)
 
     result = minio_utils.file_to_minio(
@@ -249,6 +312,12 @@ if __name__ == "__main__":
 
     # Has to be in the outer scope as use the tempdir in multiple places
     with tempfile.TemporaryDirectory() as tempdir:
+        logging.info("Fetch[ing] Folium dependencies")
+        js_libs, css_libs = pull_out_leaflet_deps(tempdir,
+                                                  secrets["proxy"]["username"], secrets["proxy"]["password"],
+                                                  secrets["minio"]["edge"]["access"], secrets["minio"]["edge"]["secret"])
+        logging.info("Fetch[ed] Folium dependencies")
+
         for directorate_file_prefix, time_period_prefix in map_prefixes:
             logging.info(f"Generat[ing] map for '{directorate_title}' - '{time_period_prefix}'")
 
@@ -267,5 +336,6 @@ if __name__ == "__main__":
             logging.info("Writ[ing] to Minio")
             write_map_to_minio(data_map, directorate_file_prefix, time_period_prefix, tempdir,
                                secrets["minio"]["edge"]["access"],
-                               secrets["minio"]["edge"]["secret"])
+                               secrets["minio"]["edge"]["secret"],
+                               js_libs, css_libs)
             logging.info("Wr[ote] to Minio")
