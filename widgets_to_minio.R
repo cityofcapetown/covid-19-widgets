@@ -780,10 +780,12 @@ ct_daily_counts <-  ct_subdistrict_cumulative_daily_counts %>%
             deaths = sum(deaths),
             icu_admissions = sum(icu_admissions)) %>% 
   ungroup() %>% 
-  mutate(rolling_death_5_days = rollmean(deaths, 5, na.pad=TRUE, align="right"))
+  mutate(rolling_death_5_days = rollmean(deaths, 5, na.pad=TRUE, align="right"),
+         rolling_cases_5_days = rollmean(cases, 5, na.pad=TRUE, align="right"))
 
 
-ct_daily_counts_bar_chart <- ct_daily_counts %>%   plot_ly(.,  x = ~date, 
+ct_daily_counts_bar_chart <- ct_daily_counts %>%   
+  plot_ly(.,  x = ~date, 
           y = ~cases, 
           type = 'bar', 
           name = 'New Cases',
@@ -799,6 +801,11 @@ ct_daily_counts_bar_chart <- ct_daily_counts %>%   plot_ly(.,  x = ~date,
             mode = "line", 
             line = list(color = 'rgba(219, 64, 82, 1)'), 
             marker = list(color = 'rgba(219, 64, 82, 1)')) %>%
+  add_trace(y = ~rolling_cases_5_days, name = 'New Cases 5 Day Average  <br> * recent dates are underreported',
+            type = "scatter", 
+            mode = "line", 
+            line = list(color = 'rgba(55, 128, 191, 1)'), 
+            marker = list(color = 'rgba(55, 128, 191, 1)')) %>%
   layout(barmode = 'stack', legend = list(x = 0.1, y = 0.9))
 
 save_widget(ct_daily_counts_bar_chart, private_destdir)
