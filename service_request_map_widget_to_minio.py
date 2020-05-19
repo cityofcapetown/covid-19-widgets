@@ -188,7 +188,7 @@ def generate_map(layer_tuples):
 
             div = FloatDiv(content=f"""
                 <span style="font-size: 20px; color:#FF0000"> 
-                    Requests not displayed: {opened_non_spatial} ({(opened_non_spatial / opened_total):.1%} %) 
+                    Requests not displayed: {opened_non_spatial} ({(opened_non_spatial / opened_total):.1%}) 
                 </span>
             """, top=95)
 
