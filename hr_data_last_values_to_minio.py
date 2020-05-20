@@ -98,6 +98,9 @@ def directorate_filter_df(hr_df, directorate_title):
 def make_statuses_succinct_again(hr_df):
     hr_df[SUCCINCT_STATUS_COL] = hr_df[STATUS_COL].apply(STATUSES_TO_SUCCINCT_MAP.get)
 
+    logging.debug(f"hr_df['{STATUS_COL}']=\n{hr_df[STATUS_COL]}")
+    logging.debug(f"hr_df['{SUCCINCT_STATUS_COL}']=\n{hr_df[SUCCINCT_STATUS_COL]}")
+
     return hr_df
 
 
@@ -112,7 +115,7 @@ def get_current_hr_df(hr_df):
     # then, sort, drop duplicates to only keep the most recent one
     current_hr_df = hr_df[
         hr_df[DATE_COL_NAME].dt.date >= date_window_start
-        ].sort_values(
+    ].sort_values(
         by=[STAFF_NUMBER_COL_NAME, DATE_COL_NAME], ascending=False
     ).drop_duplicates(
         subset=[STAFF_NUMBER_COL_NAME]
