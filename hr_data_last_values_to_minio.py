@@ -29,26 +29,26 @@ TZ_STRING = "Africa/Johannesburg"
 WORKING_STATUS = "working"
 NOT_WORKING_STATUS = "not-working"
 STATUSES_TO_SUCCINCT_MAP = {
-    "At work (on site)": WORKING_STATUS,
+    r"At work \(on site\)": WORKING_STATUS,
     "On leave": NOT_WORKING_STATUS,
     "On suspension": NOT_WORKING_STATUS,
-    "Absent from work (unauthorised)": NOT_WORKING_STATUS,
+    r"Absent from work \(unauthorised\)": NOT_WORKING_STATUS,
     "Quarantine leave – working remotely": WORKING_STATUS,
     "Quarantine leave – unable to work remotely": NOT_WORKING_STATUS,
     "Quarantine leave – working remotely, COVID 19 exposure / isolation": WORKING_STATUS,
-    "Sick (linked to COVID 19)": NOT_WORKING_STATUS,
-    "Sick (NOT linked to COVID 19)": NOT_WORKING_STATUS,
+    r"Sick \(linked to COVID 19\)": NOT_WORKING_STATUS,
+    r"Sick \(NOT linked to COVID 19\)": NOT_WORKING_STATUS,
 }
 REMOTE_WORK_STATUSES = {
     "Quarantine leave – working remotely",
     "Quarantine leave – working remotely, COVID 19 exposure / isolation",
 }
 SICK_STATUSES = {
-    "Sick (linked to COVID 19)",
-    "Sick (NOT linked to COVID 19)"
+    r"Sick \(linked to COVID 19\)",
+    r"Sick \(NOT linked to COVID 19\)"
 }
 COVID_STATUSES = {
-    "Sick (linked to COVID 19)",
+    r"Sick \(linked to COVID 19\)",
     "Quarantine leave – working remotely, COVID 19 exposure / isolation",
 }
 
