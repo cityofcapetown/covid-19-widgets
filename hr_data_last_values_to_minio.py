@@ -98,8 +98,8 @@ def directorate_filter_df(hr_df, directorate_title):
 def make_statuses_succinct_again(hr_df):
     hr_df[SUCCINCT_STATUS_COL] = hr_df[STATUS_COL].apply(STATUSES_TO_SUCCINCT_MAP.get)
 
-    logging.debug(f"hr_df['{STATUS_COL}']=\n{hr_df[STATUS_COL]}")
-    logging.debug(f"hr_df['{SUCCINCT_STATUS_COL}']=\n{hr_df[SUCCINCT_STATUS_COL]}")
+    logging.debug(f"hr_df['{STATUS_COL}'].value_counts()=\n{hr_df[STATUS_COL].value_counts()}")
+    logging.debug(f"hr_df['{SUCCINCT_STATUS_COL}'].value_counts()=\n{hr_df[SUCCINCT_STATUS_COL].value_counts()}")
 
     return hr_df
 
