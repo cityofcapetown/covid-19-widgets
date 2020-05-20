@@ -106,7 +106,7 @@ def get_service_request_data(minio_access, minio_secret):
 def filter_sr_data(sr_df, start_date, directorate=None, ):
     logging.debug(f"sr_df.shape={sr_df.shape}")
     # Date filtering
-    filter_string = f"({CREATION_TIMESTAMP_COL}.dt.date >= @start_date) | ({COMPLETION_TIMESTAMP_COL}.dt.date >= @start_date)"
+    filter_string = f"(({CREATION_TIMESTAMP_COL}.dt.date >= @start_date) | ({COMPLETION_TIMESTAMP_COL}.dt.date >= @start_date))"
 
     # Directorate
     if directorate is not None:
