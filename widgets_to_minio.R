@@ -1139,6 +1139,15 @@ wc_cumulative_deaths <- wc_all_cases %>%
 
 wc_model_latest_default <- left_join(wc_model_latest_default, wc_cumulative_deaths, by = c("TimeInterval" = "Date.of.Death"))
 
+# Write this back for fatalities management
+write_csv(wc_model_latest_default, "data/private/wc_model_latest_default.csv")
+file_to_minio("data/private/wc_model_latest_default.csv",
+              "covid",
+              minio_key,
+              minio_secret,
+              "EDGE",
+              filename_prefix_override = "data/private/")
+
 wc_model_latest_disease_figures <- plot_ly(wc_model_latest_default,
                                            x = ~TimeInterval,
                                            y = ~NewInfections, type = 'bar',
