@@ -29,27 +29,31 @@ TZ_STRING = "Africa/Johannesburg"
 WORKING_STATUS = "working"
 NOT_WORKING_STATUS = "not-working"
 STATUSES_TO_SUCCINCT_MAP = {
-    r"At work \(on site\)": WORKING_STATUS,
+    "Working remotely (NO COVID 19 exposure)": WORKING_STATUS,
+    "At work (on site)": WORKING_STATUS,
     "On leave": NOT_WORKING_STATUS,
     "On suspension": NOT_WORKING_STATUS,
-    r"Absent from work \(unauthorised\)": NOT_WORKING_STATUS,
+    "Absent from work (unauthorised)": NOT_WORKING_STATUS,
     "Quarantine leave – working remotely": WORKING_STATUS,
     "Quarantine leave – unable to work remotely": NOT_WORKING_STATUS,
     "Quarantine leave – working remotely, COVID 19 exposure / isolation": WORKING_STATUS,
-    r"Sick \(linked to COVID 19\)": NOT_WORKING_STATUS,
-    r"Sick \(NOT linked to COVID 19\)": NOT_WORKING_STATUS,
+    "Sick (linked to COVID 19)": NOT_WORKING_STATUS,
+    "Sick (NOT linked to COVID 19)": NOT_WORKING_STATUS,
+    "On Lockdown leave – unable to work remotely": NOT_WORKING_STATUS,
+    "On Lockdown leave – able to work remotely": NOT_WORKING_STATUS
 }
 REMOTE_WORK_STATUSES = {
+    "Working remotely (NO COVID 19 exposure)",
     "Quarantine leave – working remotely",
-    "Quarantine leave – working remotely, COVID 19 exposure / isolation",
+    "Quarantine leave – working remotely, COVID 19 exposure / isolation"
 }
 SICK_STATUSES = {
-    r"Sick \(linked to COVID 19\)",
-    r"Sick \(NOT linked to COVID 19\)"
+    "Sick (linked to COVID 19)",
+    "Sick (NOT linked to COVID 19)"
 }
 COVID_STATUSES = {
-    r"Sick \(linked to COVID 19\)",
-    "Quarantine leave – working remotely, COVID 19 exposure / isolation",
+    "Sick (linked to COVID 19)",
+    "Quarantine leave – working remotely, COVID 19 exposure / isolation"
 }
 
 WIDGETS_RESTRICTED_PREFIX = "widgets/private/business_continuity_"
@@ -97,9 +101,6 @@ def directorate_filter_df(hr_df, directorate_title):
 
 def make_statuses_succinct_again(hr_df):
     hr_df[SUCCINCT_STATUS_COL] = hr_df[STATUS_COL].apply(STATUSES_TO_SUCCINCT_MAP.get)
-
-    logging.debug(f"hr_df['{STATUS_COL}'].value_counts()=\n{hr_df[STATUS_COL].value_counts()}")
-    logging.debug(f"hr_df['{SUCCINCT_STATUS_COL}'].value_counts()=\n{hr_df[SUCCINCT_STATUS_COL].value_counts()}")
 
     return hr_df
 
