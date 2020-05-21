@@ -114,7 +114,7 @@ def generate_plot(plot_df, sast_tz='Africa/Johannesburg'):
 
     # Adding count on the right
     line_plot.extra_y_ranges = {"count_range": Range1d(start=0, end=plot_df[DAY_COUNT_COL].max() * 1.1)}
-    second_y_axis = LinearAxis(y_range_name="count_range", axis_label="Staff Assessed")
+    second_y_axis = LinearAxis(y_range_name="count_range", axis_label="Staff Assessed (#)")
     line_plot.add_layout(second_y_axis, 'right')
 
     # Bar plot for counts
@@ -140,8 +140,8 @@ def generate_plot(plot_df, sast_tz='Africa/Johannesburg'):
     # Legend
     legend_items = [
         ("Assessed", [count_vbar]),
-        ("Not at Work", [absent_line, absent_scatter]),
-        ("Covid-19 Exposure", [covid_line, covid_scatter])
+        ("Not at Work (%)", [absent_line, absent_scatter]),
+        ("Covid-19 Exposure (%)", [covid_line, covid_scatter])
     ]
     legend = Legend(items=legend_items, location="center", orientation="horizontal", padding=2, margin=2)
     line_plot.add_layout(legend, "below")
