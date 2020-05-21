@@ -119,4 +119,9 @@ absenteeism_operators = [
 ]
 
 BUSUNIT_STATUS_PLOT = 'hr-busunit-status-plot'
-busunit_status_operator = covid_19_widget_task(BUSUNIT_STATUS_PLOT)
+busunit_operators = [
+    covid_19_widget_task(
+        BUSUNIT_STATUS_PLOT,
+        task_cmdline_args=directorate_args
+    ) for directorate_args in DIRECTORATE_LIST
+]

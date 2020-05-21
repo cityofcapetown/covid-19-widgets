@@ -1,33 +1,55 @@
 ###################
 #
-# Dataset used:
-#    data/private/business_continuity_org_unit_statuses.csv
+# Widget to plot the self assessment of the business units ability to deliver daily tasks
 #
 ##################
 
+import datetime
 import json
+import math
 import logging
 import os
 import sys
 import tempfile
 
-from db_utils import minio_utils
-import holidays
-import numpy as np
-import pandas as pd
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
+
+from db_utils import minio_utils
+import holidays
+import pandas as pd
+
+import hr_data_last_values_to_minio
+from hr_data_last_values_to_minio import WORKING_STATUS, NOT_WORKING_STATUS, directorate_filter_df, merge_df
+
+# from hr_bp_emailer import get_data_df, HR_MASTER_FILENAME_PATH, HR_TRANSACTIONAL_FILENAME_PATH
+
 
 MINIO_BUCKET = "covid"
 MINIO_CLASSIFICATION = minio_utils.DataClassification.EDGE
 
-HR_UNITSTATUS_DATA_FILENAME = "data/private/business_continuity_org_unit_statuses.csv"
+HR_CITYSTATUS_DATA_FILENAME = "data/private/business_continuity_org_unit_statuses.csv"
+
+DATA_RESTRICTED_PREFIX = "data/private/"
+
+DATE_COL_NAME = "Date"
+# STATUS_COL = "Categories"
+# SUCCINCT_STATUS_COL = "SuccinctStatus"
+# COVID_SICK_COL = "CovidSick"
+# ABSENTEEISM_RATE_COL = "Absent"
+# DAY_COUNT_COL = "DayCount"
+
+TZ_STRING = "Africa/Johannesburg"
+ISO_TIMESTAMP_FORMAT = "%Y-%m-%dT%H:%M"
 
 WIDGETS_RESTRICTED_PREFIX = "widgets/private/business_continuity_"
-PLOT_FILENAME = "hr_unit_status.html"
+PLOT_FILENAME_SUFFIX = "hr_unitstatus_plot.html"
 
 
-def get_data(minio_key, minio_access, minio_secret):
+def get_plot_df(minio_key, minio_access, minio_secret):
+    '''
+    Read HR org unit status .csv file
+    '''
     with tempfile.NamedTemporaryFile() as temp_datafile:
         minio_utils.minio_to_file(
             filename=temp_datafile.name,
@@ -42,207 +64,167 @@ def get_data(minio_key, minio_access, minio_secret):
     return data_df
 
 
+def filter_df(hr_df, directorate_title):
+    filtered_df = (
+        hr_df.query(
+            f"Directorate.str.lower() == '{directorate_title.lower()}'"
+        ) if directorate_title != "*" else hr_df
+    )
+    logging.debug(f"filtered_df.head(10)=\n{filtered_df.head(10)}")
+
+    #  Group by Date and the Evaluation and count number of times the Evaluation status appears for the date
+    plot_df = filtered_df.groupby(["Date", "Evaluation"]).count()
+
+    # keep the count
+    count = plot_df.Directorate.values
+
+    # Calculate the percentagethe Evaluation status appears for the date and rename the "Directorate" column to "percentage"
+    plot_df = plot_df.groupby(level=0).apply(lambda x: 100 * x / x.astype(float).sum()).reset_index()
+    plot_df = plot_df.rename(columns={"Directorate": "percentage"})
+    plot_df.set_index(["Date", "Evaluation"], inplace=True)
+
+    # add column with count
+    plot_df["count"] = count
+
+    # add column with org unit lists
+    org_unit_lists = filtered_df.groupby(["Date", "Evaluation"]).apply(
+        lambda eval_df: ",<br>".join(eval_df['Org Unit Name'].values[:10])
+    )
+    logging.debug(f"org_unit_lists=\n{org_unit_lists}")
+    plot_df["org_unit_names"] = org_unit_lists
+
+    return plot_df.reset_index()
+
+
 def orgstatus_data_munge(status_df):
+    '''
+    Prepare data for plotting
+    '''
     # Convert to date format and start from 17 Arpil 2020 when HR online form went live
     status_df['Date'] = pd.to_datetime(status_df['Date'], format="%Y-%m-%d")
-    status_df = status_df.sort_values('Date')
+    # Start on 16 April when the HR online form went live in the City (17th)
     start_date = pd.to_datetime('2020-04-16', format="%Y-%m-%d")
+    # Filter for rows > 16 Arpil 2020 and with a StatusCount > 0 (means that there was an assessment done)
     status_df = status_df.loc[(status_df.Date > start_date) & (status_df.StatusCount > 0)]
+    # Drop NaN values if any in "Direcotrate" and "Evaluation" if any NaN in rest of dataset convert to blank ("")
     status_df = status_df.dropna(subset=['Directorate', 'Evaluation'])
     status_df = status_df.fillna('')
-
-    status_df['bus_unit'] = status_df['Department'] + " | " + status_df['Branch'] + " | " + status_df[
-        'Section'] + " - [" + status_df['Org Unit Name'] + "]"   
-    status_df = status_df[['Date', 'Directorate', 'bus_unit', 'Evaluation', 'Org Unit Name']]
+    # Drop any duplicate values in the dataset, keping the last. Because each staff will have same Evaluation if part of same org unit.
+    # Managers also complete form more than once
+    status_df = status_df.drop_duplicates(['Date', 'Org Unit Name', 'Directorate', 'Department', 'Branch', 'Section'],
+                                          keep='last')
+    # Keep three columns
+    status_df = status_df[['Date', 'Directorate', 'Evaluation', 'Org Unit Name']].reset_index().drop("index", axis=1)
+    logging.debug(f"status_df.head(10)=\n{status_df.head(10)}")
+    # Remove whitespace in Evaluation description
     status_df['Evaluation'] = status_df['Evaluation'].str.strip()
+    # sort values to prepare sequence for plotting
+    status_df = status_df.sort_values(['Date', 'Directorate'], ascending=True)
 
-    # Convert evaluation statusse to ordinal number
-    status_df['unit_status'] = np.where(status_df['Evaluation'] == 'We cannot deliver on daily tasks', 0,
-                                        (np.where(
-                                            status_df['Evaluation'] == 'We can deliver 75% or less of daily tasks', 1,
-                                            2)))
+    plot_df = filter_df(status_df, directorate_title)
 
-    status_df = status_df.drop_duplicates(['Date', 'Directorate', 'bus_unit'], keep='last')
-    status_df = status_df.sort_values(['Date','Directorate','bus_unit'], ascending=True)
-    status_df = status_df.loc[status_df['unit_status'].isin([0,1]),:]
-    status_df = status_df.reset_index().drop('index', axis=1)
+    # Create a dataset for each Evaluation status -- this is done due to the way plotly deals with stacked bar charts
+    logging.debug(f"{plot_df.head(10)}")
+    city_75_plot_df = plot_df.loc[
+        plot_df["Evaluation"] == "We can deliver 75% or less of daily tasks",
+        # ['Date', 'percentage', 'Evaluation', 'count']
+    ]
+    city_can_plot_df = plot_df.loc[
+        plot_df["Evaluation"] == "We can deliver on daily tasks",
+        # ['Date', 'percentage', 'Evaluation', 'count']
+    ]
+    city_cannot_plot_df = plot_df.loc[
+        plot_df["Evaluation"] == "We cannot deliver on daily tasks",
+        # ['Date', 'percentage', 'Evaluation', 'count']
+    ]
 
-    return status_df
+    return city_can_plot_df, city_75_plot_df, city_cannot_plot_df
 
 
-def generate_plot(status_df):
-    dir_list = pd.unique(status_df['Directorate'])
-    fig = make_subplots(rows=len(dir_list), cols=1)
+def generate_plot(city_can_plot_df, city_75_plot_df, city_cannot_plot_df, sast_tz='Africa/Johannesburg'):
+    fig = go.Figure()
 
-    colorscale = [[0, '#900C3F'],
-                  [0.5, '#900C3F'],
-                  [0.5, '#A3E4D7'],
-                  [1, '#A3E4D7']]
-
-    datum = list(status_df['Date'].unique())
-    datum = pd.to_datetime(pd.Series(datum), format="%Y-%m-%d")
-
-    # Removing Sundays and public holidays
-    za_holidays = holidays.CountryHoliday("ZA")
-    dates_mask = (
-            ~datum.isin(za_holidays) &
-            (datum.dt.weekday != 6)
+    fig.add_trace(go.Bar(
+        x=city_can_plot_df.Date,
+        y=city_can_plot_df.percentage,
+        name="We can deliver on daily tasks",
+        marker_color="#3D85C6",
+        opacity=0.6,
+        customdata=city_can_plot_df[["count", "org_unit_names"]].values,
+        hovertemplate=
+        '<b>Date</b>: %{x} <br>' +
+        '<b>Status</b>: We can deliver on daily tasks <br>' +
+        '<b>Percentage</b>: %{y:.2f}% <br>' +
+        '<b>Nr. of Org Units</b>: %{customdata[0]} <br>' +
+        '<b>Top Org Units</b>: %{customdata[1]}' +
+        '<extra></extra>'
+    ),
     )
-    datum = datum[dates_mask]
 
-    datum = datum.dt.strftime("%Y-%m-%d")
+    fig.add_trace(go.Bar(
+        x=city_75_plot_df.Date,
+        y=city_75_plot_df.percentage,
+        name="We can deliver 75% or less of daily tasks",
+        marker_color="#D0D0D0",
+        opacity=0.6,
+        customdata=city_75_plot_df[["count", "org_unit_names"]].values,
+        hovertemplate=
+        '<b>Date</b>: %{x}<br>' +
+        '<b>Status</b>: We can deliver 75% or less of daily tasks<br>' +
+        '<b>Percentage</b>: %{y:.2f}% <br>' +
+        '<b>Nr. of Org Units</b>: %{customdata[0]} <br>' +
+        '<b>Top Org Units</b>: %{customdata[1]}' +
+        '<extra></extra>'
+    ),
+    )
 
-    column_names = ['Date', 'Directorate', 'bus_unit', 'Org Unit Name']
-    df_dt = pd.DataFrame(columns=column_names)
+    fig.add_trace(go.Bar(
+        x=city_cannot_plot_df.Date,
+        y=city_cannot_plot_df.percentage,
+        name="We cannot deliver on daily tasks",
+        marker_color="firebrick",
+        opacity=0.6,
+        customdata=city_cannot_plot_df[["count", "org_unit_names"]].values,
+        hovertemplate=
+        '<b>Date</b>: %{x}<br>' +
+        '<b>Status</b>: We cannot deliver on daily tasks<br>' +
+        '<b>Percentage</b>: %{y:.2f}% <br>' +
+        '<b>Nr. of Org Units</b>: %{customdata[0]} <br>' +
+        '<b>Top Org Units</b>: %{customdata[1]}' +
+        '<extra></extra>'
+    ),
+    )
 
-    for index, directorate in enumerate(dir_list):
-        abbrevated_directorate_label = "".join(map(lambda dir_string: dir_string[0], str(directorate).upper().split()))
-
-        df_subset = status_df.loc[status_df['Directorate'] == directorate, :]
-
-        df_subset = df_subset.reset_index().drop('index', axis=1)
-        df_subset = df_subset.sort_values(['Date', 'Directorate', 'bus_unit'], ascending=True)
-
-        bus_unit = list(df_subset['bus_unit'].unique())
-        y_value = list(df_subset['Org Unit Name'].unique())
-
-        dat = []
-        ev = []
-        struct = []
-
-        for b_i, b_val in enumerate(bus_unit):
-
-            dat.append(list())
-            ev.append(list())
-            struct.append(list())
-            df_dt = df_dt.iloc[0:0]
-
-            for n, dt in enumerate(datum):
-                df_dt_single = pd.DataFrame(
-                    {'Date': dt, 'Directorate': directorate, 'bus_unit': b_val, 'Org Unit Name': y_value[b_i]},
-                    index=[n])
-                df_dt = df_dt.append(df_dt_single, ignore_index=True)
-
-            df_dt = df_dt.reset_index().drop('index', axis=1)
-
-            df_busunit = df_subset.loc[df_subset['bus_unit'] == b_val, :]
-            df_busunit = df_busunit.reset_index().drop('index', axis=1)
-
-            df_busunit['Date'] = df_busunit['Date'].astype(str)
-            df_dt_bu_merge = df_dt.merge(df_busunit, how='left', on=['Date', 'Directorate', 'bus_unit', 'Org Unit Name'])
-            df_dt_bu_merge['unit_status'] = df_dt_bu_merge['unit_status'].fillna('')
-
-            for i in range(len(df_dt_bu_merge)):
-                b_val = df_dt_bu_merge['Org Unit Name'][i]
-                d_val = df_dt_bu_merge['Date'][i]
-                e_val = df_dt_bu_merge['unit_status'][i]
-
-                dat[-1].append(d_val)
-                ev[-1].append(e_val)
-                struct[-1].append(b_val)
-
-        daat = [item for sublist in dat for item in sublist]
-        evalu = [item for sublist in ev for item in sublist]
-        yvalu = [item for sublist in struct for item in sublist]
-        df_dt_sub = pd.DataFrame({'Date': daat, 'unit_status': evalu, 'Org Unit Name': yvalu})
-
-        hovertext = []
-
-        for b_i, b_val in enumerate(bus_unit):
-            hovertext.append(list())
-            df_dt = df_dt.iloc[0:0]
-
-            for n, dt in enumerate(datum):
-                df_dt_single = pd.DataFrame(
-                    {'Date': dt, 'Directorate': directorate, 'bus_unit': b_val, 'Org Unit Name': y_value[b_i]},
-                    index=[n])
-                df_dt = df_dt.append(df_dt_single, ignore_index=True)
-
-            df_dt = df_dt.reset_index().drop('index', axis=1)
-
-            df_busunit = df_subset.loc[df_subset['bus_unit'] == b_val, :]
-            df_busunit = df_busunit.reset_index().drop('index', axis=1)
-
-            df_busunit['Date'] = df_busunit['Date'].astype(str)
-            df_dt_bu_merge = df_dt.merge(df_busunit, how='left', on=['Date', 'Directorate', 'bus_unit', 'Org Unit Name'])
-            df_dt_bu_merge['unit_status'] = df_dt_bu_merge['unit_status'].fillna('')
-
-            for i in range(len(df_dt_bu_merge)):
-                b_val = df_dt_bu_merge['bus_unit'][i]
-                d_val = df_dt_bu_merge['Date'][i]
-                e_val = df_dt_bu_merge['Evaluation'][i]
-
-                hovertext[-1].append(
-                    'Date:  {}<br />'
-                    'Org Unit:  {}<br />'
-                    '<br />'
-                    'Status:     {}<br />'
-                    '<br />'.format(d_val, b_val, e_val))
-
-        heatmap = go.Heatmap(
-            z=df_dt_sub.unit_status,
-            x=df_dt_sub.Date,
-            y=df_dt_sub['Org Unit Name'],
-            # z=ev,
-            # x=datum,
-            # y=y_value,
-            colorscale=colorscale,
-            xgap=3,
-            ygap=2,
-            showscale=False,
-            hoverinfo='text',
-            text=hovertext,
+    fig.update_yaxes(
+        title="% of Org Units Able to Deliver Daily Tasks",
+        dtick=5,
+        range=[0, 100],
+        tickfont=dict(
+            size=10,
         )
+    )
 
-        fig.append_trace(heatmap, row=index + 1, col=1)
-
-        # Update xaxis properties
-        fig.update_yaxes(
-            title_text=abbrevated_directorate_label,
-            
-            title_font=dict(
-                size=12
-            ),
-            showline=False,
-            showgrid=False,
-            zeroline=False,
-            tickmode='array',
-            ticks='',
-            showticklabels=False,
-            tickfont=dict(
-                size=5
-            ),
-            row=index + 1, col=1)
-
-        fig.update_xaxes(
-            tickformat="%Y-%m-%d",
-            tickvals=datum,
-            nticks=len(datum),
-            dtick=1,
-            showline=False,
-            showgrid=False,
-            zeroline=False,
-            ticks='',
-            side="top",
-            tickfont=dict(
-                size=7
-            ),
-            showticklabels=(index == 0),
-            row=index + 1, col=1)
+    fig.update_xaxes(
+        title="date",
+        # side="top",
+        type="date",
+        # dtick = 'd1',
+        tickfont=dict(
+            size=10
+        )
+    )
 
     fig.update_layout(
-        
+        barmode='stack',
         plot_bgcolor=('#fff'),
         hoverlabel=dict(
-            bgcolor='black',
-            font=dict(color='white',
-                      size=10,
+            bgcolor='white',
+            font=dict(color='black',
+                      size=12,
                       family='Arial')
         ),
+        xaxis_tickformat='%Y-%m-%d',
 
-        legend_font=dict(
-            size=7
-        ),
         margin={dim: 10 for dim in ("l", "r", "b", "t")},
     )
 
@@ -285,27 +267,34 @@ if __name__ == "__main__":
     # Loading secrets
     SECRETS_PATH_VAR = "SECRETS_PATH"
 
-    if SECRETS_PATH_VAR not in os.environ:  #
+    if SECRETS_PATH_VAR not in os.environ:
         sys.exit(-1)
 
     secrets_path = os.environ["SECRETS_PATH"]
     secrets = json.load(open(secrets_path))
 
+    directorate_file_prefix = sys.argv[1]
+    directorate_title = sys.argv[2]
+    logging.debug(f"directorate_file_prefix={directorate_file_prefix}, directorate_title={directorate_title}")
+
     logging.info("Fetch[ing] data...")
-    satus_data_df = get_data(HR_UNITSTATUS_DATA_FILENAME,
-                             secrets["minio"]["edge"]["access"],
-                             secrets["minio"]["edge"]["secret"])
+    satus_data_df = get_plot_df(HR_CITYSTATUS_DATA_FILENAME,
+                                secrets["minio"]["edge"]["access"],
+                                secrets["minio"]["edge"]["secret"])
     logging.info("...Fetch[ed] data.")
 
     logging.info("Mung[ing] data for plotting...")
-    satus_data_df = orgstatus_data_munge(satus_data_df)
+    city_can_plot_df, city_75_plot_df, city_cannot_plot_df = orgstatus_data_munge(satus_data_df)
     logging.info("...Mung[ed] data")
 
     logging.info("Generat[ing] Plot...")
-    plot_html = generate_plot(satus_data_df)
+    plot_html = generate_plot(city_can_plot_df, city_75_plot_df, city_cannot_plot_df)
     logging.info("...Generat[ed] Plot")
 
-    logging.info("Writ[ing] to Minio...")
-    write_to_minio(plot_html, PLOT_FILENAME,
+    logging.info("Writ[ing] everything to Minio...")
+    plot_filename = f"{directorate_file_prefix}_{PLOT_FILENAME_SUFFIX}"
+    write_to_minio(plot_html, plot_filename,
                    secrets["minio"]["edge"]["access"], secrets["minio"]["edge"]["secret"])
-    logging.info("...Wr[ote] to Minio")
+    logging.info("...Wr[ote] everything to Minio")
+
+    logging.info("...Done!")
