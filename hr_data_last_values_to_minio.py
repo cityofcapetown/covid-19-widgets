@@ -29,6 +29,7 @@ TZ_STRING = "Africa/Johannesburg"
 WORKING_STATUS = "working"
 NOT_WORKING_STATUS = "not-working"
 STATUSES_TO_SUCCINCT_MAP = {
+    "Working remotely (NO COVID 19 exposure)": WORKING_STATUS,
     "At work (on site)": WORKING_STATUS,
     "On leave": NOT_WORKING_STATUS,
     "On suspension": NOT_WORKING_STATUS,
@@ -38,10 +39,13 @@ STATUSES_TO_SUCCINCT_MAP = {
     "Quarantine leave – working remotely, COVID 19 exposure / isolation": WORKING_STATUS,
     "Sick (linked to COVID 19)": NOT_WORKING_STATUS,
     "Sick (NOT linked to COVID 19)": NOT_WORKING_STATUS,
+    "On Lockdown leave – unable to work remotely": NOT_WORKING_STATUS,
+    "On Lockdown leave – able to work remotely": NOT_WORKING_STATUS
 }
 REMOTE_WORK_STATUSES = {
+    "Working remotely (NO COVID 19 exposure)",
     "Quarantine leave – working remotely",
-    "Quarantine leave – working remotely, COVID 19 exposure / isolation",
+    "Quarantine leave – working remotely, COVID 19 exposure / isolation"
 }
 SICK_STATUSES = {
     "Sick (linked to COVID 19)",
@@ -49,7 +53,7 @@ SICK_STATUSES = {
 }
 COVID_STATUSES = {
     "Sick (linked to COVID 19)",
-    "Quarantine leave – working remotely, COVID 19 exposure / isolation",
+    "Quarantine leave – working remotely, COVID 19 exposure / isolation"
 }
 
 WIDGETS_RESTRICTED_PREFIX = "widgets/private/business_continuity_"
@@ -112,7 +116,7 @@ def get_current_hr_df(hr_df):
     # then, sort, drop duplicates to only keep the most recent one
     current_hr_df = hr_df[
         hr_df[DATE_COL_NAME].dt.date >= date_window_start
-        ].sort_values(
+    ].sort_values(
         by=[STAFF_NUMBER_COL_NAME, DATE_COL_NAME], ascending=False
     ).drop_duplicates(
         subset=[STAFF_NUMBER_COL_NAME]

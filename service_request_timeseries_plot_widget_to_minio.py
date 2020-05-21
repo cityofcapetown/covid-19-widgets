@@ -179,14 +179,13 @@ def generate_plot(plot_df):
         x_range=(window_start, window_end),
         y_range=(0, window_total),
         x_axis_type='datetime', toolbar_location=None,
-        x_axis_label="Date",
-        y_axis_label="SR Count"
+        y_axis_label="SR Count (#)"
     )
     # Adding extra y axis
     plot.extra_y_ranges = {
         "duration": Range1d(start=0, end=plot_df[[DURATION_COL, PREVIOUS_DURATION_COL]].max().max() * 1.2)
     }
-    plot.add_layout(LinearAxis(y_range_name="duration", axis_label="Duration (Days)"), 'right')
+    plot.add_layout(LinearAxis(y_range_name="duration", axis_label="Days to Close"), 'right')
 
     line_2019 = plot.line(x=DATE_COL, y=PREVIOUS_DURATION_COL,
                           source=plot_df, y_range_name="duration", color="Grey", line_width=4, alpha=0.5)
@@ -210,7 +209,7 @@ def generate_plot(plot_df):
     plot.xaxis.formatter = DatetimeTickFormatter(days="%Y-%m-%d")
 
     legend_items = (list(zip(("Opened", "Closed"), map(lambda x: [x], vbar_stacked))) +
-                    [("Duration", [line, circle])] +
+                    [("Performance (days)", [line, circle])] +
                     [("2019", previous_vbar_stacked)])
     legend = Legend(items=legend_items, location="center", orientation="horizontal", margin=2, padding=2)
     plot.add_layout(legend, 'below')
