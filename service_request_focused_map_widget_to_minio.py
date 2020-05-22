@@ -245,6 +245,10 @@ if __name__ == "__main__":
                                                                                              time_period_start_date,
                                                                                              open_filter=open)
                 total_time_period_requests = time_period_filtered_df.shape[0]
+                if total_time_period_requests == 0:
+                    logging.warning("Skipping because there are no requests for this time period")
+                    continue
+
                 # Then by space
                 spatial_filtered_df = service_request_map_layers_to_minio.filter_sr_data(time_period_filtered_df,
                                                                                          time_period_start_date,
