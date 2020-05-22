@@ -20,26 +20,22 @@ MINIO_CLASSIFICATION = minio_utils.DataClassification.EDGE
 CITY_PROXY_DOMAIN = "internet.capetown.gov.za:8080"
 DEP_DIR = "libdir"
 
+TOP_REQUEST_NUMBER = 20
 CITY_CENTRE = (-33.9715, 18.6021)
 
 MAP_SUFFIX = "focused_map.html"
 
 MARKER_CALLBACK = """
 function (row) {
-    var icon, marker, text, open;
+    var icon, marker, text, marker_icon, marker_colour;
 
     text = row[2];
-    open = row[3];
+    marker_icon = row[3];
+    marker_colour = row[4];
 
-    if (open) {
-        icon = L.AwesomeMarkers.icon({
-              icon: "tools", prefix: "fa", markerColor: "blue"});
-        }
-    } else {
-        icon = L.AwesomeMarkers.icon({
-              icon: "check", prefix: "fa", markerColor: "green"});
-        }
-    }
+    icon = L.AwesomeMarkers.icon({
+        icon: marker_icon, prefix: "fa", markerColor: marker_colour
+    });
 
     marker = L.marker(new L.LatLng(row[0], row[1]));
     marker.setIcon(icon);
@@ -110,24 +106,24 @@ def marker_data_generator(request_df):
     return (
         (
             row.Latitude, row.Longitude,
-            f"{row.Index}: '{row.NotificationShortText}' ({row.Duration / 86400} days)",
-            pandas.isna(row.CompletionTimestamp)
+            f"{row.Index}: '{row.NotificationShortText}' (open {row.Duration / 86400:.1f} days)",
+            *(
+                ("wrench", "blue") if pandas.isna(row.CompletionTimestamp) else ("check", "green")
+            )
+            # pandas.isna(row.CompletionTimestamp)
         )
         for row in request_df.itertuples()
     )
 
 
-def get_prototype_div(dept_geospatial_proportion, start_time, max_time, top=95):
-    prototype_message = f"""Displaying {dept_geospatial_proportion:.1%} geolocated requests,
-        from {start_time.date().isoformat()} to {max_time.date().isoformat()}."""
+def get_prototype_div(dept_geospatial_proportion, start_time, top=95):
+    prototype_message = f"Displaying {dept_geospatial_proportion:.1%} of all requests, since {start_time.isoformat()}"
 
     div = FloatDiv(
         content="""
-        <marquee behavior="alternate" bgcolor="#bb3434" direction="left" height:="" scrollamount="1" scrolldelay="2" width=100%>
-            <span style="font-size: 20px; color:#FFFFFF">
+        <div style="font-size: 20px; color:#FFFFFF; background-color:#f00">
             {prototype_message}
-          </span>
-        </marquee>
+        </div>
         """.format(prototype_message=prototype_message),
         top=top
     )
@@ -154,13 +150,13 @@ def get_dept_clusters(dept_df):
             fast_marker_clusters_tuples,
             key=lambda marker_tuple: marker_tuple[0],
             reverse=True
-        )
+        )[:TOP_REQUEST_NUMBER]
     )
 
     return fast_marker_clusters
 
 
-def generate_map(map_data, total_requests):
+def generate_map(map_data, total_requests, start_time):
     # Get map
     m = get_basemap()
 
@@ -174,7 +170,8 @@ def generate_map(map_data, total_requests):
 
     # Add prototype banner
     dept_geospatial_proportion = map_data.shape[0] / total_requests
-    dept_prototype_div = get_prototype_div(dept_geospatial_proportion)
+
+    dept_prototype_div = get_prototype_div(dept_geospatial_proportion, start_time)
     dept_prototype_div.add_to(m)
 
     # Add layer control last
@@ -211,7 +208,8 @@ if __name__ == "__main__":
     logging.info("Upfront filter[ing] of SR Data")
     filter_df = service_request_map_layers_to_minio.filter_sr_data(
         sr_data_df, service_request_map_layers_to_minio.SOD_DATE,
-        directorate_title if directorate_title != "*" else None
+        directorate_title if directorate_title != "*" else None,
+        open_filter=False
     )
     logging.info("Upfront filter[ed] SR Data")
 
@@ -224,43 +222,44 @@ if __name__ == "__main__":
     # Has to be in the outer scope as use the tempdir in multiple places
     with tempfile.TemporaryDirectory() as tempdir:
         logging.info("Fetch[ing] Folium dependencies")
-        js_libs, css_libs = service_request_map_widget_to_minio.pull_out_leaflet_deps(tempdir,
-                                                                                      secrets["proxy"]["username"],
-                                                                                      secrets["proxy"]["password"],
-                                                                                      secrets["minio"]["edge"][
-                                                                                          "access"],
-                                                                                      secrets["minio"]["edge"][
-                                                                                          "secret"])
+        js_libs, css_libs = (
+            service_request_map_widget_to_minio.pull_out_leaflet_deps(tempdir,
+                                                                      secrets["proxy"]["username"],
+                                                                      secrets["proxy"]["password"],
+                                                                      secrets["minio"]["edge"]["access"],
+                                                                      secrets["minio"]["edge"]["secret"])
+        )
         logging.info("Fetch[ed] Folium dependencies")
 
         for time_period_prefix, time_period_date_func in service_request_map_layers_to_minio.TIME_PERIODS:
-            logging.info(f"Generat[ing] service reqeusts map for '{directorate_title}' - '{time_period_prefix}'")
+            for open in (True, False):
+                logging.info(f"Generat[ing] {'open ' if open else ''}service requests map for '{directorate_title}' - "
+                             f"'{time_period_prefix}'")
 
-            time_period_start_date = time_period_date_func(filter_df)
-            logging.debug(f"time_period_start_date={time_period_start_date.strftime('%Y-%m-%d')}")
+                time_period_start_date = time_period_date_func(filter_df)
+                logging.debug(f"time_period_start_date={time_period_start_date.strftime('%Y-%m-%d')}")
 
-            logging.info("G[etting] map data")
-            # First filtering by time
-            time_period_filtered_df = service_request_map_layers_to_minio.filter_sr_data(filter_df,
-                                                                                         time_period_start_date)
-            total_time_period_requests = (
-                service_request_map_layers_to_minio.filter_sr_data(filter_df,
-                                                                   time_period_start_date).shape[0]
-            )
-            # Then by space
-            spatial_filtered_df = service_request_map_layers_to_minio.filter_sr_data(filter_df,
-                                                                                     time_period_start_date,
-                                                                                     spatial_filter=True)
-            logging.info("G[ot] map data")
+                logging.info("G[etting] map data")
+                # First filtering by time and open status
+                time_period_filtered_df = service_request_map_layers_to_minio.filter_sr_data(filter_df,
+                                                                                             time_period_start_date,
+                                                                                             open_filter=open)
+                total_time_period_requests = time_period_filtered_df.shape[0]
+                # Then by space
+                spatial_filtered_df = service_request_map_layers_to_minio.filter_sr_data(time_period_filtered_df,
+                                                                                         time_period_start_date,
+                                                                                         spatial_filter=True)
+                logging.info("G[ot] map data")
 
-            logging.info("Generat[ing] map")
-            data_map = generate_map(spatial_filtered_df, total_time_period_requests)
-            logging.info("Generat[ed] map")
+                logging.info("Generat[ing] map")
+                data_map = generate_map(spatial_filtered_df, total_time_period_requests, time_period_start_date)
+                logging.info("Generat[ed] map")
 
-            logging.info("Writ[ing] to Minio")
-            service_request_map_widget_to_minio.write_map_to_minio(
-                data_map, directorate_file_prefix, time_period_prefix, MAP_SUFFIX, tempdir,
-                secrets["minio"]["edge"]["access"],
-                secrets["minio"]["edge"]["secret"],
-                js_libs, css_libs)
-            logging.info("Wr[ote] to Minio")
+                logging.info("Writ[ing] to Minio")
+                map_suffix = f"open_{MAP_SUFFIX}" if open else MAP_SUFFIX
+                service_request_map_widget_to_minio.write_map_to_minio(
+                    data_map, directorate_file_prefix, time_period_prefix, map_suffix, tempdir,
+                    secrets["minio"]["edge"]["access"],
+                    secrets["minio"]["edge"]["secret"],
+                    js_libs, css_libs)
+                logging.info("Wr[ote] to Minio")

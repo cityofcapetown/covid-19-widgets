@@ -43,7 +43,7 @@ LAYER_FILES = (
     # (CT_WARD_FILENAME, MINIO_COVID_BUCKET, DATA_PUBLIC_PREFIX),
 )
 
-SOD_DATE = pandas.Timestamp(year=2020, month=3, day=15, tz=pytz.FixedOffset(120))
+SOD_DATE = pandas.Timestamp(year=2020, month=3, day=15)
 
 CREATION_TIMESTAMP_COL = "CreationTimestamp"
 COMPLETION_TIMESTAMP_COL = "CompletionTimestamp"
@@ -103,7 +103,7 @@ def get_service_request_data(minio_access, minio_secret):
     return service_request_df
 
 
-def filter_sr_data(sr_df, start_date, directorate=None, spatial_filter=False):
+def filter_sr_data(sr_df, start_date, directorate=None, spatial_filter=False, open_filter=False):
     logging.debug(f"sr_df.shape={sr_df.shape}")
     # Date filtering
     filter_string = f"(({CREATION_TIMESTAMP_COL}.dt.date >= @start_date) | ({COMPLETION_TIMESTAMP_COL}.dt.date >= @start_date))"
@@ -116,6 +116,10 @@ def filter_sr_data(sr_df, start_date, directorate=None, spatial_filter=False):
     # Spatial Filter
     if spatial_filter:
         filter_string += " & (Latitude.notna() & Longitude.notna())"
+
+    # Open Filter
+    if open_filter:
+        filter_string += f" & ({COMPLETION_TIMESTAMP_COL}.isna())"
 
     logging.debug(f"Resulting filter string: '{filter_string}'")
     filter_df = sr_df.query(filter_string)
