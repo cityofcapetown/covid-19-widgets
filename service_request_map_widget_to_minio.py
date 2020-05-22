@@ -261,9 +261,9 @@ def pull_out_leaflet_deps(tempdir, proxy_username, proxy_password, minio_access,
     return js_libs, css_libs
 
 
-def write_map_to_minio(map, directorate_file_prefix, time_period_prefix, tempdir,
+def write_map_to_minio(map, directorate_file_prefix, time_period_prefix, map_suffix, tempdir,
                        minio_access, minio_secret, js_libs, css_libs):
-    map_filename = f"{time_period_prefix}_{directorate_file_prefix}_{MAP_SUFFIX}"
+    map_filename = f"{time_period_prefix}_{directorate_file_prefix}_{map_suffix}"
     local_path = os.path.join(tempdir, map_filename)
 
     folium.folium._default_js = js_libs
@@ -334,7 +334,7 @@ if __name__ == "__main__":
             logging.info("Generat[ed] map")
 
             logging.info("Writ[ing] to Minio")
-            write_map_to_minio(data_map, directorate_file_prefix, time_period_prefix, tempdir,
+            write_map_to_minio(data_map, directorate_file_prefix, time_period_prefix, MAP_SUFFIX, tempdir,
                                secrets["minio"]["edge"]["access"],
                                secrets["minio"]["edge"]["secret"],
                                js_libs, css_libs)

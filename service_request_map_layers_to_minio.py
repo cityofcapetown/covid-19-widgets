@@ -103,7 +103,7 @@ def get_service_request_data(minio_access, minio_secret):
     return service_request_df
 
 
-def filter_sr_data(sr_df, start_date, directorate=None, ):
+def filter_sr_data(sr_df, start_date, directorate=None, spatial_filter=False):
     logging.debug(f"sr_df.shape={sr_df.shape}")
     # Date filtering
     filter_string = f"(({CREATION_TIMESTAMP_COL}.dt.date >= @start_date) | ({COMPLETION_TIMESTAMP_COL}.dt.date >= @start_date))"
@@ -112,6 +112,10 @@ def filter_sr_data(sr_df, start_date, directorate=None, ):
     if directorate is not None:
         directorate_filter_str = directorate.lower()
         filter_string += " & (directorate.str.lower() == @directorate_filter_str)"
+
+    # Spatial Filter
+    if spatial_filter:
+        filter_string += " & (Latitude.notna() & Longitude.notna())"
 
     logging.debug(f"Resulting filter string: '{filter_string}'")
     filter_df = sr_df.query(filter_string)
