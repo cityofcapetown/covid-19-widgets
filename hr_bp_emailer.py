@@ -98,8 +98,8 @@ DIRECTORATE_DETAILS_DICT = {
          "receiver_email": ["PreciousPhindile.Dlamini@capetown.gov.za", "Ashwin.Martin@capetown.gov.za"],
          "cc_email": HR_CREW + ["Lele.Sithole@capetown.gov.za"]},
     "TRANSPORT":
-        {"receiver_name": ["Louise"],
-         "receiver_email": ["Louise.Burger@capetown.gov.za"],
+        {"receiver_name": ["Louise", "Austin"],
+         "receiver_email": ["Louise.Burger@capetown.gov.za", "Austin.Joemat@capetown.gov.za"],
          "cc_email": HR_CREW + ["Lele.Sithole@capetown.gov.za"]},
     "ECONOMIC OPPORTUNITIES &ASSET MANAGEMENT":
         {"receiver_name": ["Roline"],
