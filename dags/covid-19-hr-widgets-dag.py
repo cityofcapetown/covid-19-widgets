@@ -91,7 +91,7 @@ DIRECTORATE_LIST = {
     ("city_manager", 'CITY MANAGER'),
     ("water_and_waste", 'WATER AND WASTE'),
     # ("energy_and_climate_change", 'ENERGY AND CLIMATE CHANGE'),
-    # ("finance", 'FINANCE'),
+    ("finance", 'FINANCE'),
     # ("safety_and_security", "SAFETY AND SECURITY"),
     # ("community_services_and_health", 'COMMUNITY SERVICES and HEALTH'),
     ("transport", "TRANSPORT"),
