@@ -132,7 +132,7 @@ def filter_sr_data(sr_df, start_date, directorate=None, spatial_filter=False, op
 
 def apply_hexes(sr_df, hex_level):
     return sr_df.apply(
-        lambda row: h3.geo_to_h3(row.Latitude, row.Longitude, res=hex_level),
+        lambda row: h3.geo_to_h3(row.Latitude, row.Longitude, resolution=hex_level),
         axis="columns"
     )
 
