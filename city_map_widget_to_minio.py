@@ -41,6 +41,9 @@ LAYER_PROPERTIES_LOOKUP = collections.OrderedDict((
     ("health_care_facilities.geojson", (
         ("NAME", "ADR",), ("Healthcare Facility Name", "Address",), None, "Healthcare Facilities", False, False
     )),
+    ("health_districts.geojson", (
+        ("CITY_HLTH_RGN_NAME", ), ("Healthcare District Name", ), None, "Healthcare Districts", False, False
+    )),
 ))
 MAP_FILENAME = "widget.html"
 

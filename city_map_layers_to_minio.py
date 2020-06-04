@@ -34,6 +34,7 @@ CHOROPLETH_SOURCE_LAYERS = {
 }
 
 LAYER_FILES = (
+    ("health_districts.geojson", MINIO_COVID_BUCKET, DATA_PUBLIC_PREFIX),
     ("informal_settlements.geojson", MINIO_COVID_BUCKET, DATA_PUBLIC_PREFIX),
     ("health_care_facilities.geojson", MINIO_COVID_BUCKET, DATA_PUBLIC_PREFIX),
     (CT_HEX_L7_FILENAME, MINIO_HEX_BUCKET, ""),
