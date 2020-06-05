@@ -4,13 +4,13 @@ import os
 import sys
 import tempfile
 
-import branca
 from db_utils import minio_utils
 import folium
 from folium.plugins import FastMarkerCluster
 import jinja2
 import pandas
 
+import float_div
 import service_request_map_layers_to_minio
 import service_request_map_widget_to_minio
 
@@ -44,33 +44,6 @@ function (row) {
     return marker;
 };
 """
-
-
-class FloatDiv(branca.element.MacroElement):
-    """Adds a floating div in HTML canvas on top of the map."""
-    _template = jinja2.Template("""
-            {% macro header(this,kwargs) %}
-                <style>
-                    #{{this.get_name()}} {
-                        position:absolute;
-                        top:{{this.top}}%;
-                        left:{{this.left}}%;
-                        }
-                </style>
-            {% endmacro %}
-            {% macro html(this,kwargs) %}
-            <div id="{{this.get_name()}}" alt="float_div" style="z-index: 999999">
-              {{this.content}}
-            </div
-            {% endmacro %}
-            """)
-
-    def __init__(self, content, top=10, left=0):
-        super(FloatDiv, self).__init__()
-        self._name = 'FloatDiv'
-        self.content = content
-        self.top = top
-        self.left = left
 
 
 def get_basemap():
@@ -119,12 +92,8 @@ def marker_data_generator(request_df):
 def get_prototype_div(dept_geospatial_proportion, start_time, top=95):
     prototype_message = f"Displaying {dept_geospatial_proportion:.1%} of all requests, since {start_time.isoformat()}"
 
-    div = FloatDiv(
-        content="""
-        <div style="font-size: 20px; color:#FFFFFF; background-color:#f00">
-            {prototype_message}
-        </div>
-        """.format(prototype_message=prototype_message),
+    div = float_div.FloatDiv(
+        content=f"<span style='font-size: 20px; color:#FF0000'>{prototype_message}</span>",
         top=top
     )
 
@@ -170,8 +139,8 @@ def generate_map(map_data, total_requests, start_time):
 
     # Add prototype banner
     dept_geospatial_proportion = map_data.shape[0] / total_requests
-
     dept_prototype_div = get_prototype_div(dept_geospatial_proportion, start_time)
+
     dept_prototype_div.add_to(m)
 
     # Add layer control last

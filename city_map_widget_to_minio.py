@@ -6,7 +6,6 @@ import sys
 import tempfile
 from urllib.parse import urlparse
 
-import branca
 from db_utils import minio_utils
 import folium
 import geopandas
@@ -14,6 +13,7 @@ import jinja2
 import requests
 
 import city_map_layers_to_minio
+import float_div
 
 MINIO_BUCKET = "covid"
 MINIO_CLASSIFICATION = minio_utils.DataClassification.EDGE
@@ -92,33 +92,6 @@ def get_layers(tempdir, minio_access, minio_secret):
         yield layer, local_path, layer_gdf, layer_metadata
 
 
-class FloatDiv(branca.element.MacroElement):
-    """Adds a floating div in HTML canvas on top of the map."""
-    _template = jinja2.Template("""
-            {% macro header(this,kwargs) %}
-                <style>
-                    #{{this.get_name()}} {
-                        position:absolute;
-                        top:{{this.top}}%;
-                        left:{{this.left}}%;
-                        }
-                </style>
-            {% endmacro %}
-            {% macro html(this,kwargs) %}
-            <div id="{{this.get_name()}}" alt="float_div" style="z-index: 999999">
-              {{this.content}}
-            </div
-            {% endmacro %}
-            """)
-
-    def __init__(self, content, top=10, left=0):
-        super(FloatDiv, self).__init__()
-        self._name = 'FloatDiv'
-        self.content = content
-        self.top = top
-        self.left = left
-
-
 def generate_map(layers_dict):
     m = folium.Map(
         location=CITY_CENTRE, zoom_start=9,
@@ -158,7 +131,6 @@ def generate_map(layers_dict):
             show=visible_by_default
         )
 
-        # Styling them there choropleths.
         # Monkey patching the choropleth GeoJSON to *not* embed
         choropleth.geojson.embed = False
         choropleth.geojson.embed_link = (
@@ -172,17 +144,24 @@ def generate_map(layers_dict):
         )
         choropleth.geojson.add_child(layer_tooltip)
 
+        # Rather repacking things into a feature group
+        choropleth_feature_group = folium.features.FeatureGroup(
+            name=title,
+            show=visible_by_default
+        )
+        choropleth_feature_group.add_child(choropleth.geojson)
+
         # Adding missing count from metadata
         if city_map_layers_to_minio.NOT_SPATIAL_CASE_COUNT in layer_metadata:
-            div = FloatDiv(content=f"""
-                <span style="font-size: 20px; color:#FF0000"> 
-                    Cases not displayed: {layer_metadata[city_map_layers_to_minio.NOT_SPATIAL_CASE_COUNT]} 
-                </span>
-            """, top=95)
+            cases_not_displayed = layer_metadata[city_map_layers_to_minio.NOT_SPATIAL_CASE_COUNT]
+            div = float_div.FloatDiv(content=(
+                "<span style='font-size: 20px; color:#FF0000'>" 
+                    f"Cases not displayed: {cases_not_displayed}"
+                "</span>"
+            ), top=95)
+            choropleth_feature_group.add_child(div)
 
-            choropleth.geojson.add_child(div)
-
-        choropleth.add_to(m)
+        choropleth_feature_group.add_to(m)
 
     # Layer Control
     layer_control = folium.LayerControl(collapsed=False)
