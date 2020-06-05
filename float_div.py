@@ -40,7 +40,7 @@ class FloatDiv(folium.map.Layer):
                 {{ this._parent.get_name() }}_parent_remove_func.call(this, map);
             };
 
-            {% if this.show %}
+            {% if this.show or this._parent.show %}
                 {{ this.get_name() }}_add();
             {% endif %}
 

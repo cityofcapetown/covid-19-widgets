@@ -7,7 +7,6 @@ import tempfile
 from db_utils import minio_utils
 import folium
 from folium.plugins import FastMarkerCluster
-import jinja2
 import pandas
 
 import float_div
@@ -141,7 +140,10 @@ def generate_map(map_data, total_requests, start_time):
     dept_geospatial_proportion = map_data.shape[0] / total_requests
     dept_prototype_div = get_prototype_div(dept_geospatial_proportion, start_time)
 
-    dept_prototype_div.add_to(m)
+    # Add feature group for floating div that isn't in the controls
+    div_feature_group = folium.map.FeatureGroup(control=False, show=True)
+    dept_prototype_div.add_to(div_feature_group)
+    div_feature_group.add_to(m)
 
     # Add layer control last
     layer_control = folium.LayerControl(collapsed=False)
