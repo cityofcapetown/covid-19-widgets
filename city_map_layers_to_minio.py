@@ -21,15 +21,20 @@ WIDGETS_RESTRICTED_PREFIX = "widgets/private/"
 CITY_CASE_DATA_FILENAME = "ct_all_cases.csv"
 
 WARD_COUNT_FILENAME = "ward_case_count.geojson"
-HEX_COUNT_FILENAME = "hex_case_count.geojson"
+HEX_L7_COUNT_FILENAME = "hex_l7_case_count.geojson"
+HEX_L8_COUNT_FILENAME = "hex_l8_case_count.geojson"
+
 CHOROPLETH_LAYERS = (
     WARD_COUNT_FILENAME,
-    HEX_COUNT_FILENAME,
+    HEX_L7_COUNT_FILENAME,
+    HEX_L8_COUNT_FILENAME
 )
 CT_HEX_L7_FILENAME = "city-hex-polygons-7.geojson"
+CT_HEX_L8_FILENAME = "city-hex-polygons-8.geojson"
 CT_WARD_FILENAME = "ct_wards.geojson"
 CHOROPLETH_SOURCE_LAYERS = {
-    HEX_COUNT_FILENAME: CT_HEX_L7_FILENAME,
+    HEX_L7_COUNT_FILENAME: CT_HEX_L7_FILENAME,
+    HEX_L8_COUNT_FILENAME: CT_HEX_L8_FILENAME,
     WARD_COUNT_FILENAME: CT_WARD_FILENAME
 }
 
@@ -38,6 +43,7 @@ LAYER_FILES = (
     ("informal_settlements.geojson", MINIO_COVID_BUCKET, DATA_PUBLIC_PREFIX),
     ("health_care_facilities.geojson", MINIO_COVID_BUCKET, DATA_PUBLIC_PREFIX),
     (CT_HEX_L7_FILENAME, MINIO_HEX_BUCKET, ""),
+    (CT_HEX_L8_FILENAME, MINIO_HEX_BUCKET, ""),
     (CT_WARD_FILENAME, MINIO_COVID_BUCKET, DATA_PUBLIC_PREFIX),
 )
 
@@ -48,7 +54,8 @@ CHOROPLETH_COL_LOOKUP = {
         "WardID", "Ward.Number",
         lambda ward: (str(int(ward)) if pandas.notna(ward) else None)
     ),
-    HEX_COUNT_FILENAME: (HEX_COUNT_INDEX_PROPERTY, "hex_l7", lambda hex: hex),
+    HEX_L7_COUNT_FILENAME: (HEX_COUNT_INDEX_PROPERTY, "hex_l7", lambda hex: hex),
+    HEX_L8_COUNT_FILENAME: (HEX_COUNT_INDEX_PROPERTY, "hex_l8", lambda hex: hex),
 }
 
 ACTIVE_WINDOW = pandas.Timedelta(days=14)
