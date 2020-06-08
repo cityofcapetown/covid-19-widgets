@@ -27,22 +27,30 @@ HEX_COUNT_INDEX_PROPERTY = "index"
 CITY_CENTRE = (-33.9715, 18.6021)
 
 LAYER_PROPERTIES_LOOKUP = collections.OrderedDict((
-    (city_map_layers_to_minio.HEX_COUNT_FILENAME, (
-        (HEX_COUNT_INDEX_PROPERTY, city_map_layers_to_minio.CASE_COUNT_COL), ("Hex ID", "Case Count"),
-        "OrRd", "Covid-19 Cases by L7 Hex", True, True
+     ("Active Covid-19 Cases by L7 Hex", (
+        (HEX_COUNT_INDEX_PROPERTY, city_map_layers_to_minio.ACTIVE_CASE_COUNT_COL), ("Hex ID", "Presumed Active Cases"),
+        "OrRd", city_map_layers_to_minio.HEX_L7_COUNT_FILENAME, True, True, city_map_layers_to_minio.NOT_SPATIAL_ACTIVE_CASE_COUNT
     )),
-    (city_map_layers_to_minio.WARD_COUNT_FILENAME, (
-        (WARD_COUNT_NAME_PROPERTY, city_map_layers_to_minio.CASE_COUNT_COL), ("Ward Name", "Case Count"),
-        "BuPu", "Covid-19 Cases by Ward", False, True
+    ("Active Covid-19 Cases by Ward", (
+        (WARD_COUNT_NAME_PROPERTY, city_map_layers_to_minio.ACTIVE_CASE_COUNT_COL), ("Ward Name", "Presumed Active Cases"),
+        "BuPu", city_map_layers_to_minio.WARD_COUNT_FILENAME, False, True, city_map_layers_to_minio.NOT_SPATIAL_ACTIVE_CASE_COUNT
     )),
-    ("informal_settlements.geojson", (
-        ("INF_STLM_NAME",), ("Informal Settlement Name",), None, "Informal Settlements", False, False
+    ("All Covid-19 Cases by L7 Hex", (
+        (HEX_COUNT_INDEX_PROPERTY, city_map_layers_to_minio.CASE_COUNT_COL), ("Hex ID", "All Cases"),
+        "OrRd", city_map_layers_to_minio.HEX_L7_COUNT_FILENAME, False, True, city_map_layers_to_minio.NOT_SPATIAL_CASE_COUNT
     )),
-    ("health_care_facilities.geojson", (
-        ("NAME", "ADR",), ("Healthcare Facility Name", "Address",), None, "Healthcare Facilities", False, False
+    ("All Covid-19 Cases by Ward", (
+        (WARD_COUNT_NAME_PROPERTY, city_map_layers_to_minio.CASE_COUNT_COL), ("Ward Name", "All Cases"),
+        "BuPu", city_map_layers_to_minio.WARD_COUNT_FILENAME, False, True, city_map_layers_to_minio.NOT_SPATIAL_CASE_COUNT
     )),
-    ("health_districts.geojson", (
-        ("CITY_HLTH_RGN_NAME", ), ("Healthcare District Name", ), None, "Healthcare Districts", False, False
+    ("Informal Settlements", (
+        ("INF_STLM_NAME",), ("Informal Settlement Name",), None, "informal_settlements.geojson", False, False, None
+    )),
+    ("Healthcare Facilities", (
+        ("NAME", "ADR",), ("Healthcare Facility Name", "Address",), None, "health_care_facilities.geojson", False, False, None
+    )),
+    ("Healthcare Districts", (
+        ("CITY_HLTH_RGN_NAME", ), ("Healthcare District Name", ), None, "health_districts.geojson", False, False, None
     )),
 ))
 MAP_FILENAME = "widget.html"
@@ -50,11 +58,12 @@ MAP_FILENAME = "widget.html"
 
 def get_layers(tempdir, minio_access, minio_secret):
     for layer in LAYER_PROPERTIES_LOOKUP.keys():
-        local_path = os.path.join(tempdir, layer)
+        *_, layer_filename, _1, _2, _3 = LAYER_PROPERTIES_LOOKUP[layer]
+        local_path = os.path.join(tempdir, layer_filename)
 
         layer_minio_path = (
             f"{city_map_layers_to_minio.WIDGETS_RESTRICTED_PREFIX}{city_map_layers_to_minio.CITY_MAP_PREFIX}"
-            f"{layer}"
+            f"{layer_filename}"
         )
         minio_utils.minio_to_file(
             filename=local_path,
@@ -67,9 +76,9 @@ def get_layers(tempdir, minio_access, minio_secret):
 
         layer_gdf = geopandas.read_file(local_path)
 
-        *_, has_metadata = LAYER_PROPERTIES_LOOKUP[layer]
+        *_, has_metadata, _ = LAYER_PROPERTIES_LOOKUP[layer]
         if has_metadata:
-            metadata_filename = os.path.splitext(layer)[0] + ".json"
+            metadata_filename = os.path.splitext(layer_filename)[0] + ".json"
             metadata_local_path = os.path.join(tempdir, metadata_filename)
             metadata_minio_path = (
                 f"{city_map_layers_to_minio.WIDGETS_RESTRICTED_PREFIX}{city_map_layers_to_minio.CITY_MAP_PREFIX}"
@@ -89,7 +98,7 @@ def get_layers(tempdir, minio_access, minio_secret):
         else:
             layer_metadata = {}
 
-        yield layer, local_path, layer_gdf, layer_metadata
+        yield layer, layer_filename, local_path, layer_gdf, layer_metadata
 
 
 def generate_map(layers_dict):
@@ -110,9 +119,10 @@ def generate_map(layers_dict):
     )
 
     # Going layer by layer
-    for layer_filename, (layer_path, count_gdf, is_choropleth, layer_metadata) in layers_dict.items():
+    for title, (layer_path, count_gdf, is_choropleth, layer_metadata) in layers_dict.items():
         (layer_lookup_fields, layer_lookup_aliases,
-         colour_scheme, title, visible_by_default, has_metadata) = LAYER_PROPERTIES_LOOKUP[layer_filename]
+         colour_scheme, layer_filename, visible_by_default,
+         has_metadata, not_spatial_key) = LAYER_PROPERTIES_LOOKUP[title]
 
         layer_lookup_key, *_ = layer_lookup_fields
         choropleth = folium.features.Choropleth(
@@ -152,8 +162,8 @@ def generate_map(layers_dict):
         choropleth_feature_group.add_child(choropleth.geojson)
 
         # Adding missing count from metadata
-        if city_map_layers_to_minio.NOT_SPATIAL_CASE_COUNT in layer_metadata:
-            cases_not_displayed = layer_metadata[city_map_layers_to_minio.NOT_SPATIAL_CASE_COUNT]
+        if not_spatial_key in layer_metadata:
+            cases_not_displayed = layer_metadata[not_spatial_key]
             div = float_div.FloatDiv(content=(
                 "<span style='font-size: 20px; color:#FF0000'>" 
                     f"Cases not displayed: {cases_not_displayed}"
@@ -269,10 +279,10 @@ if __name__ == "__main__":
         logging.info("G[etting] layers")
         map_layers_dict = {
             # layername: (location, data, choropleth flag?)
-            layer: (local_path, layer_gdf, layer in city_map_layers_to_minio.CHOROPLETH_LAYERS, layer_metadata)
-            for layer, local_path, layer_gdf, layer_metadata in get_layers(tempdir,
-                                                                           secrets["minio"]["edge"]["access"],
-                                                                           secrets["minio"]["edge"]["secret"])
+            layer: (local_path, layer_gdf, layer_filename in city_map_layers_to_minio.CHOROPLETH_LAYERS, layer_metadata)
+            for layer, layer_filename, local_path, layer_gdf, layer_metadata in get_layers(tempdir,
+                                                                                           secrets["minio"]["edge"]["access"],
+                                                                                           secrets["minio"]["edge"]["secret"])
         }
         logging.info("G[ot] layers")
 
