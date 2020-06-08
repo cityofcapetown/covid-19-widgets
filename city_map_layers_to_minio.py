@@ -48,12 +48,17 @@ CHOROPLETH_COL_LOOKUP = {
         "WardID", "Ward.Number",
         lambda ward: (str(int(ward)) if pandas.notna(ward) else None)
     ),
-    HEX_COUNT_FILENAME: (HEX_COUNT_INDEX_PROPERTY, "hex_l7", lambda hex: hex)
+    HEX_COUNT_FILENAME: (HEX_COUNT_INDEX_PROPERTY, "hex_l7", lambda hex: hex),
 }
 
-CASE_COUNT_COL_OLD = "Date.of.Diagnosis"
+ACTIVE_WINDOW = pandas.Timedelta(days=14)
+
+DATE_DIAGNOSIS_COL = "Date.of.Diagnosis"
+
+ACTIVE_CASE_COUNT_COL = "ActiveCaseCount"
 CASE_COUNT_COL = "CaseCount"
 NOT_SPATIAL_CASE_COUNT = "not_spatial_count"
+NOT_SPATIAL_ACTIVE_CASE_COUNT = "not_spatial_active_count"
 
 
 def get_layers(tempdir, minio_access, minio_secret):
@@ -86,29 +91,55 @@ def get_case_data(minio_access, minio_secret):
         )
 
         case_data_df = pandas.read_csv(temp_datafile.name)
+        case_data_df[DATE_DIAGNOSIS_COL] = pandas.to_datetime(case_data_df[DATE_DIAGNOSIS_COL])
 
     return case_data_df
+
+
+def filter_active_case_data(case_data_df):
+    latest_date = case_data_df[DATE_DIAGNOSIS_COL].max()
+    logging.debug(f"Latest date seen: {latest_date.strftime('%Y-%m-%d')}")
+
+    active_window = latest_date - ACTIVE_WINDOW
+    logging.debug(f"Assuming all cases since {active_window.strftime('%Y-%m-%d')} are active")
+
+    active_filter = case_data_df[DATE_DIAGNOSIS_COL] >= active_window
+    logging.debug(f"Active / Total cases {active_filter.sum()} / {active_filter.shape[0]}")
+
+    return case_data_df[active_filter]
 
 
 def spatialise_case_data(case_data_df, case_data_groupby_index, data_gdf, data_gdf_index):
     case_counts = case_data_df.groupby(
         case_data_groupby_index
-    ).count()[CASE_COUNT_COL_OLD].rename(CASE_COUNT_COL)
+    ).count()[DATE_DIAGNOSIS_COL].rename(CASE_COUNT_COL)
+
+    active_case_counts = filter_active_case_data(case_data_df).groupby(
+        case_data_groupby_index
+    ).count()[DATE_DIAGNOSIS_COL].rename(ACTIVE_CASE_COUNT_COL)
 
     case_count_gdf = data_gdf.copy().set_index(data_gdf_index)
-    case_count_gdf[CASE_COUNT_COL] = case_counts
-    case_count_gdf[CASE_COUNT_COL].fillna(0, inplace=True)
-    logging.debug(
-        f"case_count_gdf.sort_values(by=CASE_COUNT_COL, ascending=False).head(5)=\n{case_count_gdf.sort_values(by=CASE_COUNT_COL, ascending=False).head(5)}"
-    )
+
+    for col, counts in ((CASE_COUNT_COL, case_counts),
+                        (ACTIVE_CASE_COUNT_COL, active_case_counts)):
+        case_count_gdf[col] = counts
+        case_count_gdf[col].fillna(0, inplace=True)
+        logging.debug(
+            f"case_count_gdf.sort_values(by='{col}', ascending=False).head(5)=\n"
+            f"{case_count_gdf.sort_values(by=col, ascending=False).head(5)}"
+        )
 
     return case_count_gdf
 
 
-def count_non_spatial_data(case_data_df, case_data_groupby_index):
-    case_count_groupby_nas = case_data_df[case_data_groupby_index].isna().sum()
+def generate_metadata(case_data_df, case_data_groupby_index):
+    case_count_dict = {
+        NOT_SPATIAL_CASE_COUNT: int(case_data_df[case_data_groupby_index].isna().sum()),
+        NOT_SPATIAL_ACTIVE_CASE_COUNT: int(filter_active_case_data(case_data_df)[case_data_groupby_index].isna().sum())
+    }
+    logging.debug(f"case_count_dict={case_count_dict}")
 
-    return case_count_groupby_nas
+    return case_count_dict
 
 
 def write_case_count_gdf_to_disk(case_count_data_gdf, tempdir, case_count_filename):
@@ -190,7 +221,7 @@ if __name__ == "__main__":
             cases_df[df_col] = cases_df[df_col].apply(sanitise_func)
             case_count_gdf = spatialise_case_data(cases_df, df_col,
                                                   data_gdf, gdf_property)
-            case_count_not_gdf = count_non_spatial_data(cases_df, df_col)
+            layer_metadata = generate_metadata(cases_df, df_col)
             logging.info(f"Count[ed] cases for '{layer_filename}'")
 
             logging.info(f"Writ[ing] geojson for '{layer_filename}'")
@@ -199,9 +230,6 @@ if __name__ == "__main__":
             logging.info(f"Wr[ote] geojson for '{layer_filename}'")
 
             logging.info(f"Writ[ing] metadata for '{layer_filename}'")
-            layer_metadata = {
-                NOT_SPATIAL_CASE_COUNT: int(case_count_not_gdf)
-            }
             logging.debug(f"layer_metadata=\n{pprint.pformat(layer_metadata)}")
             layer_stem, layer_ext = os.path.splitext(layer_filename)
             metadata_filename = layer_stem + ".json"
