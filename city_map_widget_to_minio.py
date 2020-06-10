@@ -10,6 +10,7 @@ from db_utils import minio_utils
 import folium
 import geopandas
 import jinja2
+import pandas
 import requests
 
 import city_map_layers_to_minio
@@ -29,19 +30,19 @@ CITY_CENTRE = (-33.9715, 18.6021)
 LAYER_PROPERTIES_LOOKUP = collections.OrderedDict((
      ("Active Covid-19 Cases by L7 Hex", (
         (HEX_COUNT_INDEX_PROPERTY, city_map_layers_to_minio.ACTIVE_CASE_COUNT_COL), ("Hex ID", "Presumed Active Cases"),
-        "OrRd", city_map_layers_to_minio.HEX_L7_COUNT_FILENAME, True, True, city_map_layers_to_minio.NOT_SPATIAL_ACTIVE_CASE_COUNT
+        "OrRd", city_map_layers_to_minio.HEX_L7_COUNT_FILENAME, True, True, city_map_layers_to_minio.ACTIVE_METADATA_KEY
     )),
     ("Active Covid-19 Cases by Ward", (
         (WARD_COUNT_NAME_PROPERTY, city_map_layers_to_minio.ACTIVE_CASE_COUNT_COL), ("Ward Name", "Presumed Active Cases"),
-        "BuPu", city_map_layers_to_minio.WARD_COUNT_FILENAME, False, True, city_map_layers_to_minio.NOT_SPATIAL_ACTIVE_CASE_COUNT
+        "BuPu", city_map_layers_to_minio.WARD_COUNT_FILENAME, False, True, city_map_layers_to_minio.ACTIVE_METADATA_KEY
     )),
     ("All Covid-19 Cases by L7 Hex", (
         (HEX_COUNT_INDEX_PROPERTY, city_map_layers_to_minio.CASE_COUNT_COL), ("Hex ID", "All Cases"),
-        "OrRd", city_map_layers_to_minio.HEX_L7_COUNT_FILENAME, False, True, city_map_layers_to_minio.NOT_SPATIAL_CASE_COUNT
+        "OrRd", city_map_layers_to_minio.HEX_L7_COUNT_FILENAME, False, True, city_map_layers_to_minio.CUMULATIVE_METADATA_KEY
     )),
     ("All Covid-19 Cases by Ward", (
         (WARD_COUNT_NAME_PROPERTY, city_map_layers_to_minio.CASE_COUNT_COL), ("Ward Name", "All Cases"),
-        "BuPu", city_map_layers_to_minio.WARD_COUNT_FILENAME, False, True, city_map_layers_to_minio.NOT_SPATIAL_CASE_COUNT
+        "BuPu", city_map_layers_to_minio.WARD_COUNT_FILENAME, False, True, city_map_layers_to_minio.CUMULATIVE_METADATA_KEY
     )),
     ("Informal Settlements", (
         ("INF_STLM_NAME",), ("Informal Settlement Name",), None, "informal_settlements.geojson", False, False, None
@@ -53,6 +54,9 @@ LAYER_PROPERTIES_LOOKUP = collections.OrderedDict((
         ("CITY_HLTH_RGN_NAME", ), ("Healthcare District Name", ), None, "health_districts.geojson", False, False, None
     )),
 ))
+
+BIN_QUANTILES = [0, 0, 0.5, 0.75, 0.9, 0.99, 1]
+
 MAP_FILENAME = "widget.html"
 
 
@@ -101,6 +105,22 @@ def get_layers(tempdir, minio_access, minio_secret):
         yield layer, layer_filename, local_path, layer_gdf, layer_metadata
 
 
+def _get_choropleth_bins(count_series):
+    bins = [0]
+    data_edges = list(count_series.quantile(BIN_QUANTILES).values)
+
+    # Making sure the first bin is 0 values
+    if data_edges[0] != 1:
+        bins += [1]
+
+    # Only then adding new bin edges if they are monotonically increasing
+    bins += [
+        val for val in data_edges if val > 1
+    ]
+
+    return bins
+
+
 def generate_map(layers_dict):
     m = folium.Map(
         location=CITY_CENTRE, zoom_start=9,
@@ -122,7 +142,12 @@ def generate_map(layers_dict):
     for title, (layer_path, count_gdf, is_choropleth, layer_metadata) in layers_dict.items():
         (layer_lookup_fields, layer_lookup_aliases,
          colour_scheme, layer_filename, visible_by_default,
-         has_metadata, not_spatial_key) = LAYER_PROPERTIES_LOOKUP[title]
+         has_metadata, metadata_key) = LAYER_PROPERTIES_LOOKUP[title]
+
+        case_count_col = (
+            layer_metadata[metadata_key].get(city_map_layers_to_minio.CASE_COUNT_KEY, None)
+            if has_metadata else None
+        )
 
         layer_lookup_key, *_ = layer_lookup_fields
         choropleth = folium.features.Choropleth(
@@ -130,11 +155,12 @@ def generate_map(layers_dict):
             data=count_gdf.reset_index(),
             name=title,
             key_on=f"feature.properties.{layer_lookup_key}",
-            columns=[layer_lookup_key, city_map_layers_to_minio.CASE_COUNT_COL],
+            columns=[layer_lookup_key, case_count_col],
             fill_color=colour_scheme,
             highlight=True,
             show=visible_by_default,
-            line_opacity=0
+            line_opacity=0,
+            bins=_get_choropleth_bins(count_gdf[case_count_col]),
         ) if is_choropleth else folium.features.Choropleth(
             layer_path,
             name=title,
@@ -162,8 +188,8 @@ def generate_map(layers_dict):
         choropleth_feature_group.add_child(choropleth.geojson)
 
         # Adding missing count from metadata
-        if not_spatial_key in layer_metadata:
-            cases_not_displayed = layer_metadata[not_spatial_key]
+        if metadata_key in layer_metadata:
+            cases_not_displayed = layer_metadata[metadata_key][city_map_layers_to_minio.NOT_SPATIAL_CASE_COUNT]
             div = float_div.FloatDiv(content=(
                 "<span style='font-size: 20px; color:#FF0000'>" 
                     f"Cases not displayed: {cases_not_displayed}"

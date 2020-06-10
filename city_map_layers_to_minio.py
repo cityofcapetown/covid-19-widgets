@@ -62,11 +62,15 @@ ACTIVE_WINDOW = pandas.Timedelta(days=14)
 
 DATE_DIAGNOSIS_COL = "Date.of.Diagnosis"
 
+ACTIVE_METADATA_KEY = "Active"
+CUMULATIVE_METADATA_KEY = "All"
+
 ACTIVE_CASE_COUNT_COL = "ActiveCaseCount"
 CASE_COUNT_COL = "CaseCount"
-NOT_SPATIAL_CASE_COUNT = "not_spatial_count"
-NOT_SPATIAL_ACTIVE_CASE_COUNT = "not_spatial_active_count"
 
+CASE_COUNT_KEY = "CountCol"
+NOT_SPATIAL_CASE_COUNT = "not_spatial_count"
+BINS = "bins"
 
 def get_layers(tempdir, minio_access, minio_secret):
     for layer, layer_bucket, layer_minio_prefix in LAYER_FILES:
@@ -140,13 +144,18 @@ def spatialise_case_data(case_data_df, case_data_groupby_index, data_gdf, data_g
 
 
 def generate_metadata(case_data_df, case_data_groupby_index):
-    case_count_dict = {
-        NOT_SPATIAL_CASE_COUNT: int(case_data_df[case_data_groupby_index].isna().sum()),
-        NOT_SPATIAL_ACTIVE_CASE_COUNT: int(filter_active_case_data(case_data_df)[case_data_groupby_index].isna().sum())
+    metadata_dict = {
+        metadata_key: {
+            CASE_COUNT_KEY: case_count_col,
+            NOT_SPATIAL_CASE_COUNT: int(metadata_df[case_data_groupby_index].isna().sum()),
+        }
+        for metadata_key, case_count_col, metadata_df in (
+            (CUMULATIVE_METADATA_KEY, CASE_COUNT_COL, case_data_df),
+            (ACTIVE_METADATA_KEY, ACTIVE_CASE_COUNT_COL, filter_active_case_data(case_data_df)))
     }
-    logging.debug(f"case_count_dict={case_count_dict}")
+    logging.debug(f"metadata_dict={metadata_dict}")
 
-    return case_count_dict
+    return metadata_dict
 
 
 def write_case_count_gdf_to_disk(case_count_data_gdf, tempdir, case_count_filename):
