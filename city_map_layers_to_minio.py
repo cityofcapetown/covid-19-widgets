@@ -61,6 +61,7 @@ CHOROPLETH_COL_LOOKUP = {
 ACTIVE_WINDOW = pandas.Timedelta(days=14)
 
 DATE_DIAGNOSIS_COL = "Date.of.Diagnosis"
+DIED_COL = "Died"
 
 ACTIVE_METADATA_KEY = "Active"
 CUMULATIVE_METADATA_KEY = "All"
@@ -115,6 +116,8 @@ def filter_active_case_data(case_data_df):
     logging.debug(f"Assuming all cases since {active_window.strftime('%Y-%m-%d')} are active")
 
     active_filter = case_data_df[DATE_DIAGNOSIS_COL] >= active_window
+    active_filter &= case_data_df[DIED_COL] != "Yes"
+
     logging.debug(f"Active / Total cases {active_filter.sum()} / {active_filter.shape[0]}")
 
     return case_data_df[active_filter]
