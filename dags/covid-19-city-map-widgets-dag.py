@@ -86,7 +86,7 @@ DISTRICT_TUPLES = (
     #   ((subdistrict 1 file prefix, sub district 1 name),
     #    ...,
     #    (subdistrict n file prefix, sub district n name)),
-    ("city", "city of cape town"), (
+    ("city", "city of cape town", (
         ('eastern', 'eastern'),
         ('klipfontein', 'klipfontein'),
         ('southern', 'southern'),
@@ -96,8 +96,8 @@ DISTRICT_TUPLES = (
         ('western', 'western'),
         ('tygerberg', 'tygerberg'),
         ('all', '*')
-    ),
-    ("prov", "*"), (('all', '*'),)
+    )),
+    ("prov", "*", (('all', '*'),))
 )
 
 # Defining tasks
