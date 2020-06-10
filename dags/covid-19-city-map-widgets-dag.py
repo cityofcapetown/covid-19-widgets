@@ -29,7 +29,7 @@ dag = DAG('covid-19-city-map-widgets',
           catchup=False,
           default_args=default_args,
           schedule_interval=dag_interval,
-          concurrency=1)
+          concurrency=4)
 
 # env variables for inside the k8s pod
 k8s_run_env = {
@@ -54,15 +54,19 @@ k8s_run_args = {
     "secrets": [secret_file],
     "env_vars": k8s_run_env,
     "image_pull_policy": "Always",
-     "startup_timeout_seconds": 60*30,
+    "startup_timeout_seconds": 60 * 30,
 }
 
 
-def covid_19_widget_task(task_name, task_kwargs={}):
+def covid_19_widget_task(task_name, task_kwargs={}, task_cmdline_args=[]):
     """Factory for k8sPodOperator"""
-    name = "covid-19-city-map-widgets-{}".format(task_name)
+    name = "covid-19-city-map-widgets-{}-{}-{}".format(task_name,
+                                                       task_cmdline_args[0].replace("_", "-"),
+                                                       task_cmdline_args[2].replace("_", "-"))
     run_args = {**k8s_run_args.copy(), **task_kwargs}
-    run_cmd = "bash -c '{} && \"$COVID_19_WIDGETS_DIR\"/bin/{}.sh'".format(startup_cmd, task_name)
+    run_cmd = "bash -c '{} && \"$COVID_19_WIDGETS_DIR\"/bin/{}.sh \"{}\"'".format(
+        startup_cmd, task_name, '" "'.join(task_cmdline_args)
+    )
 
     operator = KubernetesPodOperator(
         cmds=["bash", "-cx"],
@@ -77,12 +81,46 @@ def covid_19_widget_task(task_name, task_kwargs={}):
     return operator
 
 
+DISTRICT_TUPLES = (
+    # ((district 1 file prefix, district 1 name),
+    #   ((subdistrict 1 file prefix, sub district 1 name),
+    #    ...,
+    #    (subdistrict n file prefix, sub district n name)),
+    ("city", "city of cape town"), (
+        ('eastern', 'eastern'),
+        ('klipfontein', 'klipfontein'),
+        ('southern', 'southern'),
+        ('mitchells plain', 'mitchells plain'),
+        ('khayelitsha', 'khayelitsha'),
+        ('northern', 'northern'),
+        ('western', 'western'),
+        ('tygerberg', 'tygerberg'),
+        ('all', '*')
+    ),
+    ("prov", "*"), (('all', '*'),)
+)
+
 # Defining tasks
 CITY_MAP_LAYERS_GENERATE = 'city-map-layers-generate'
-city_map_layers_generate_operator = covid_19_widget_task(CITY_MAP_LAYERS_GENERATE)
+city_map_layers_generate_operators = [
+    covid_19_widget_task(
+        CITY_MAP_LAYERS_GENERATE,
+        task_cmdline_args=[district_filename_prefix, district_name, subdistrict_filename_prefix, subdistrict_name]
+    )
+    for district_filename_prefix, district_name, subdistrict_tuples in DISTRICT_TUPLES
+    for subdistrict_filename_prefix, subdistrict_name in subdistrict_tuples
+]
 
 CITY_MAP_PLOT = 'city-map-plot'
-city_map_plot_operator = covid_19_widget_task(CITY_MAP_PLOT)
+city_map_plot_operators = [
+    covid_19_widget_task(
+        CITY_MAP_PLOT,
+        task_cmdline_args=[district_filename_prefix, district_name, subdistrict_filename_prefix, subdistrict_name]
+    )
+    for district_filename_prefix, district_name, subdistrict_tuples in DISTRICT_TUPLES
+    for subdistrict_filename_prefix, subdistrict_name in subdistrict_tuples
+]
 
 # Dependencies
-city_map_layers_generate_operator >> city_map_plot_operator
+for layer_generate_operator, map_plot_operator in zip(city_map_layers_generate_operators, city_map_plot_operators):
+    map_plot_operator.set_upstream(layer_generate_operator)
