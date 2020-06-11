@@ -739,7 +739,7 @@ for (subdist in unique(ct_subdistrict_cumulative_daily_counts$Subdistrict)) {
                         paste(obj_name, "html", sep = "."))
   libdir <- file.path(getwd(), private_destdir, 
                       "libdir")
-  saveWidget(get(obj_name), savepath, selfcontained = F, libdir = libdir)
+  save_widget(p, private_destdir)
   rm(p)
 }
 
@@ -848,7 +848,7 @@ for (subdist in unique(ct_subdistrict_cumulative_daily_counts$Subdistrict)) {
                         paste(obj_name, "html", sep = "."))
   libdir <- file.path(getwd(), private_destdir, 
                       "libdir")
-  saveWidget(get(obj_name), savepath, selfcontained = F, libdir = libdir)
+  save_widget(p, private_destdir)
   rm(p)
 }
 
