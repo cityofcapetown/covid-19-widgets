@@ -233,6 +233,20 @@ ct_latest_update <- wc_latest_update
 ct_latest_confirmed <- nrow(ct_all_cases)
 ct_latest_deaths <- ct_all_cases %>% filter(!is.na(Date.of.Death)) %>% nrow() 
 
+# Latest values Subdistricts
+subdistrict_latest_df <- ct_all_cases %>% 
+  group_by(Subdistrict) %>% 
+  summarise(latest_deaths = sum(!is.na(Date.of.Death)),
+            latest_confirmed = sum(!is.na(Date.of.Diagnosis))) %>%
+  ungroup() %>%
+  mutate(Subdistrict = tolower(Subdistrict)) %>%
+  gather(key = "metric", value = "count", -Subdistrict) %>%
+  mutate(metric = paste(Subdistrict, metric)) %>% select(-Subdistrict) %>%
+  mutate(metric = str_replace_all(metric, " ", "_"))
+
+subdistrict_latest <- as.list(subdistrict_latest_df$count)
+names(subdistrict_latest) <- subdistrict_latest_df$metric
+
 # expected_future_trajectory -----------------------
 countries_this_far <- global_ts_since_100 %>% 
   select(-days_since_passed_100) %>% 
@@ -387,7 +401,10 @@ latest_values <- listN(ct_latest_update,
                        rsa_latest_deaths,
                   global_last_updated,
                   global_last_confirmed_val,
-                  global_last_deaths_val)
+                  global_last_deaths_val,
+                  subdistrict_latest)
+
+
 
 write(
   toJSON(latest_values), 
@@ -398,6 +415,7 @@ latest_private_values <- append(latest_values,
                                 listN(ct_latest_update,
                                 ct_latest_confirmed,
                                 ct_latest_deaths))
+
 
 write(
   toJSON(latest_private_values), 
@@ -657,7 +675,7 @@ ct_subdistrict_daily_confirmed_cases  <- ct_all_cases_parsed %>%
   ungroup() 
 
 # Make sure all dates are included in the melted dataframe
-spread_ct_subdistrict_daily_confirmed_cases <-  ct_subdistrict_daily_confirmed_cases %>% spread(key = Subdistrict, value = count) 
+spread_ct_subdistrict_daily_confirmed_cases <-  ct_subdistrict_daily_confirmed_cases %>% spread(key = Subdistrict, value = count) %>% drop_na(date)
 spread_ct_subdistrict_daily_confirmed_cases[is.na(spread_ct_subdistrict_daily_confirmed_cases)] <- 0
 ct_subdistrict_daily_confirmed_cases <- spread_ct_subdistrict_daily_confirmed_cases %>% gather(key = "Subdistrict", value = count, -date)
 
@@ -669,6 +687,7 @@ every_nth = function(n) {
 ct_subdistrict_daily_active_cases  <- 
   ct_all_cases_parsed %>% 
   rename(date = Date.of.Diagnosis) %>%
+  drop_na(date) %>%
   group_by(date, Subdistrict) %>% 
   summarise(cases = n()) %>% 
   ungroup() %>% 
