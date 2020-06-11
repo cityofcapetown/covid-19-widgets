@@ -731,7 +731,7 @@ for (subdist in unique(ct_subdistrict_cumulative_daily_counts$Subdistrict)) {
                        marker = list(color = 'rgba(50, 171, 96, 0.7)'))
   p <- p %>% add_trace(y = ~cumulative_deaths, name = 'Cumulative Deaths',
                        marker = list(color = 'rgba(219, 64, 82, 0.7)'))
-  p <- p %>% layout(yaxis = list(title = 'Count'), barmode = 'stack')
+  p <- p %>% layout(yaxis = list(title = 'Count'), barmode = 'stack', legend = list(x = 0.1, y = 0.9))
   obj_name <- print(paste("cct_", str_replace_all(str_replace_all(subdist, " ", "_"), "&", ""), "_cumulative_counts", sep = ""))  
   assign(obj_name, p)
   savepath <- file.path(getwd(), private_destdir, 
@@ -840,7 +840,7 @@ for (subdist in unique(ct_subdistrict_cumulative_daily_counts$Subdistrict)) {
               line = list(color = 'rgba(55, 128, 191, 1)'), 
               marker = list(color = 'rgba(55, 128, 191, 1)')) %>%
     
-    layout(barmode = 'stack')
+    layout(barmode = 'stack', legend = list(x = 0.1, y = 0.9))
   obj_name <- print(paste("cct_", str_replace_all(str_replace_all(subdist, " ", "_"), "&", ""), "_daily_counts_bar_chart", sep = ""))  
   assign(obj_name, p)
   savepath <- file.path(getwd(), private_destdir, 
