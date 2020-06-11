@@ -149,7 +149,7 @@ def filter_active_case_data(case_data_df):
 
 
 def filter_deaths_case_data(case_data_df):
-    death_filter  = case_data_df[DIED_COL] == "Yes"
+    death_filter = case_data_df[DIED_COL] == "Yes"
 
     logging.debug(f"Deaths / Total cases {death_filter.sum()} / {death_filter.shape[0]}")
 

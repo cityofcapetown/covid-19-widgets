@@ -144,23 +144,7 @@ def _get_choropleth_bins(count_series):
     return bins
 
 
-def generate_map(layers_dict):
-    m = folium.Map(
-        location=CITY_CENTRE, zoom_start=9,
-        tiles="",
-        prefer_canvas=True
-    )
-
-    # Feature Map
-    m.add_child(
-        folium.TileLayer(
-            name='Base Map',
-            tiles='https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
-            attr='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; '
-                 '<a href="https://carto.com/attributions">CARTO</a>'
-        )
-    )
-
+def generate_map_features(layers_dict):
     # Going layer by layer
     for title, (layer_path, count_gdf, is_choropleth, layer_metadata) in layers_dict.items():
         (layer_lookup_fields, layer_lookup_aliases,
@@ -190,6 +174,11 @@ def generate_map(layers_dict):
             show=visible_by_default
         )
 
+        # If this is a visible layer, calculating the centroids
+        centroids = list(count_gdf.geometry.map(
+                lambda shape: (shape.centroid.y, shape.centroid.x)
+            )) if visible_by_default else []
+
         # Monkey patching the choropleth GeoJSON to *not* embed
         choropleth.geojson.embed = False
         *_, layer_filename = os.path.split(layer_path)
@@ -216,12 +205,39 @@ def generate_map(layers_dict):
 
             div = float_div.FloatDiv(content=(
                 "<span style='font-size: 20px; color:#FF0000'>"
-                f"Cases not displayed: {cases_not_displayed} ({cases_not_displayed/total_count:.1%} of total)"
+                f"Cases not displayed: {cases_not_displayed} ({cases_not_displayed / total_count:.1%} of total)"
                 "</span>"
             ), top=95)
             choropleth_feature_group.add_child(div)
 
-        choropleth_feature_group.add_to(m)
+        yield choropleth_feature_group, centroids
+
+
+def generate_map(map_features):
+    m = folium.Map(
+        location=CITY_CENTRE, zoom_start=9,
+        tiles="",
+        prefer_canvas=True
+    )
+
+    # Feature Map
+    m.add_child(
+        folium.TileLayer(
+            name='Base Map',
+            tiles='https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
+            attr='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; '
+                 '<a href="https://carto.com/attributions">CARTO</a>'
+        )
+    )
+
+    # Adding the features
+    map_centroids = []
+    for feature, centroids in map_features:
+        m.add_child(feature)
+        map_centroids += centroids
+
+    # Setting the map zoom using any visible layers
+    m.fit_bounds(map_centroids, padding_bottom_right=(0, 100))
 
     # Layer Control
     layer_control = folium.LayerControl(collapsed=False)
@@ -350,7 +366,8 @@ if __name__ == "__main__":
         logging.info("G[ot] layers")
 
         logging.info("Generat[ing] map")
-        data_map = generate_map(map_layers_dict)
+        map_feature_generator = generate_map_features(map_layers_dict)
+        data_map = generate_map(map_feature_generator)
         logging.info("Generat[ed] map")
 
         logging.info("Writ[ing] to Minio")
