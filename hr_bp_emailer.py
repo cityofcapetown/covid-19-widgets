@@ -85,21 +85,21 @@ DIRECTORATE_DETAILS_DICT = {
     #     {"receiver_name": ["Maurietta"],
     #      "receiver_email": ["Maurietta.Page@capetown.gov.za"],
     #      "cc_email": HR_CREW + ["Lele.Sithole@capetown.gov.za"]},
-    # "FINANCE":
-    #     {"receiver_name": ["Tembekile"],
-    #      "receiver_email": ["Tembekile.Solanga@capetown.gov.za"],
-    #      "cc_email": HR_CREW + ["Lele.Sithole@capetown.gov.za"]},
+    "FINANCE":
+        {"receiver_name": ["Tembekile", "Louise", "Gillian", "Petro"],
+         "receiver_email": ["Tembekile.Solanga@capetown.gov.za", "Louise.Muller@capetown.gov.za", "Gillian.Meyer@capetown.gov.za", "Petro.Rheeder@capetown.gov.za"],
+         "cc_email": HR_CREW + ["Lele.Sithole@capetown.gov.za"]},
     # "CORPORATE SERVICES":
     #     {"receiver_name": ["Gordon"],
     #      "receiver_email": ["gordon.inggs@capetown.gov.za"],
     #      "cc_email": ["gordon.inggs@capetown.gov.za"]},
     "CORPORATE SERVICES":
-        {"receiver_name": ["Phindile"],
-         "receiver_email": ["PreciousPhindile.Dlamini@capetown.gov.za"],
+        {"receiver_name": ["Phindile", "Ashwin"],
+         "receiver_email": ["PreciousPhindile.Dlamini@capetown.gov.za", "Ashwin.Martin@capetown.gov.za"],
          "cc_email": HR_CREW + ["Lele.Sithole@capetown.gov.za"]},
     "TRANSPORT":
-        {"receiver_name": ["Louise"],
-         "receiver_email": ["Louise.Burger@capetown.gov.za"],
+        {"receiver_name": ["Louise", "Austin"],
+         "receiver_email": ["Louise.Burger@capetown.gov.za", "Austin.Joemat@capetown.gov.za"],
          "cc_email": HR_CREW + ["Lele.Sithole@capetown.gov.za"]},
     "ECONOMIC OPPORTUNITIES &ASSET MANAGEMENT":
         {"receiver_name": ["Roline"],
@@ -118,8 +118,8 @@ DIRECTORATE_DETAILS_DICT = {
          "receiver_email": ["Sibusiso.Mayekiso@capetown.gov.za"],
          "cc_email": HR_CREW + ["Lele.Sithole@capetown.gov.za"]},
     "CITY MANAGER":
-        {"receiver_name": ["Phindile"],
-         "receiver_email": ["PreciousPhindile.Dlamini@capetown.gov.za"],
+        {"receiver_name": ["Phindile", "Ashwin"],
+         "receiver_email": ["PreciousPhindile.Dlamini@capetown.gov.za", "Ashwin.Martin@capetown.gov.za"],
          "cc_email": HR_CREW + ["Lele.Sithole@capetown.gov.za"]},
 }
 

@@ -7,13 +7,13 @@ import sys
 import tempfile
 from urllib.parse import urlparse
 
-import branca
 from db_utils import minio_utils
 import folium
 import geopandas
 import jinja2
 import requests
 
+import float_div
 import service_request_map_layers_to_minio
 
 MINIO_BUCKET = "covid"
@@ -106,33 +106,6 @@ def get_layers(directorate_file_prefix, time_period_prefix, tempdir, minio_acces
         yield time_period_layer_filename, (local_path, layer_gdf, is_choropleth, layer_metadata, layer_props)
 
 
-class FloatDiv(branca.element.MacroElement):
-    """Adds a floating div in HTML canvas on top of the map."""
-    _template = jinja2.Template("""
-            {% macro header(this,kwargs) %}
-                <style>
-                    #{{this.get_name()}} {
-                        position:absolute;
-                        top:{{this.top}}%;
-                        left:{{this.left}}%;
-                        }
-                </style>
-            {% endmacro %}
-            {% macro html(this,kwargs) %}
-            <div id="{{this.get_name()}}" alt="float_div" style="z-index: 999999">
-              {{this.content}}
-            </div
-            {% endmacro %}
-            """)
-
-    def __init__(self, content, top=10, left=0):
-        super(FloatDiv, self).__init__()
-        self._name = 'FloatDiv'
-        self.content = content
-        self.top = top
-        self.left = left
-
-
 def generate_map(layer_tuples):
     m = folium.Map(
         location=CITY_CENTRE, zoom_start=9,
@@ -186,20 +159,26 @@ def generate_map(layer_tuples):
         )
         choropleth.geojson.add_child(layer_tooltip)
 
+        # Rather repacking things into a feature group
+        choropleth_feature_group = folium.features.FeatureGroup(
+            name=title,
+            show=visible_by_default
+        )
+        choropleth_feature_group.add_child(choropleth.geojson)
+
         # Adding missing count from metadata
         if service_request_map_layers_to_minio.METADATA_OPENED_NON_SPATIAL in layer_metadata:
             opened_non_spatial = int(layer_metadata[service_request_map_layers_to_minio.METADATA_OPENED_NON_SPATIAL])
             opened_total = int(layer_metadata[service_request_map_layers_to_minio.METADATA_OPENED_TOTAL])
 
-            div = FloatDiv(content=f"""
-                <span style="font-size: 20px; color:#FF0000"> 
-                    Requests not displayed: {opened_non_spatial} ({(opened_non_spatial / opened_total):.1%}) 
-                </span>
-            """, top=95)
+            div = float_div.FloatDiv(content=(
+                "<span style='font-size: 20px; color:#FF0000'>" 
+                    f"Requests not displayed: {opened_non_spatial} ({(opened_non_spatial / opened_total):.1%})" 
+                "</span>"
+            ), top=95)
+            choropleth_feature_group.add_child(div)
 
-            choropleth.geojson.add_child(div)
-
-        choropleth.add_to(m)
+        choropleth_feature_group.add_to(m)
 
     # Layer Control
     layer_control = folium.LayerControl(collapsed=False)
@@ -261,9 +240,9 @@ def pull_out_leaflet_deps(tempdir, proxy_username, proxy_password, minio_access,
     return js_libs, css_libs
 
 
-def write_map_to_minio(map, directorate_file_prefix, time_period_prefix, tempdir,
+def write_map_to_minio(map, directorate_file_prefix, time_period_prefix, map_suffix, tempdir,
                        minio_access, minio_secret, js_libs, css_libs):
-    map_filename = f"{time_period_prefix}_{directorate_file_prefix}_{MAP_SUFFIX}"
+    map_filename = f"{time_period_prefix}_{directorate_file_prefix}_{map_suffix}"
     local_path = os.path.join(tempdir, map_filename)
 
     folium.folium._default_js = js_libs
@@ -334,7 +313,7 @@ if __name__ == "__main__":
             logging.info("Generat[ed] map")
 
             logging.info("Writ[ing] to Minio")
-            write_map_to_minio(data_map, directorate_file_prefix, time_period_prefix, tempdir,
+            write_map_to_minio(data_map, directorate_file_prefix, time_period_prefix, MAP_SUFFIX, tempdir,
                                secrets["minio"]["edge"]["access"],
                                secrets["minio"]["edge"]["secret"],
                                js_libs, css_libs)

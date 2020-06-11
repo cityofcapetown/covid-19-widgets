@@ -29,7 +29,7 @@ dag = DAG('covid-19-sr-widgets',
           catchup=False,
           default_args=default_args,
           schedule_interval=dag_interval,
-          concurrency=4)
+          concurrency=5)
 
 # env variables for inside the k8s pod
 k8s_run_env = {
@@ -113,6 +113,14 @@ MAP_WIDGET_TASK = 'sr-maps-generate'
 map_widget_operators = [
     covid_19_widget_task(
         MAP_WIDGET_TASK,
+        task_cmdline_args=[directorate_filename_prefix, directorate_title, ]
+    ) for directorate_filename_prefix, directorate_title in DIRECTORATE_LIST
+]
+
+FOCUS_MAP_WIDGET_TASK = 'sr-focus-maps-generate'
+focus_map_widget_operators = [
+    covid_19_widget_task(
+        FOCUS_MAP_WIDGET_TASK,
         task_cmdline_args=[directorate_filename_prefix, directorate_title, ]
     ) for directorate_filename_prefix, directorate_title in DIRECTORATE_LIST
 ]

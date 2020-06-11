@@ -91,7 +91,7 @@ DIRECTORATE_LIST = {
     ("city_manager", 'CITY MANAGER'),
     ("water_and_waste", 'WATER AND WASTE'),
     # ("energy_and_climate_change", 'ENERGY AND CLIMATE CHANGE'),
-    # ("finance", 'FINANCE'),
+    ("finance", 'FINANCE'),
     # ("safety_and_security", "SAFETY AND SECURITY"),
     # ("community_services_and_health", 'COMMUNITY SERVICES and HEALTH'),
     ("transport", "TRANSPORT"),
@@ -119,4 +119,9 @@ absenteeism_operators = [
 ]
 
 BUSUNIT_STATUS_PLOT = 'hr-busunit-status-plot'
-busunit_status_operator = covid_19_widget_task(BUSUNIT_STATUS_PLOT)
+busunit_operators = [
+    covid_19_widget_task(
+        BUSUNIT_STATUS_PLOT,
+        task_cmdline_args=directorate_args
+    ) for directorate_args in DIRECTORATE_LIST
+]
