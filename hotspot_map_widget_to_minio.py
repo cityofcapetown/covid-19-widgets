@@ -1,9 +1,12 @@
 import collections
+import itertools
 import json
 import logging
 import os
 import sys
 import tempfile
+
+import folium.plugins
 
 import city_map_layers_to_minio
 import city_map_widget_to_minio
@@ -46,6 +49,38 @@ HOTSPOT_LAYER_PROPERTIES_LOOKUP = collections.OrderedDict((
 BIN_QUANTILES = [0, 0, 0.5, 0.75, 0.9, 0.99, 1]
 
 MAP_FILENAME = "hotspot_map_widget.html"
+
+
+def generate_district_map_features():
+    features = []
+    # Base Layers
+    features += [
+        folium.TileLayer(
+            name='No Base Map',
+            tiles='',
+            attr='No one'
+        ),
+        folium.TileLayer(
+            name='Terrain',
+            tiles='https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+            attr='Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
+        )
+    ]
+
+    # Minimap
+    features += [
+        folium.plugins.MiniMap(
+            tile_layer=folium.TileLayer(
+                tiles='https://stamen-tiles-{s}.a.ssl.fastly.net/toner-background/{z}/{x}/{y}{r}.png',
+                attr='Map tiles by <a href="http://stamen.com">Stamen Design</a>, <a href="http://creativecommons.org/licenses/by/3.0">CC BY 3.0</a> &mdash; Map data &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            ),
+            zoom_level_fixed=7,
+        )
+    ]
+
+    for feature in features:
+        yield feature, None
+
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO,
@@ -92,8 +127,11 @@ if __name__ == "__main__":
         logging.info("G[ot] layers")
 
         logging.info("Generat[ing] map")
-        map_feature_generator = city_map_widget_to_minio.generate_map_features(map_layers_dict,
-                                                                               layer_properties=HOTSPOT_LAYER_PROPERTIES_LOOKUP)
+        health_feature_generator = city_map_widget_to_minio.generate_map_features(map_layers_dict,
+                                                                                  layer_properties=HOTSPOT_LAYER_PROPERTIES_LOOKUP)
+        district_map_features = generate_district_map_features() if subdistrict_name != "*" else []
+
+        map_feature_generator = itertools.chain(health_feature_generator, district_map_features)
         data_map = city_map_widget_to_minio.generate_map(map_feature_generator)
         logging.info("Generat[ed] map")
 

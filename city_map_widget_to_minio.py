@@ -233,7 +233,7 @@ def generate_map(map_features):
     map_centroids = []
     for feature, centroids in map_features:
         m.add_child(feature)
-        map_centroids += centroids
+        map_centroids += centroids if centroids else []
 
     # Setting the map zoom using any visible layers
     m.fit_bounds(map_centroids, padding_bottom_right=(0, 100))
