@@ -64,9 +64,15 @@ listN <- function(...){
   anonList
 }
 
-save_widget <- function(widg, destdir) {
+save_widget <- function(widg, destdir, name_override=NULL) {
+  widget_name <- deparse(substitute(widg))
+  if (!is.null(name_override)){
+    widget_name <- name_override
+    print(paste("Overriding widget name to ", widget_name))
+  }
+
   savepath <- file.path(getwd(), destdir, 
-                        paste(deparse(substitute(widg)), "html", sep = "."))
+                        paste(widget_name, "html", sep = "."))
   libdir <- file.path(getwd(), destdir, 
                       "libdir")
   if (!(file.exists(libdir))) {
@@ -739,7 +745,7 @@ for (subdist in unique(ct_subdistrict_cumulative_daily_counts$Subdistrict)) {
                         paste(obj_name, "html", sep = "."))
   libdir <- file.path(getwd(), private_destdir, 
                       "libdir")
-  save_widget(p, private_destdir)
+  save_widget(p, private_destdir, obj_name)
   rm(p)
 }
 
@@ -848,7 +854,7 @@ for (subdist in unique(ct_subdistrict_cumulative_daily_counts$Subdistrict)) {
                         paste(obj_name, "html", sep = "."))
   libdir <- file.path(getwd(), private_destdir, 
                       "libdir")
-  save_widget(p, private_destdir)
+  save_widget(p, private_destdir, obj_name)
   rm(p)
 }
 
