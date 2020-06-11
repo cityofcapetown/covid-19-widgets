@@ -68,17 +68,24 @@ ACTIVE_WINDOW = pandas.Timedelta(days=14)
 DISTRICT_COL = "District"
 SUBDISTRICT_COL = "Subdistrict"
 DATE_DIAGNOSIS_COL = "Date.of.Diagnosis"
+DATE_DEATH_COL = "Date.of.Death"
 DIED_COL = "Died"
 
 ACTIVE_METADATA_KEY = "Active"
 CUMULATIVE_METADATA_KEY = "All"
+DEATHS_METADATA_KEY = "Deaths"
 
 ACTIVE_CASE_COUNT_COL = "ActiveCaseCount"
 CASE_COUNT_COL = "CaseCount"
+DEATHS_COUNT_COL = "DeathsCount"
 
 CASE_COUNT_KEY = "CountCol"
 NOT_SPATIAL_CASE_COUNT = "not_spatial_count"
 CASE_COUNT_TOTAL = "total_count"
+LATEST_INCREASE = "latest_increase"
+
+REPORTING_PERIOD = pandas.Timedelta(days=3)
+REPORTING_DELAY = pandas.Timedelta(days=3)
 
 
 def get_layers(tempdir, minio_access, minio_secret):
@@ -141,6 +148,14 @@ def filter_active_case_data(case_data_df):
     return case_data_df[active_filter]
 
 
+def filter_deaths_case_data(case_data_df):
+    death_filter  = case_data_df[DIED_COL] == "Yes"
+
+    logging.debug(f"Deaths / Total cases {death_filter.sum()} / {death_filter.shape[0]}")
+
+    return case_data_df[death_filter]
+
+
 def spatialise_case_data(case_data_df, case_data_groupby_index, data_gdf, data_gdf_index, fill_nas=False):
     case_counts = case_data_df.groupby(
         case_data_groupby_index
@@ -150,10 +165,15 @@ def spatialise_case_data(case_data_df, case_data_groupby_index, data_gdf, data_g
         case_data_groupby_index
     ).count()[DATE_DIAGNOSIS_COL].rename(ACTIVE_CASE_COUNT_COL)
 
+    fatal_case_counts = filter_deaths_case_data(case_data_df).groupby(
+        case_data_groupby_index
+    ).count()[DATE_DEATH_COL].rename(DEATHS_COUNT_COL)
+
     case_count_gdf = data_gdf.copy().set_index(data_gdf_index)
 
     for col, counts in ((CASE_COUNT_COL, case_counts),
-                        (ACTIVE_CASE_COUNT_COL, active_case_counts)):
+                        (ACTIVE_CASE_COUNT_COL, active_case_counts),
+                        (DEATHS_COUNT_COL, fatal_case_counts)):
         case_count_gdf[col] = counts
         if fill_nas:
             case_count_gdf[col].fillna(0, inplace=True)
@@ -168,16 +188,32 @@ def spatialise_case_data(case_data_df, case_data_groupby_index, data_gdf, data_g
     return case_count_gdf
 
 
+def calculate_latest_increase(case_data_df):
+    daily_counts = case_data_df.groupby(DATE_DIAGNOSIS_COL).count()[DIED_COL].rename("DailyCases")
+    logging.debug(f"daily_counts=\n{daily_counts}")
+
+    most_recent = daily_counts.index.max() - REPORTING_DELAY
+    previous_period_end = most_recent - REPORTING_PERIOD
+    previous_period_start = previous_period_end - REPORTING_PERIOD
+
+    delta = daily_counts[previous_period_end:most_recent].median() - daily_counts[previous_period_start:previous_period_end].median()
+    logging.debug(f"most_recent={most_recent}, previous_period_end={previous_period_end}, delta={delta}")
+
+    return delta
+
+
 def generate_metadata(case_data_df, case_data_groupby_index):
     metadata_dict = {
         metadata_key: {
             CASE_COUNT_KEY: case_count_col,
             NOT_SPATIAL_CASE_COUNT: int(metadata_df[case_data_groupby_index].isna().sum()),
             CASE_COUNT_TOTAL: int(metadata_df.shape[0]),
+            LATEST_INCREASE: int(calculate_latest_increase(metadata_df))
         }
         for metadata_key, case_count_col, metadata_df in (
             (CUMULATIVE_METADATA_KEY, CASE_COUNT_COL, case_data_df),
             (ACTIVE_METADATA_KEY, ACTIVE_CASE_COUNT_COL, filter_active_case_data(case_data_df)),
+            (DEATHS_METADATA_KEY, DEATHS_COUNT_COL, filter_deaths_case_data(case_data_df)),
         )
     }
     logging.debug(f"metadata_dict={metadata_dict}")
