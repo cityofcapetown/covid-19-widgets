@@ -29,7 +29,7 @@ dag = DAG('covid-19-city-map-widgets',
           catchup=False,
           default_args=default_args,
           schedule_interval=dag_interval,
-          concurrency=4)
+          concurrency=8)
 
 # env variables for inside the k8s pod
 k8s_run_env = {
