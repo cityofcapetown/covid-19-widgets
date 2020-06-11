@@ -272,7 +272,6 @@ values_to_drop <- ifelse(countries_this_far < 14, NA, 1)
 
 median_values <- median_values * values_to_drop
 
-
 # Age brackets -----
 age_brackets <- c(0, 10, 20, 30,40,50,60,70, 80, Inf)
 age_bracket_labels <- c("0 < 9", 
@@ -802,6 +801,26 @@ ct_daily_counts <-  ct_subdistrict_cumulative_daily_counts %>%
   mutate(rolling_death_5_days = rollmean(deaths, 5, na.pad=TRUE, align="right"),
          rolling_cases_5_days = rollmean(cases, 5, na.pad=TRUE, align="right"))
 
+
+ct_rolling_5_day_deaths_latest <- ct_daily_counts$rolling_death_5_days[nrow(ct_daily_counts)]
+ct_rolling_5_day_cases_latest <- ct_daily_counts$rolling_cases_5_days[nrow(ct_daily_counts)]
+ct_rolling_5_day_deaths_yesterday <- ct_daily_counts$rolling_death_5_days[nrow(ct_daily_counts)-1]
+ct_rolling_5_day_cases_yesterday <- ct_daily_counts$rolling_cases_5_days[nrow(ct_daily_counts)-1]
+ct_rolling_5_day_deaths_day_change <- ct_rolling_5_day_deaths_latest - ct_rolling_5_day_deaths_yesterday
+ct_rolling_5_day_cases_day_change <- ct_rolling_5_day_cases_latest - ct_rolling_5_day_cases_yesterday
+
+latest_values <- append(latest_values,
+       listN(ct_rolling_5_day_deaths_latest,
+                       ct_rolling_5_day_cases_latest,
+                       ct_rolling_5_day_deaths_yesterday,
+                       ct_rolling_5_day_cases_yesterday,
+                       ct_rolling_5_day_deaths_day_change,
+                       ct_rolling_5_day_cases_day_change))
+
+write(
+  toJSON(latest_values), 
+  file.path(getwd(), public_destdir,"latest_values.json")
+)
 
 ct_daily_counts_bar_chart <- ct_daily_counts %>%   
   plot_ly(.,  x = ~date, 
