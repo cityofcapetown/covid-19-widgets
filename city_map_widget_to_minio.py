@@ -299,8 +299,8 @@ def pull_out_leaflet_deps(tempdir, proxy_username, proxy_password, minio_access,
 
 
 def write_map_to_minio(city_map, district_file_prefix, subdistrict_file_prefix, tempdir, minio_access, minio_secret,
-                       js_libs, css_libs):
-    map_filename = f"{district_file_prefix}_{subdistrict_file_prefix}_{MAP_FILENAME}"
+                       js_libs, css_libs, map_suffix=MAP_FILENAME):
+    map_filename = f"{district_file_prefix}_{subdistrict_file_prefix}_{map_suffix}"
     local_path = os.path.join(tempdir, map_filename)
 
     folium.folium._default_js = js_libs
