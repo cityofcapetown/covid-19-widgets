@@ -76,12 +76,13 @@ MAP_FILENAME = "map_widget.html"
 
 
 def get_layers(district_file_prefix, subdistrict_file_prefix, tempdir, minio_access, minio_secret,
-               layer_properties=LAYER_PROPERTIES_LOOKUP, ):
+               layer_properties=LAYER_PROPERTIES_LOOKUP, choropleth_layer_lookup=city_map_layers_to_minio.CHOROPLETH_LAYERS):
     for layer, layer_properties in layer_properties.items():
-        *_, layer_suffix, _1, _2, _3 = layer_properties
-        is_choropleth = layer_suffix in city_map_layers_to_minio.CHOROPLETH_LAYERS
+        *_, layer_suffix, _1, has_metadata, _3 = layer_properties
+        is_choropleth = layer_suffix in choropleth_layer_lookup
 
-        layer_filename = (f"{district_file_prefix}_{subdistrict_file_prefix}_{layer_suffix}" if is_choropleth
+        layer_filename = (f"{district_file_prefix}_{subdistrict_file_prefix}_{layer_suffix}"
+                          if is_choropleth and has_metadata
                           else layer_suffix)
 
         local_path = os.path.join(tempdir, layer_filename)
@@ -102,7 +103,6 @@ def get_layers(district_file_prefix, subdistrict_file_prefix, tempdir, minio_acc
         layer_gdf = geopandas.read_file(local_path)
 
         # Getting the layer's metadata
-        *_, has_metadata, _ = layer_properties
         if has_metadata:
             metadata_filename = os.path.splitext(layer_filename)[0] + ".json"
             metadata_local_path = os.path.join(tempdir, metadata_filename)
@@ -131,13 +131,8 @@ def _get_choropleth_bins(count_series):
     bins = [0]
     data_edges = list(count_series.quantile(BIN_QUANTILES).values)
 
-    # Making sure the first bin is 0 values
-    if data_edges[0] != 1:
-        bins += [1]
-
-    # Only then adding new bin edges if they are monotonically increasing
     bins += [
-        val for val in data_edges if val > 1
+        val for val in data_edges if val > bins[-1]
     ]
 
     return bins
@@ -150,23 +145,29 @@ def generate_map_features(layers_dict, layer_properties=LAYER_PROPERTIES_LOOKUP)
          colour_scheme, layer_suffix, visible_by_default,
          has_metadata, metadata_key) = layer_properties[title]
 
-        case_count_col = (
-            layer_metadata[metadata_key].get(city_map_layers_to_minio.CASE_COUNT_KEY, None)
-            if has_metadata else None
-        )
+        # case_count_col = (
+        #     layer_metadata[metadata_key].get(city_map_layers_to_minio.CASE_COUNT_KEY, None)
+        #     if has_metadata else None
+        # )
 
-        layer_lookup_key, *_ = layer_lookup_fields
+        logging.info(title)
+        logging.info(layer_lookup_fields)
+        layer_lookup_key, choropleth_key = layer_lookup_fields if is_choropleth else (None, None,)
+        logging.info((layer_lookup_key, choropleth_key))
+        logging.info(count_gdf.columns)
+
         choropleth = folium.features.Choropleth(
             layer_path,
             data=count_gdf.reset_index(),
             name=title,
             key_on=f"feature.properties.{layer_lookup_key}",
-            columns=[layer_lookup_key, case_count_col],
+            columns=[layer_lookup_key, choropleth_key],
             fill_color=colour_scheme,
             highlight=True,
             show=visible_by_default,
             line_opacity=0,
-            bins=_get_choropleth_bins(count_gdf[case_count_col]),
+            bins=_get_choropleth_bins(count_gdf[choropleth_key]),
+            nan_fill_opacity=0,
         ) if is_choropleth else folium.features.Choropleth(
             layer_path,
             name=title,
