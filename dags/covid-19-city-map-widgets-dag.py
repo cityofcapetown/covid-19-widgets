@@ -90,7 +90,7 @@ DISTRICT_TUPLES = (
         ('eastern', 'eastern'),
         ('klipfontein', 'klipfontein'),
         ('southern', 'southern'),
-        ('mitchells plain', 'mitchells plain'),
+        ('mitchells_plain', 'mitchells plain'),
         ('khayelitsha', 'khayelitsha'),
         ('northern', 'northern'),
         ('western', 'western'),
