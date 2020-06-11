@@ -9,8 +9,6 @@ from urllib.parse import urlparse
 from db_utils import minio_utils
 import folium
 import geopandas
-import jinja2
-import pandas
 import requests
 
 import city_map_layers_to_minio
@@ -77,9 +75,10 @@ BIN_QUANTILES = [0, 0, 0.5, 0.75, 0.9, 0.99, 1]
 MAP_FILENAME = "map_widget.html"
 
 
-def get_layers(district_file_prefix, subdistrict_file_prefix, tempdir, minio_access, minio_secret):
-    for layer in LAYER_PROPERTIES_LOOKUP.keys():
-        *_, layer_suffix, _1, _2, _3 = LAYER_PROPERTIES_LOOKUP[layer]
+def get_layers(district_file_prefix, subdistrict_file_prefix, tempdir, minio_access, minio_secret,
+               layer_properties=LAYER_PROPERTIES_LOOKUP, ):
+    for layer, layer_properties in layer_properties.items():
+        *_, layer_suffix, _1, _2, _3 = layer_properties
         is_choropleth = layer_suffix in city_map_layers_to_minio.CHOROPLETH_LAYERS
 
         layer_filename = (f"{district_file_prefix}_{subdistrict_file_prefix}_{layer_suffix}" if is_choropleth
@@ -103,7 +102,7 @@ def get_layers(district_file_prefix, subdistrict_file_prefix, tempdir, minio_acc
         layer_gdf = geopandas.read_file(local_path)
 
         # Getting the layer's metadata
-        *_, has_metadata, _ = LAYER_PROPERTIES_LOOKUP[layer]
+        *_, has_metadata, _ = layer_properties
         if has_metadata:
             metadata_filename = os.path.splitext(layer_filename)[0] + ".json"
             metadata_local_path = os.path.join(tempdir, metadata_filename)
@@ -144,12 +143,12 @@ def _get_choropleth_bins(count_series):
     return bins
 
 
-def generate_map_features(layers_dict):
+def generate_map_features(layers_dict, layer_properties=LAYER_PROPERTIES_LOOKUP):
     # Going layer by layer
     for title, (layer_path, count_gdf, is_choropleth, layer_metadata) in layers_dict.items():
         (layer_lookup_fields, layer_lookup_aliases,
          colour_scheme, layer_suffix, visible_by_default,
-         has_metadata, metadata_key) = LAYER_PROPERTIES_LOOKUP[title]
+         has_metadata, metadata_key) = layer_properties[title]
 
         case_count_col = (
             layer_metadata[metadata_key].get(city_map_layers_to_minio.CASE_COUNT_KEY, None)

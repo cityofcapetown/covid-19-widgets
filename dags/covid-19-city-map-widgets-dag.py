@@ -121,6 +121,19 @@ city_map_plot_operators = [
     for subdistrict_filename_prefix, subdistrict_name in subdistrict_tuples
 ]
 
+CITY_HOTSPOT_MAP_PLOT = 'city-hotspot-map-plot'
+city_hotspot_map_plot_operators = [
+    covid_19_widget_task(
+        CITY_HOTSPOT_MAP_PLOT,
+        task_cmdline_args=[district_filename_prefix, district_name, subdistrict_filename_prefix, subdistrict_name]
+    )
+    for district_filename_prefix, district_name, subdistrict_tuples in DISTRICT_TUPLES
+    for subdistrict_filename_prefix, subdistrict_name in subdistrict_tuples
+]
+
 # Dependencies
-for layer_generate_operator, map_plot_operator in zip(city_map_layers_generate_operators, city_map_plot_operators):
+for layer_generate_operator, map_plot_operator, hotspot_plot_operator in zip(city_map_layers_generate_operators,
+                                                                             city_map_plot_operators,
+                                                                             city_hotspot_map_plot_operators):
     map_plot_operator.set_upstream(layer_generate_operator)
+    hotspot_plot_operator.set_upstream(layer_generate_operator)
