@@ -51,6 +51,10 @@ HOTSPOT_LAYER_PROPERTIES_LOOKUP = collections.OrderedDict((
         ("NAME", "ADR",), ("Healthcare Facility Name", "Address",),
         None, "health_care_facilities.geojson", False, False, None
     )),
+    ("Testing Facilities", (
+        ("FACILITY_N", "STREET_ADD", "OWNERSHIP"), ("Healthcare Facility Name", "Address", "Ownership"),
+        None, "wcpg_testing_facilities.geojson", False, False, None
+    )),
 
     # Population Density
     ("2019 Population Estimate", (
