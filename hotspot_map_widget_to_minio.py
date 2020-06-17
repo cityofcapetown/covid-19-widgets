@@ -31,10 +31,21 @@ HOTSPOT_LAYER_PROPERTIES_LOOKUP = collections.OrderedDict((
         city_map_layers_to_minio.CUMULATIVE_METADATA_KEY
     )),
     ("All Covid-19 Cases by District", (
-        (DISTRICT_NAME_PROPERTY, city_map_layers_to_minio.ACTIVE_CASE_COUNT_COL),
-        ("Healthcare District Name", "Presumed Active Cases"),
+        (DISTRICT_NAME_PROPERTY, city_map_layers_to_minio.CASE_COUNT_COL),
+        ("Healthcare District Name", "All Cases"),
         "YlGn", city_map_layers_to_minio.DISTRICT_COUNT_SUFFIX, False, True,
         city_map_layers_to_minio.CUMULATIVE_METADATA_KEY
+    )),
+    ("Covid-19 Mortality by L8 Hex", (
+        (HEX_COUNT_INDEX_PROPERTY, city_map_layers_to_minio.DEATHS_COUNT_COL), ("Hex ID", "Deaths"),
+        "OrRd", city_map_layers_to_minio.HEX_L8_COUNT_SUFFIX, False, True,
+        city_map_layers_to_minio.DEATHS_METADATA_KEY
+    )),
+    ("Covid-19 Mortality by District", (
+        (DISTRICT_NAME_PROPERTY, city_map_layers_to_minio.DEATHS_COUNT_COL),
+        ("Healthcare District Name", "Deaths"),
+        "YlGn", city_map_layers_to_minio.DISTRICT_COUNT_SUFFIX, False, True,
+        city_map_layers_to_minio.DEATHS_METADATA_KEY
     )),
     ("Healthcare Facilities", (
         ("NAME", "ADR",), ("Healthcare Facility Name", "Address",),
