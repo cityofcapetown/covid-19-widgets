@@ -135,6 +135,10 @@ def _get_choropleth_bins(count_series):
         val for val in data_edges if val > bins[-1]
     ]
 
+    # Adding extra padding if we have a bi-modal plot (colorbrewer needs 3 bins, at least)
+    if len(bins) <= 3:
+        bins.insert(0, 0)
+
     return bins
 
 
