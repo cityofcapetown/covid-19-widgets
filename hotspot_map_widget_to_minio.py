@@ -7,7 +7,6 @@ import sys
 import tempfile
 
 import folium.plugins
-import numpy
 
 import city_map_layers_to_minio
 import city_map_widget_to_minio
@@ -37,18 +36,18 @@ HOTSPOT_LAYER_PROPERTIES_LOOKUP = collections.OrderedDict((
         "YlGn", city_map_layers_to_minio.DISTRICT_COUNT_SUFFIX, False, True,
         city_map_layers_to_minio.CUMULATIVE_METADATA_KEY
     )),
-    ("Informal Settlements", (
-        ("INF_STLM_NAME",), ("Informal Settlement Name",),
-        None, "informal_settlements.geojson", False, False, None
-    )),
     ("Healthcare Facilities", (
         ("NAME", "ADR",), ("Healthcare Facility Name", "Address",),
         None, "health_care_facilities.geojson", False, False, None
     )),
+
+    # Population Density
     ("2019 Population Estimate", (
         ("SAL_CODE", "POP_2019",), ("SAL Code", "People",),
         "Greens", "sl_du_pop_est_2019.geojson", False, False, None
     )),
+
+    # Vulnerability Indicies
     ("CCT Vulnerability Index", (
         ("SAL_CODE", "VLNR_IDX",), ("SAL Code", "Vulnerability Score",),
         "Reds", "cct_soc_vuln_index_targeted_adj2.geojson", False, False, None
@@ -56,6 +55,50 @@ HOTSPOT_LAYER_PROPERTIES_LOOKUP = collections.OrderedDict((
     ("WC Vulnerability Index", (
         ("id", "Cluster_SE",), ("SAL Code", "Vulnerability Score",),
         "Reds", "provincesevi.geojson", False, False, None
+    )),
+
+    # Places of Risk
+    ("WCED Schools", (
+        ("SCHL", "SUB", "QUINT"), ("School Name", "Suburb", "Quintile",),
+        None, "wced_metro_schools_2019.geojson", False, False, None
+    )),
+    ("Public Transport Interchanges", (
+        ("Name", "Bus", "ParkRide", "Taxi", "Train",), ("Name", "Bus", "Park and Ride", "Taxi", "Train"),
+        None, "public_transport_interchanges.geojson", False, False, None
+    )),
+    ("Designated Trading Location", (
+        ("LOC_NAME",), ("Location Name",),
+        None, "trading_location.geojson", False, False, None
+    )),
+    ("SASSA Local Offices", (
+        ("Name", "Status"), ("Name", "Status"),
+        None, "sassa_local_office_coc.geojson", False, False, None
+    )),
+
+    # People at Risk
+    ("Rental Stock - Houses", (
+        ("FULL_ADR", "OFC_SBRB_NAME", "SUB_TYPE"), ("Full Address", "Official Suburb", "SubType"),
+        None, "cct_rental_stock_house.geojson", False, False, None
+    )),
+    ("Rental Stock - Flats", (
+        ("BLCK_NAME", "FLAT_NAME", "TYPE",), ("Block Name", "Flat Name", "Type"),
+        None, "cct_rental_stock_flats.geojson", False, False, None
+    )),
+    ("Areas of Informality", (
+        ("AOI_NAME", "OTH_NAME", "AOI_TYPE"), ("Area Name", "Other Name", "Area Type",),
+        None, "areas_of_informality_2019.geojson", False, False, None
+    )),
+    ("Old Age Facilities (per Valuations Roll)", (
+        ("v_ou_cd", "v_su_ext_gla_tot"), ("Valuations Use Code", "Size (sq m)",),
+        None, "olderpersons_res_fac_valrole.geojson", False, False, None
+    )),
+    ("City Old Age Facilities", (
+        ("Name_of_Or", "Physical_A", "Service_Ty"), ("Name", "Physical Address", "Service Type",),
+        None, "olderpersons_res_fac_cct.geojson", False, False, None
+    )),
+    ("Adult Homeless Shelters", (
+        ("Name_of_Or", "Service_Ty", "Physical_a"), ("Name of Organisation", "Service Type", "Address"),
+        None, "adult_homeless_shelters_coct.geojson", False, False, None
     )),
 ))
 
@@ -67,9 +110,24 @@ CHOROPLETH_LAYERS = {
 }
 
 CATEGORY_BUCKET = {
+    # Population Density
     "2019 Population Estimate": "Population Density",
-    #"People at Risk",
-    #"Places of Risk",
+
+    # "Places of Risk",
+    "WCED Schools": "Places of Risk",
+    "Public Transport Interchanges": "Places of Risk",
+    "Designated Trading Locations": "Places of Risk",
+    "SASSA Local Offices": "Places of Risk",
+
+    # "People at Risk",
+    "Rental Stock - Flats": "People at Risk",
+    "Rental Stock - Houses": "People at Risk",
+    "Areas of Informality": "People at Risk",
+    "Old Age Facilities (per Valuations Roll)": "People at Risk",
+    "Old Age Facilities (City)": "People at Risk",
+    "Adult Homeless Shelter": "People at Risk",
+
+    # Vulnerability Indices
     "CCT Vulnerability Index": "Vulnerability Indices",
     "WC Vulnerability Index": "Vulnerability Indices",
 }
