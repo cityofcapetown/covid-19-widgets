@@ -73,6 +73,14 @@ HOTSPOT_LAYER_PROPERTIES_LOOKUP = collections.OrderedDict((
         ("SCHL", "SUB", "QUINT"), ("School Name", "Suburb", "Quintile",),
         None, "wced_metro_schools_2019.geojson", False, False, None
     )),
+    ("Retail Stores", (
+        ("Store_Name", "Store_Group", "Address"), ("Store Name", "Store Group", "Address",),
+        None, "retail_stores.geojson", False, False, None
+    )),
+    ("Shopping Centres", (
+        ("Centre_nam", "Physical_a",), ("Centre Name", "Address",),
+        None, "shopping_centres_above_5000sqm_rode_2020.geojson", False, False, None
+    )),
     ("Public Transport Interchanges", (
         ("Name", "Bus", "ParkRide", "Taxi", "Train",), ("Name", "Bus", "Park and Ride", "Taxi", "Train"),
         None, "public_transport_interchanges.geojson", False, False, None
@@ -126,6 +134,8 @@ CATEGORY_BUCKET = {
 
     # "Places of Risk",
     "WCED Schools": "Places of Risk",
+    "Retail Stores": "Places of Risk",
+    "Shopping Centres": "Places of Risk",
     "Public Transport Interchanges": "Places of Risk",
     "Designated Trading Locations": "Places of Risk",
     "SASSA Local Offices": "Places of Risk",
