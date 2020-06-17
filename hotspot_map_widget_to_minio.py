@@ -113,7 +113,7 @@ HOTSPOT_LAYER_PROPERTIES_LOOKUP = collections.OrderedDict((
     )),
     ("Elderly Population Density", (
         ('GRID_ID', "CNT_AGE_BIN_55PLUS"), ("Grid ID", "People older than 55 years",),
-        "Greens", "sl_snth_pop_aggr_sqkm_grid.geojson", False, False, None
+        "Greens", "sl_snth_pop_aggr_sqkm_grid.geojson", False, True, None
     )),
     ("Old Age Facilities (per Valuations Roll)", (
         ("v_ou_cd", "v_su_ext_gla_tot"), ("Valuations Use Code", "Size (sq m)",),
