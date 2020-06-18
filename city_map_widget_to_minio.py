@@ -4,6 +4,7 @@ import logging
 import os
 import sys
 import tempfile
+from enum import Enum
 from urllib.parse import urlparse
 
 from db_utils import minio_utils
@@ -13,6 +14,7 @@ import requests
 
 import city_map_layers_to_minio
 import float_div
+import geojson_markers
 
 MINIO_BUCKET = "covid"
 MINIO_CLASSIFICATION = minio_utils.DataClassification.EDGE
@@ -26,46 +28,64 @@ DISTRICT_NAME_PROPERTY = "CITY_HLTH_RGN_NAME"
 
 CITY_CENTRE = (-33.9715, 18.6021)
 
+
+class LayerType(Enum):
+    CHOROPLETH = "choropleth"
+    POINT = "point"
+    POLYGON = "polygon"
+
+
 LAYER_PROPERTIES_LOOKUP = collections.OrderedDict((
     ("Active Covid-19 Cases by L7 Hex", (
+        LayerType.CHOROPLETH,
         (HEX_COUNT_INDEX_PROPERTY, city_map_layers_to_minio.ACTIVE_CASE_COUNT_COL), ("Hex ID", "Presumed Active Cases"),
         "OrRd", city_map_layers_to_minio.HEX_L7_COUNT_SUFFIX, True, True, city_map_layers_to_minio.ACTIVE_METADATA_KEY
     )),
     ("Active Covid-19 Cases by Ward", (
+        LayerType.CHOROPLETH,
         (WARD_COUNT_NAME_PROPERTY, city_map_layers_to_minio.ACTIVE_CASE_COUNT_COL),
         ("Ward Name", "Presumed Active Cases"),
         "BuPu", city_map_layers_to_minio.WARD_COUNT_SUFFIX, False, True, city_map_layers_to_minio.ACTIVE_METADATA_KEY
     )),
     ("Active Covid-19 Cases by District", (
+        LayerType.CHOROPLETH,
         (DISTRICT_NAME_PROPERTY, city_map_layers_to_minio.ACTIVE_CASE_COUNT_COL),
         ("Healthcare District Name", "Presumed Active Cases"),
-        "YlGn", city_map_layers_to_minio.DISTRICT_COUNT_SUFFIX, False, True, city_map_layers_to_minio.ACTIVE_METADATA_KEY
+        "YlGn", city_map_layers_to_minio.DISTRICT_COUNT_SUFFIX, False, True,
+        city_map_layers_to_minio.ACTIVE_METADATA_KEY
     )),
     ("All Covid-19 Cases by L7 Hex", (
+        LayerType.CHOROPLETH,
         (HEX_COUNT_INDEX_PROPERTY, city_map_layers_to_minio.CASE_COUNT_COL), ("Hex ID", "All Cases"),
         "OrRd", city_map_layers_to_minio.HEX_L7_COUNT_SUFFIX, False, True,
         city_map_layers_to_minio.CUMULATIVE_METADATA_KEY
     )),
     ("All Covid-19 Cases by Ward", (
+        LayerType.CHOROPLETH,
         (WARD_COUNT_NAME_PROPERTY, city_map_layers_to_minio.CASE_COUNT_COL), ("Ward Name", "All Cases"),
         "BuPu", city_map_layers_to_minio.WARD_COUNT_SUFFIX, False, True,
         city_map_layers_to_minio.CUMULATIVE_METADATA_KEY
     )),
     ("All Covid-19 Cases by District", (
+        LayerType.CHOROPLETH,
         (DISTRICT_NAME_PROPERTY, city_map_layers_to_minio.ACTIVE_CASE_COUNT_COL),
         ("Healthcare District Name", "Presumed Active Cases"),
-        "YlGn", city_map_layers_to_minio.DISTRICT_COUNT_SUFFIX, False, True, city_map_layers_to_minio.CUMULATIVE_METADATA_KEY
+        "YlGn", city_map_layers_to_minio.DISTRICT_COUNT_SUFFIX, False, True,
+        city_map_layers_to_minio.CUMULATIVE_METADATA_KEY
     )),
     ("Informal Settlements", (
+        LayerType.POLYGON,
         ("INF_STLM_NAME",), ("Informal Settlement Name",),
         None, "informal_settlements.geojson", False, False, None
     )),
     ("Healthcare Facilities", (
+        LayerType.POINT,
         ("NAME", "ADR",), ("Healthcare Facility Name", "Address",),
         None, "health_care_facilities.geojson", False, False, None
     )),
     ("Healthcare Districts", (
-        ("CITY_HLTH_RGN_NAME",), ("Healthcare District Name",),
+        LayerType.POLYGON,
+        ("CITY_HLTH_RGN_NAME", ), ("Healthcare District Name",),
         None, "health_districts.geojson", False, False, None
     )),
 ))
@@ -76,13 +96,12 @@ MAP_FILENAME = "map_widget.html"
 
 
 def get_layers(district_file_prefix, subdistrict_file_prefix, tempdir, minio_access, minio_secret,
-               layer_properties=LAYER_PROPERTIES_LOOKUP, choropleth_layer_lookup=city_map_layers_to_minio.CHOROPLETH_LAYERS):
+               layer_properties=LAYER_PROPERTIES_LOOKUP):
     for layer, layer_properties in layer_properties.items():
-        *_, layer_suffix, _1, has_metadata, _3 = layer_properties
-        is_choropleth = layer_suffix in choropleth_layer_lookup
+        layer_type, *_, layer_suffix, _1, has_metadata, _3 = layer_properties
 
         layer_filename = (f"{district_file_prefix}_{subdistrict_file_prefix}_{layer_suffix}"
-                          if is_choropleth and has_metadata
+                          if layer_type is LayerType.CHOROPLETH and has_metadata
                           else layer_suffix)
 
         local_path = os.path.join(tempdir, layer_filename)
@@ -124,7 +143,7 @@ def get_layers(district_file_prefix, subdistrict_file_prefix, tempdir, minio_acc
         else:
             layer_metadata = {}
 
-        yield layer, local_path, layer_gdf, is_choropleth, layer_metadata
+        yield layer, local_path, layer_gdf, layer_metadata
 
 
 def _get_choropleth_bins(count_series):
@@ -144,63 +163,92 @@ def _get_choropleth_bins(count_series):
 
 def generate_map_features(layers_dict, layer_properties=LAYER_PROPERTIES_LOOKUP):
     # Going layer by layer
-    for title, (layer_path, count_gdf, is_choropleth, layer_metadata) in layers_dict.items():
-        (layer_lookup_fields, layer_lookup_aliases,
+    for title, (layer_path, count_gdf, layer_metadata) in layers_dict.items():
+        (layer_type,
+         layer_lookup_fields, layer_lookup_aliases,
          colour_scheme, layer_suffix, visible_by_default,
          has_metadata, metadata_key) = layer_properties[title]
 
-        # case_count_col = (
-        #     layer_metadata[metadata_key].get(city_map_layers_to_minio.CASE_COUNT_KEY, None)
-        #     if has_metadata else None
-        # )
-
-        logging.info(title)
-        logging.info(layer_lookup_fields)
-        layer_lookup_key, choropleth_key = layer_lookup_fields if is_choropleth else (None, None,)
-        logging.info((layer_lookup_key, choropleth_key))
-        logging.info(count_gdf.columns)
-
-        choropleth = folium.features.Choropleth(
-            layer_path,
-            data=count_gdf.reset_index(),
-            name=title,
-            key_on=f"feature.properties.{layer_lookup_key}",
-            columns=[layer_lookup_key, choropleth_key],
-            fill_color=colour_scheme,
-            highlight=True,
-            show=visible_by_default,
-            line_opacity=0,
-            bins=_get_choropleth_bins(count_gdf[choropleth_key]),
-            nan_fill_opacity=0,
-        ) if is_choropleth else folium.features.Choropleth(
-            layer_path,
+        # Everything gets packed into a feature group
+        layer_feature_group = folium.features.FeatureGroup(
             name=title,
             show=visible_by_default
         )
+        *_, layer_filename = os.path.split(layer_path)
+
+        if layer_type in {LayerType.CHOROPLETH, LayerType.POLYGON}:
+            layer_lookup_key, choropleth_key = layer_lookup_fields if layer_type is LayerType.CHOROPLETH else (None, None,)
+
+            choropleth = folium.features.Choropleth(
+                layer_path,
+                data=count_gdf.reset_index(),
+                name=title,
+                key_on=f"feature.properties.{layer_lookup_key}",
+                columns=[layer_lookup_key, choropleth_key],
+                fill_color=colour_scheme,
+                highlight=True,
+                show=visible_by_default,
+                line_opacity=0,
+                bins=_get_choropleth_bins(count_gdf[choropleth_key]),
+                nan_fill_opacity=0,
+            ) if layer_type is LayerType.CHOROPLETH else folium.features.Choropleth(
+                layer_path,
+                name=title,
+                show=visible_by_default
+            )
+
+            # Monkey patching the choropleth GeoJSON to *not* embed
+            choropleth.geojson.embed = False
+            choropleth.geojson.embed_link = f"{layer_filename}"
+
+            # Adding the hover-over tooltip
+            layer_tooltip = folium.features.GeoJsonTooltip(
+                fields=layer_lookup_fields,
+                aliases=layer_lookup_aliases
+            )
+            choropleth.geojson.add_child(layer_tooltip)
+
+            layer_feature_group.add_child(choropleth.geojson)
+        elif layer_type is LayerType.POINT:
+            tooltip_item_array = "['" + "'],['".join([
+                "','".join((col, alias,))
+                for col, alias in zip(layer_lookup_fields, layer_lookup_aliases)
+            ]) + "']"
+
+            tooltip_callback = f"""
+                function (feature) {{
+                    let handleObject = (feature)=>typeof(feature)=='object' ? JSON.stringify(feature) : feature;
+                    return '<table>' +
+                        String(
+                            [{tooltip_item_array}].map(
+                                columnTuple=>
+                                    `<tr style="text-align: left;">
+                                    <th style="padding: 4px; padding-right: 10px;">
+                                        ${{ handleObject(columnTuple[1]).toLocaleString() }}
+                                    </th>
+                                    <td style="padding: 4px;">
+                                        ${{ handleObject(feature.properties[columnTuple[0]]).toLocaleString() }}
+                                    </td></tr>`
+                            ).join('')
+                        )
+                        + '</table>'
+                }};
+            """
+
+            markers = geojson_markers.GeoJsonMarkers(
+                count_gdf.reset_index(), embed=True,
+                tooltip_callback=tooltip_callback,
+                name=title, show=visible_by_default
+            )
+            markers.embed = False
+            markers.embed_link = layer_filename
+
+            layer_feature_group.add_child(markers)
 
         # If this is a visible layer, calculating the centroids
         centroids = list(count_gdf.geometry.map(
-                lambda shape: (shape.centroid.y, shape.centroid.x)
-            )) if visible_by_default else []
-
-        # Monkey patching the choropleth GeoJSON to *not* embed
-        choropleth.geojson.embed = False
-        *_, layer_filename = os.path.split(layer_path)
-        choropleth.geojson.embed_link = f"{layer_filename}"
-
-        # Adding the hover-over tooltip
-        layer_tooltip = folium.features.GeoJsonTooltip(
-            fields=layer_lookup_fields,
-            aliases=layer_lookup_aliases
-        )
-        choropleth.geojson.add_child(layer_tooltip)
-
-        # Rather repacking things into a feature group
-        choropleth_feature_group = folium.features.FeatureGroup(
-            name=title,
-            show=visible_by_default
-        )
-        choropleth_feature_group.add_child(choropleth.geojson)
+           lambda shape: (shape.centroid.y.round(4), shape.centroid.x.round(4))
+        )) if visible_by_default else []
 
         # Adding missing count from metadata
         if metadata_key in layer_metadata:
@@ -212,9 +260,9 @@ def generate_map_features(layers_dict, layer_properties=LAYER_PROPERTIES_LOOKUP)
                 f"Cases not displayed: {cases_not_displayed} ({cases_not_displayed / total_count:.1%} of total)"
                 "</span>"
             ), top=95)
-            choropleth_feature_group.add_child(div)
+            layer_feature_group.add_child(div)
 
-        yield choropleth_feature_group, centroids
+        yield layer_feature_group, centroids
 
 
 def generate_map(map_features):
@@ -358,14 +406,12 @@ if __name__ == "__main__":
         logging.info("G[etting] layers")
         map_layers_dict = {
             # layername: (location, data, choropleth flag?, layer_metadata)
-            layer: (local_path, layer_gdf, is_choropleth, layer_metadata)
-            for layer, local_path, layer_gdf, is_choropleth, layer_metadata in get_layers(district_file_prefix,
-                                                                                          subdistrict_file_prefix,
-                                                                                          tempdir,
-                                                                                          secrets["minio"]["edge"][
-                                                                                              "access"],
-                                                                                          secrets["minio"]["edge"][
-                                                                                              "secret"])
+            layer: (local_path, layer_gdf, layer_metadata)
+            for layer, local_path, layer_gdf, layer_metadata in get_layers(district_file_prefix,
+                                                                           subdistrict_file_prefix,
+                                                                           tempdir,
+                                                                           secrets["minio"]["edge"]["access"],
+                                                                           secrets["minio"]["edge"]["secret"])
         }
         logging.info("G[ot] layers")
 
