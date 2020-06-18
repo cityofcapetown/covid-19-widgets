@@ -113,7 +113,7 @@ HOTSPOT_LAYER_PROPERTIES_LOOKUP = collections.OrderedDict((
     )),
     ("Elderly Population Density", (
         ('GRID_ID', "CNT_AGE_BIN_55PLUS"), ("Grid ID", "People older than 55 years",),
-        "Greens", "sl_snth_pop_aggr_sqkm_grid.geojson", False, True, None
+        "Greens", "sl_snth_pop_aggr_sqkm_grid.geojson", False, False, None
     )),
     ("Old Age Facilities (per Valuations Roll)", (
         ("v_ou_cd", "v_su_ext_gla_tot"), ("Valuations Use Code", "Size (sq m)",),
@@ -133,7 +133,8 @@ CHOROPLETH_LAYERS = {
     *city_map_layers_to_minio.CHOROPLETH_LAYERS,
     "sl_du_pop_est_2019.geojson",
     "cct_soc_vuln_index_targeted_adj2.geojson",
-    "provincesevi.geojson"
+    "provincesevi.geojson",
+    "sl_snth_pop_aggr_sqkm_grid.geojson"
 }
 
 CATEGORY_BUCKET = {
