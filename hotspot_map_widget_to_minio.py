@@ -16,142 +16,126 @@ DISTRICT_NAME_PROPERTY = "CITY_HLTH_RGN_NAME"
 
 HOTSPOT_LAYER_PROPERTIES_LOOKUP = collections.OrderedDict((
     ("Active Covid-19 Cases by L8 Hex", (
-        city_map_widget_to_minio.LayerType.CHOROPLETH,
         (HEX_COUNT_INDEX_PROPERTY, city_map_layers_to_minio.ACTIVE_CASE_COUNT_COL), ("Hex ID", "Presumed Active Cases"),
         "OrRd", city_map_layers_to_minio.HEX_L8_COUNT_SUFFIX, True, True, city_map_layers_to_minio.ACTIVE_METADATA_KEY
     )),
     ("Active Covid-19 Cases by District", (
-        city_map_widget_to_minio.LayerType.CHOROPLETH,
         (DISTRICT_NAME_PROPERTY, city_map_layers_to_minio.ACTIVE_CASE_COUNT_COL),
         ("Healthcare District Name", "Presumed Active Cases"),
         "YlGn", city_map_layers_to_minio.DISTRICT_COUNT_SUFFIX, False, True,
         city_map_layers_to_minio.ACTIVE_METADATA_KEY
     )),
     ("All Covid-19 Cases by L8 Hex", (
-        city_map_widget_to_minio.LayerType.CHOROPLETH,
         (HEX_COUNT_INDEX_PROPERTY, city_map_layers_to_minio.CASE_COUNT_COL), ("Hex ID", "All Cases"),
         "OrRd", city_map_layers_to_minio.HEX_L8_COUNT_SUFFIX, False, True,
         city_map_layers_to_minio.CUMULATIVE_METADATA_KEY
     )),
     ("All Covid-19 Cases by District", (
-        city_map_widget_to_minio.LayerType.CHOROPLETH,
         (DISTRICT_NAME_PROPERTY, city_map_layers_to_minio.CASE_COUNT_COL),
         ("Healthcare District Name", "All Cases"),
         "YlGn", city_map_layers_to_minio.DISTRICT_COUNT_SUFFIX, False, True,
         city_map_layers_to_minio.CUMULATIVE_METADATA_KEY
     )),
     ("Covid-19 Mortality by L8 Hex", (
-        city_map_widget_to_minio.LayerType.CHOROPLETH,
         (HEX_COUNT_INDEX_PROPERTY, city_map_layers_to_minio.DEATHS_COUNT_COL), ("Hex ID", "Deaths"),
         "OrRd", city_map_layers_to_minio.HEX_L8_COUNT_SUFFIX, False, True,
         city_map_layers_to_minio.DEATHS_METADATA_KEY
     )),
     ("Covid-19 Mortality by District", (
-        city_map_widget_to_minio.LayerType.CHOROPLETH,
         (DISTRICT_NAME_PROPERTY, city_map_layers_to_minio.DEATHS_COUNT_COL),
         ("Healthcare District Name", "Deaths"),
         "YlGn", city_map_layers_to_minio.DISTRICT_COUNT_SUFFIX, False, True,
         city_map_layers_to_minio.DEATHS_METADATA_KEY
     )),
     ("Healthcare Facilities", (
-        city_map_widget_to_minio.LayerType.POINT,
         ("NAME", "ADR",), ("Healthcare Facility Name", "Address",),
         None, "health_care_facilities.geojson", False, False, None
     )),
     ("Testing Facilities", (
-        city_map_widget_to_minio.LayerType.POINT,
         ("FACILITY_N", "STREET_ADD", "OWNERSHIP"), ("Healthcare Facility Name", "Address", "Ownership"),
         None, "wcpg_testing_facilities.geojson", False, False, None
     )),
 
     # Population Density
     ("2019 Population Estimate", (
-        city_map_widget_to_minio.LayerType.CHOROPLETH,
         ("SAL_CODE", "POP_2019",), ("SAL Code", "People",),
         "Greens", "sl_du_pop_est_2019.geojson", False, False, None
     )),
 
     # Vulnerability Indicies
     ("CCT Vulnerability Index", (
-        city_map_widget_to_minio.LayerType.CHOROPLETH,
         ("SAL_CODE", "VLNR_IDX",), ("SAL Code", "Vulnerability Score",),
         "Reds", "cct_soc_vuln_index_targeted_adj2.geojson", False, False, None
     )),
     ("WC Vulnerability Index", (
-        city_map_widget_to_minio.LayerType.CHOROPLETH,
         ("id", "Cluster_SE",), ("SAL Code", "Vulnerability Score",),
         "Reds", "provincesevi.geojson", False, False, None
     )),
 
     # Places of Risk
     ("WCED Schools", (
-        city_map_widget_to_minio.LayerType.POINT,
         ("SCHL", "SUB", "QUINT"), ("School Name", "Suburb", "Quintile",),
         None, "wced_metro_schools_2019.geojson", False, False, None
     )),
     ("Retail Stores", (
-        city_map_widget_to_minio.LayerType.POINT,
         ("Store_Name", "Store_Group", "Address"), ("Store Name", "Store Group", "Address",),
         None, "retail_stores.geojson", False, False, None
     )),
     ("Shopping Centres", (
-        city_map_widget_to_minio.LayerType.POINT,
         ("Centre_nam", "Physical_a",), ("Centre Name", "Address",),
         None, "shopping_centres_above_5000sqm_rode_2020.geojson", False, False, None
     )),
     ("Public Transport Interchanges", (
-        city_map_widget_to_minio.LayerType.POLYGON,
         ("Name", "Bus", "ParkRide", "Taxi", "Train",), ("Name", "Bus", "Park and Ride", "Taxi", "Train"),
         None, "public_transport_interchanges.geojson", False, False, None
     )),
     ("Designated Trading Location", (
-        city_map_widget_to_minio.LayerType.POLYGON,
         ("LOC_NAME",), ("Location Name",),
         None, "trading_location.geojson", False, False, None
     )),
     ("SASSA Local Offices", (
-        city_map_widget_to_minio.LayerType.POINT,
         ("Name", "Status"), ("Name", "Status"),
         None, "sassa_local_office_coc.geojson", False, False, None
     )),
 
     # People at Risk
     ("Rental Stock - Houses", (
-        city_map_widget_to_minio.LayerType.POINT,
         ("FULL_ADR", "OFC_SBRB_NAME", "SUB_TYPE"), ("Full Address", "Official Suburb", "SubType"),
         None, "cct_rental_stock_house.geojson", False, False, None
     )),
     ("Rental Stock - Flats", (
-        city_map_widget_to_minio.LayerType.POINT,
         ("BLCK_NAME", "FLAT_NAME", "TYPE",), ("Block Name", "Flat Name", "Type"),
         None, "cct_rental_stock_flats.geojson", False, False, None
     )),
     ("Areas of Informality", (
-        city_map_widget_to_minio.LayerType.POLYGON,
         ("AOI_NAME", "OTH_NAME", "AOI_TYPE"), ("Area Name", "Other Name", "Area Type",),
         None, "areas_of_informality_2019.geojson", False, False, None
     )),
     ("Elderly Population Density", (
-        city_map_widget_to_minio.LayerType.CHOROPLETH,
         ('GRID_ID', "CNT_AGE_BIN_55PLUS"), ("Grid ID", "People older than 55 years",),
         "Greens", "sl_snth_pop_aggr_sqkm_grid.geojson", False, False, None
     )),
     ("Old Age Facilities (per Valuations Roll)", (
-        city_map_widget_to_minio.LayerType.POINT,
         ("v_ou_cd", "v_su_ext_gla_tot"), ("Valuations Use Code", "Size (sq m)",),
         None, "olderpersons_res_fac_valrole.geojson", False, False, None
     )),
     ("City Old Age Facilities", (
-        city_map_widget_to_minio.LayerType.POINT,
         ("Name_of_Or", "Physical_A", "Service_Ty"), ("Name", "Physical Address", "Service Type",),
         None, "olderpersons_res_fac_cct.geojson", False, False, None
     )),
     ("Adult Homeless Shelters", (
-        city_map_widget_to_minio.LayerType.POINT,
         ("Name_of_Or", "Service_Ty", "Physical_a"), ("Name of Organisation", "Service Type", "Address"),
         None, "adult_homeless_shelters_coct.geojson", False, False, None
     )),
 ))
+
+CHOROPLETH_LAYERS = {
+    *city_map_layers_to_minio.CHOROPLETH_LAYERS,
+    "sl_du_pop_est_2019.geojson",
+    "cct_soc_vuln_index_targeted_adj2.geojson",
+    "provincesevi.geojson",
+    "sl_snth_pop_aggr_sqkm_grid.geojson"
+}
 
 CATEGORY_BUCKET = {
     # Population Density
@@ -270,15 +254,16 @@ if __name__ == "__main__":
 
         logging.info("G[etting] layers")
         map_layers_dict = {
-            # layername: (location, data, layer_metadata)
-            layer: (local_path, layer_gdf, layer_metadata)
-            for layer, local_path, layer_gdf, layer_metadata in
+            # layername: (location, data, choropleth flag?, layer_metadata)
+            layer: (local_path, layer_gdf, is_choropleth, layer_metadata)
+            for layer, local_path, layer_gdf, is_choropleth, layer_metadata in
             city_map_widget_to_minio.get_layers(district_file_prefix,
                                                 subdistrict_file_prefix,
                                                 tempdir,
                                                 secrets["minio"]["edge"]["access"],
                                                 secrets["minio"]["edge"]["secret"],
-                                                layer_properties=HOTSPOT_LAYER_PROPERTIES_LOOKUP)
+                                                layer_properties=HOTSPOT_LAYER_PROPERTIES_LOOKUP,
+                                                choropleth_layer_lookup=CHOROPLETH_LAYERS)
         }
         map_features = list(city_map_widget_to_minio.generate_map_features(map_layers_dict,
                                                                            layer_properties=HOTSPOT_LAYER_PROPERTIES_LOOKUP))
