@@ -110,11 +110,6 @@ HOTSPOT_LAYER_PROPERTIES_LOOKUP = collections.OrderedDict((
         ("Id", "gridcode",), ("Grid ID", "Activity Score",),
         ("Greens",), "public_transport_activity_levels_poly.geojson", False, False, None
     )),
-    ("Public Transport Activity Levels by L8 Hex", (
-        city_map_widget_to_minio.LayerType.CHOROPLETH,
-        ("HX_L8", "gridcode",), ("Hex ID", "Activity Score",),
-        ("Greens",), "public_transport_activity_levels_hex8.geojson", False, False, None
-    )),
     ("Designated Trading Location", (
         city_map_widget_to_minio.LayerType.POLYGON,
         ("LOC_NAME",), ("Location Name",),
@@ -151,11 +146,6 @@ HOTSPOT_LAYER_PROPERTIES_LOOKUP = collections.OrderedDict((
         city_map_widget_to_minio.LayerType.CHOROPLETH,
         ('Id', "gridcode"), ("Grid ID", "Older Population Score",),
         ("Purples",), "hdx_pop_estimates_elderly.geojson", False, False, None
-    )),
-    ("Elderly Population Density by L8 Hex", (
-        city_map_widget_to_minio.LayerType.CHOROPLETH,
-        ("HX_L8", "gridcode"), ("Hex ID", "Older Population Score",),
-        ("Purples",), "hdx_pop_estimates_elderly_hex8.geojson", False, False, None
     )),
     ("Old Age Facilities (per Valuations Roll)", (
         city_map_widget_to_minio.LayerType.POLYGON,

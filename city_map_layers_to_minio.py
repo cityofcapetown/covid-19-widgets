@@ -14,6 +14,7 @@ MINIO_HEX_BUCKET = "city-hex-polygons"
 MINIO_CLASSIFICATION = minio_utils.DataClassification.EDGE
 
 DATA_PUBLIC_PREFIX = "data/public/"
+DATA_VULNERABILITY_PREFIX = "data/staging/vulenerability_layers/" # yes, I know it's misspelled - should be temporary
 DATA_RESTRICTED_PREFIX = "data/private/"
 CASE_MAP_PREFIX = "widgets/private/case_count_maps/"
 
@@ -48,7 +49,24 @@ LAYER_FILES = (
     (CT_HEX_L7_FILENAME, MINIO_HEX_BUCKET, ""),
     (CT_HEX_L8_FILENAME, MINIO_HEX_BUCKET, ""),
     (CT_WARD_FILENAME, MINIO_COVID_BUCKET, DATA_PUBLIC_PREFIX),
-    (CT_HEALTH_DISTRICT_FILENAME, MINIO_COVID_BUCKET, DATA_PUBLIC_PREFIX)
+    (CT_HEALTH_DISTRICT_FILENAME, MINIO_COVID_BUCKET, DATA_PUBLIC_PREFIX),
+    ("wcpg_testing_facilities.geojson", MINIO_COVID_BUCKET, DATA_VULNERABILITY_PREFIX),
+    ("sl_du_pop_est_2019.geojson", MINIO_COVID_BUCKET, DATA_VULNERABILITY_PREFIX),
+    ("provincesevi.geojson", MINIO_COVID_BUCKET, DATA_VULNERABILITY_PREFIX),
+    ("wced_metro_schools_2019.geojson", MINIO_COVID_BUCKET, DATA_VULNERABILITY_PREFIX),
+    ("retail_stores.geojson", MINIO_COVID_BUCKET, DATA_VULNERABILITY_PREFIX),
+    ("shopping_centres_above_5000sqm_rode_2020.geojson", MINIO_COVID_BUCKET, DATA_VULNERABILITY_PREFIX),
+    ("public_transport_interchanges.geojson", MINIO_COVID_BUCKET, DATA_VULNERABILITY_PREFIX),
+    ("public_transport_activity_levels_poly.geojson", MINIO_COVID_BUCKET, DATA_VULNERABILITY_PREFIX),
+    ("trading_location.geojson", MINIO_COVID_BUCKET, DATA_VULNERABILITY_PREFIX),
+    ("sassa_local_office_coc.geojson", MINIO_COVID_BUCKET, DATA_VULNERABILITY_PREFIX),
+    ("cct_rental_stock_house.geojson", MINIO_COVID_BUCKET, DATA_VULNERABILITY_PREFIX),
+    ("cct_rental_stock_flats.geojson", MINIO_COVID_BUCKET, DATA_VULNERABILITY_PREFIX),
+    ("areas_of_informality_2019.geojson", MINIO_COVID_BUCKET, DATA_VULNERABILITY_PREFIX),
+    ("hdx_pop_estimates_elderly.geojson", MINIO_COVID_BUCKET, DATA_VULNERABILITY_PREFIX),
+    ("olderpersons_res_fac_valrole.geojson", MINIO_COVID_BUCKET, DATA_VULNERABILITY_PREFIX),
+    ("olderpersons_res_fac_cct.geojson", MINIO_COVID_BUCKET, DATA_VULNERABILITY_PREFIX),
+    ("adult_homeless_shelters_coct.geojson", MINIO_COVID_BUCKET, DATA_VULNERABILITY_PREFIX),
 )
 
 HEX_COUNT_INDEX_PROPERTY = "index"
