@@ -154,11 +154,11 @@ HOTSPOT_LAYER_PROPERTIES_LOOKUP = collections.OrderedDict((
     #     ('GRID_ID', "CNT_AGE_BIN_55PLUS"), ("Grid ID", "People older than 55 years",),
     #     ("Purples",), "sl_snth_pop_aggr_sqkm_grid.geojson", False, False, None
     # )),
-    ("Elderly Population Density", (
-        city_map_widget_to_minio.LayerType.CHOROPLETH,
-        ('index', "gridcode"), ("Hex ID", "Older Population Score",),
-        ("Purples",), "hdx_pop_estimates_elderly_hex9.geojson", False, False, None
-    )),
+    # ("Elderly Population Density", (
+    #     city_map_widget_to_minio.LayerType.CHOROPLETH,
+    #     ('index', "gridcode"), ("Hex ID", "Older Population Score",),
+    #     ("Purples",), "hdx_pop_estimates_elderly_hex9.geojson", False, False, None
+    # )),
     ("Old Age Facilities (per Valuations Roll)", (
         city_map_widget_to_minio.LayerType.POLYGON,
         ("v_ou_cd", "v_su_ext_gla_tot"), ("Valuations Use Code", "Size (sq m)",),
