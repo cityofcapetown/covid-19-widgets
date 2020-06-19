@@ -178,29 +178,29 @@ HOTSPOT_LAYER_PROPERTIES_LOOKUP = collections.OrderedDict((
 
 CATEGORY_BUCKET = {
     # Population Density
-    "2019 Population Estimate": "Population Density",
+    "2019 Population Estimate": "POPULATION DENSITY",
 
-    # "Places of Risk",
-    "WCED Schools": "Places of Risk",
-    "Retail Stores": "Places of Risk",
-    "Shopping Centres (>5k sq.m)": "Places of Risk",
-    "Public Transport Interchanges": "Places of Risk",
-    "Public Transport Activity": "Places of Risk",
-    "Trading Locations": "Places of Risk",
-    "SASSA Offices": "Places of Risk",
+    # "PLACES OF RISK",
+    "WCED Schools": "PLACES OF RISK",
+    "Retail Stores": "PLACES OF RISK",
+    "Shopping Centres (>5k sq.m)": "PLACES OF RISK",
+    "Public Transport Interchanges": "PLACES OF RISK",
+    "Public Transport Activity": "PLACES OF RISK",
+    "Trading Locations": "PLACES OF RISK",
+    "SASSA Offices": "PLACES OF RISK",
 
-    # "People at Risk",
-    "Rental Stock (flats)": "People at Risk",
-    "Rental Stock (houses)": "People at Risk",
-    "Rental Stock (hostels)": "People at Risk",
-    "Areas of Informality": "People at Risk",
-    #"Elderly Population Density": "People at Risk",
-    "Old Age Facilities (by use)": "People at Risk",
-    "City Old Age Facilities": "People at Risk",
-    "Adult Homeless Shelter": "People at Risk",
+    # "PEOPLE AT RISK",
+    "Rental Stock (flats)": "PEOPLE AT RISK",
+    "Rental Stock (houses)": "PEOPLE AT RISK",
+    "Rental Stock (hostels)": "PEOPLE AT RISK",
+    "Areas of Informality": "PEOPLE AT RISK",
+    #"Elderly Population Density": "PEOPLE AT RISK",
+    "Old Age Facilities (by use)": "PEOPLE AT RISK",
+    "City Old Age Facilities": "PEOPLE AT RISK",
+    "Adult Homeless Shelter": "PEOPLE AT RISK",
 
-    # Vulnerability Indices
-    "WCPG SEVI": "Vulnerability Indices",
+    # "VULNERABILITY INDICES"
+    "WCPG SEVI": "VULNERABILITY INDICES",
 }
 
 BIN_QUANTILES = [0, 0, 0.5, 0.75, 0.9, 0.99, 1]
