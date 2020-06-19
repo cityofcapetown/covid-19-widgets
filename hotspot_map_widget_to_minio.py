@@ -178,34 +178,34 @@ HOTSPOT_LAYER_PROPERTIES_LOOKUP = collections.OrderedDict((
 
 CATEGORY_BUCKET = {
     # Population Density
-    "2019 Population Estimate": "POPULATION DENSITY",
+    "<small>2019 Population Estimate</small>": "POPULATION DENSITY",
 
     # "PLACES OF RISK",
-    "WCED Schools": "PLACES OF RISK",
-    "Retail Stores": "PLACES OF RISK",
-    "Shopping Centres (>5k sq.m)": "PLACES OF RISK",
-    "Public Transport Interchanges": "PLACES OF RISK",
-    "Public Transport Activity": "PLACES OF RISK",
-    "Trading Locations": "PLACES OF RISK",
-    "SASSA Offices": "PLACES OF RISK",
+    "<small>WCED Schools</small>": "PLACES OF RISK",
+    "<small>Retail Stores</small>": "PLACES OF RISK",
+    "<small>Shopping Centres (>5k sq.m)</small>": "PLACES OF RISK",
+    "<small>Public Transport Interchanges</small>": "PLACES OF RISK",
+    "<small>Public Transport Activity</small>": "PLACES OF RISK",
+    "<small>Trading Locations</small>": "PLACES OF RISK",
+    "<small>SASSA Offices</small>": "PLACES OF RISK",
 
     # "PEOPLE AT RISK",
-    "Rental Stock (flats)": "PEOPLE AT RISK",
-    "Rental Stock (houses)": "PEOPLE AT RISK",
-    "Rental Stock (hostels)": "PEOPLE AT RISK",
-    "Areas of Informality": "PEOPLE AT RISK",
+    "<small>Rental Stock (flats)</small>": "PEOPLE AT RISK",
+    "<small>Rental Stock (houses)</small>": "PEOPLE AT RISK",
+    "<small>Rental Stock (hostels)</small>": "PEOPLE AT RISK",
+    "<small>Areas of Informality</small>": "PEOPLE AT RISK",
     #"Elderly Population Density": "PEOPLE AT RISK",
-    "Old Age Facilities (by use)": "PEOPLE AT RISK",
-    "City Old Age Facilities": "PEOPLE AT RISK",
-    "Adult Homeless Shelter": "PEOPLE AT RISK",
+    "<small>Old Age Facilities (by use)</small>": "PEOPLE AT RISK",
+    "<small>City Old Age Facilities</small>": "PEOPLE AT RISK",
+    "<small>Adult Homeless Shelter</small>": "PEOPLE AT RISK",
 
     # "VULNERABILITY INDICES"
-    "WCPG SEVI": "VULNERABILITY INDICES",
+    "<small>WCPG SEVI</small>": "VULNERABILITY INDICES",
 }
 
 BIN_QUANTILES = [0, 0, 0.5, 0.75, 0.9, 0.99, 1]
 
-MAP_ZOOM = 8
+MAP_ZOOM = 9
 MAP_RIGHT_PADDING = 200
 MAP_FILENAME = "hotspot_map_widget.html"
 

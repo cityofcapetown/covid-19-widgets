@@ -39,7 +39,8 @@ LAYER_PROPERTIES_LOOKUP = collections.OrderedDict((
     ("Active Covid-19 Cases by L7 Hex", (
         LayerType.CHOROPLETH,
         (HEX_COUNT_INDEX_PROPERTY, city_map_layers_to_minio.ACTIVE_CASE_COUNT_COL), ("Hex ID", "Presumed Active Cases"),
-        ("OrRd",), city_map_layers_to_minio.HEX_L7_COUNT_SUFFIX, True, True, city_map_layers_to_minio.ACTIVE_METADATA_KEY
+        ("OrRd",), city_map_layers_to_minio.HEX_L7_COUNT_SUFFIX, True, True,
+        city_map_layers_to_minio.ACTIVE_METADATA_KEY
     )),
     ("Active Covid-19 Cases by Ward", (
         LayerType.CHOROPLETH,
@@ -85,7 +86,7 @@ LAYER_PROPERTIES_LOOKUP = collections.OrderedDict((
     )),
     ("Healthcare Districts", (
         LayerType.POLYGON,
-        ("CITY_HLTH_RGN_NAME", ), ("Healthcare District Name",),
+        ("CITY_HLTH_RGN_NAME",), ("Healthcare District Name",),
         ("red",), "health_districts.geojson", False, False, None
     )),
 ))
@@ -174,19 +175,20 @@ def generate_map_features(layers_dict, layer_properties=LAYER_PROPERTIES_LOOKUP)
 
         # Everything gets packed into a feature group
         layer_feature_group = folium.features.FeatureGroup(
-            name=title,
+            name=f"<small>{title}</small>",
             show=visible_by_default
         )
         *_, layer_filename = os.path.split(layer_path)
 
         if layer_type in {LayerType.CHOROPLETH, LayerType.POLYGON}:
-            layer_lookup_key, choropleth_key = layer_lookup_fields[:2] if layer_type is LayerType.CHOROPLETH else (None, None,)
+            layer_lookup_key, choropleth_key = layer_lookup_fields[:2] if layer_type is LayerType.CHOROPLETH else (
+            None, None,)
             colour_scheme, *_ = display_properties
 
             choropleth = folium.features.Choropleth(
                 layer_path,
                 data=count_gdf.reset_index(),
-                name=title,
+                name=f"<small>{title}</small>",
                 key_on=f"feature.properties.{layer_lookup_key}",
                 columns=[layer_lookup_key, choropleth_key],
                 fill_color=colour_scheme,
@@ -198,7 +200,7 @@ def generate_map_features(layers_dict, layer_properties=LAYER_PROPERTIES_LOOKUP)
                 fill_opacity=0.7,
             ) if layer_type is LayerType.CHOROPLETH else folium.features.Choropleth(
                 layer_path,
-                name=title,
+                name=f"<small>{title}</small>",
                 show=visible_by_default,
                 fill_color=colour_scheme,
             )
@@ -221,14 +223,14 @@ def generate_map_features(layers_dict, layer_properties=LAYER_PROPERTIES_LOOKUP)
             marker_callback = f"""
             function(feature) {{
                 var coords = feature.geometry.coordinates;
-    
+
                 var icon = L.AwesomeMarkers.icon({{
                     icon: "{icon}", prefix: "fa", markerColor: "{colour}"
                 }});
-    
+
                 marker = L.marker(new L.LatLng(coords[1], coords[0]));
                 marker.setIcon(icon);
-    
+
                 return marker;
             }};"""
 
@@ -260,7 +262,7 @@ def generate_map_features(layers_dict, layer_properties=LAYER_PROPERTIES_LOOKUP)
             markers = geojson_markers.GeoJsonMarkers(
                 count_gdf.reset_index(), embed=True,
                 callback=marker_callback, tooltip_callback=tooltip_callback,
-                name=title, show=visible_by_default
+                name=f"<small>{title}</small>", show=visible_by_default
             )
             markers.embed = False
             markers.embed_link = layer_filename
@@ -269,7 +271,7 @@ def generate_map_features(layers_dict, layer_properties=LAYER_PROPERTIES_LOOKUP)
 
         # If this is a visible layer, calculating the centroids
         centroids = list(count_gdf.geometry.map(
-           lambda shape: (shape.centroid.y, shape.centroid.x)
+            lambda shape: (shape.centroid.y, shape.centroid.x)
         )) if visible_by_default else []
 
         # Adding missing count from metadata
