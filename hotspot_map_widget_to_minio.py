@@ -121,22 +121,22 @@ HOTSPOT_LAYER_PROPERTIES_LOOKUP = collections.OrderedDict((
         city_map_widget_to_minio.LayerType.CHOROPLETH,
         ("index", "Count",
          'House-Free Standing', 'House-Row House', 'House-Semi-Detached',
-         'Maisonette-Row Maisonette', 'Maisonette-Semi-Detached'),
+         'Maisonette-Row Maisonette', 'Maisonette-Semi-Detached',),
         ("Hex ID", "Number of Houses",
-         'Free Standing', 'Row House', 'Semi-Detached House',
-         'Row Maisonette', 'Semi-Detached Maisonette'),
-        ("Purples",), "city_hostal_counts.geojson", False, False, None
+         'Free Standing Houses', 'Row Houses', 'Semi-Detached Houses',
+         'Row Maisonettes', 'Semi-Detached Maisonettes',),
+        ("Purples",), "city_house_counts.geojson", False, False, None
     )),
     ("Rental Stock - Flats", (
         city_map_widget_to_minio.LayerType.CHOROPLETH,
         ("index", "Count", 'Flat', 'Hostel', 'Old Age Home'),
         ("Hex ID", "Total Blocks of Flats", 'Flats', 'Hostels', 'Old Age Homes'),
-        ("Purples",), "city_hostal_counts.geojson", False, False, None
+        ("Purples",), "city_flats_counts.geojson", False, False, None
     )),
     ("Rental Stock - Hostels", (
         city_map_widget_to_minio.LayerType.CHOROPLETH,
         ("index", "Count",), ("Hex ID", "Number of Hostel Blocks",),
-        ("Purples",), "city_hostal_counts.geojson", False, False, None
+        ("Purples",), "city_hostel_counts.geojson", False, False, None
     )),
     ("Areas of Informality", (
         city_map_widget_to_minio.LayerType.POLYGON,
@@ -187,6 +187,7 @@ CATEGORY_BUCKET = {
     # "People at Risk",
     "Rental Stock - Flats": "People at Risk",
     "Rental Stock - Houses": "People at Risk",
+    "Rental Stock - Hostels": "People at Risk",
     "Areas of Informality": "People at Risk",
     "Elderly Population Density": "People at Risk",
     "Elderly Population Density by L8 Hex": "People at Risk",

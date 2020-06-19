@@ -168,6 +168,7 @@ def generate_map_features(layers_dict, layer_properties=LAYER_PROPERTIES_LOOKUP)
          layer_lookup_fields, layer_lookup_aliases,
          display_properties, layer_suffix, visible_by_default,
          has_metadata, metadata_key) = layer_properties[title]
+        logging.debug(f"Generating {title} map feature")
 
         # Everything gets packed into a feature group
         layer_feature_group = folium.features.FeatureGroup(
@@ -177,7 +178,7 @@ def generate_map_features(layers_dict, layer_properties=LAYER_PROPERTIES_LOOKUP)
         *_, layer_filename = os.path.split(layer_path)
 
         if layer_type in {LayerType.CHOROPLETH, LayerType.POLYGON}:
-            layer_lookup_key, choropleth_key = layer_lookup_fields if layer_type is LayerType.CHOROPLETH else (None, None,)
+            layer_lookup_key, choropleth_key = layer_lookup_fields[:2] if layer_type is LayerType.CHOROPLETH else (None, None,)
             colour_scheme, *_ = display_properties
 
             choropleth = folium.features.Choropleth(
