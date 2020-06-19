@@ -205,6 +205,8 @@ CATEGORY_BUCKET = {
 
 BIN_QUANTILES = [0, 0, 0.5, 0.75, 0.9, 0.99, 1]
 
+MAP_ZOOM = 8
+MAP_RIGHT_PADDING = 200
 MAP_FILENAME = "hotspot_map_widget.html"
 
 
@@ -316,7 +318,8 @@ if __name__ == "__main__":
         map_feature_generator = itertools.chain(district_map_features,
                                                 assigned_feature_groups)
 
-        data_map = city_map_widget_to_minio.generate_map(map_feature_generator)
+        data_map = city_map_widget_to_minio.generate_map(map_feature_generator,
+                                                         map_zoom=MAP_ZOOM, map_right_padding=MAP_RIGHT_PADDING)
         logging.info("Generat[ed] map")
 
         logging.info("Writ[ing] to Minio")

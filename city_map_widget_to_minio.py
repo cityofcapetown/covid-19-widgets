@@ -92,6 +92,8 @@ LAYER_PROPERTIES_LOOKUP = collections.OrderedDict((
 
 BIN_QUANTILES = [0, 0, 0.5, 0.75, 0.9, 0.99, 1]
 
+MAP_ZOOM = 9
+MAP_RIGHT_PADDING = 100
 MAP_FILENAME = "map_widget.html"
 
 
@@ -285,9 +287,9 @@ def generate_map_features(layers_dict, layer_properties=LAYER_PROPERTIES_LOOKUP)
         yield layer_feature_group, centroids
 
 
-def generate_map(map_features):
+def generate_map(map_features, map_zoom=MAP_ZOOM, map_right_padding=MAP_RIGHT_PADDING):
     m = folium.Map(
-        location=CITY_CENTRE, zoom_start=9,
+        location=CITY_CENTRE, zoom_start=map_zoom,
         tiles="",
         prefer_canvas=True
     )
@@ -309,7 +311,7 @@ def generate_map(map_features):
         map_centroids += centroids if centroids else []
 
     # Setting the map zoom using any visible layers
-    m.fit_bounds(map_centroids, padding_bottom_right=(0, 100))
+    m.fit_bounds(map_centroids, padding_bottom_right=(0, map_right_padding), max_zoom=map_zoom)
 
     # Layer Control
     layer_control = folium.LayerControl(collapsed=False)
