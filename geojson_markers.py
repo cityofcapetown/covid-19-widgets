@@ -26,7 +26,7 @@ class GeoJsonMarkers(FeatureGroup):
                 var feature_group = L.featureGroup({{ this.options|tojson }});
 
                 {% if not this.embed %}
-                $.ajax({url: {{ this.embed_link|tojson }}, dataType: 'json', async: false,
+                $.ajax({url: {{ this.embed_link|tojson }}, dataType: 'json', async: true,
                     success: function(fetched_data) {
                 {% endif %}
 
