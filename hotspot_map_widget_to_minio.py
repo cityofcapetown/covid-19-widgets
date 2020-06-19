@@ -68,15 +68,15 @@ HOTSPOT_LAYER_PROPERTIES_LOOKUP = collections.OrderedDict((
     # Population Density
     ("2019 Population Estimate", (
         city_map_widget_to_minio.LayerType.CHOROPLETH,
-        ("SAL_CODE", "POP_2019",), ("SAL Code", "People",),
-        ("Blues",), "sl_du_pop_est_2019.geojson", False, False, None
+        ("index", "PopDensity2019",), ("Hex ID", "People / sq.m",),
+        ("Blues",), "sl_du_pop_est_2019_hex9.geojson", False, False, None
     )),
 
     # Vulnerability Indicies
     ("WC Vulnerability Index", (
         city_map_widget_to_minio.LayerType.CHOROPLETH,
-        ("id", "Cluster_SE",), ("SAL Code", "Vulnerability Score",),
-        ("Reds",), "provincesevi.geojson", False, False, None
+        ("index", "Cluster_SE",), ("Hex ID", "Vulnerability Score",),
+        ("Reds",), "province_sevi_hex9.geojson", False, False, None
     )),
 
     # Places of Risk
@@ -102,7 +102,7 @@ HOTSPOT_LAYER_PROPERTIES_LOOKUP = collections.OrderedDict((
     )),
     ("Public Transport Activity Levels", (
         city_map_widget_to_minio.LayerType.CHOROPLETH,
-        ("Id", "gridcode",), ("Grid ID", "Activity Score",),
+        ("index", "gridcode",), ("Hex ID", "Activity Score",),
         ("Greens",), "public_transport_activity_levels_hex9.geojson", False, False, None
     )),
     ("Designated Trading Location", (
@@ -150,7 +150,7 @@ HOTSPOT_LAYER_PROPERTIES_LOOKUP = collections.OrderedDict((
     # )),
     ("Elderly Population Density", (
         city_map_widget_to_minio.LayerType.CHOROPLETH,
-        ('Id', "gridcode"), ("Grid ID", "Older Population Score",),
+        ('index', "gridcode"), ("Hex ID", "Older Population Score",),
         ("Purples",), "hdx_pop_estimates_elderly_hex9.geojson", False, False, None
     )),
     ("Old Age Facilities (per Valuations Roll)", (
