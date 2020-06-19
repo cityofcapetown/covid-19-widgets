@@ -14,7 +14,7 @@ MINIO_HEX_BUCKET = "city-hex-polygons"
 MINIO_CLASSIFICATION = minio_utils.DataClassification.EDGE
 
 DATA_PUBLIC_PREFIX = "data/public/"
-DATA_VULNERABILITY_PREFIX = "data/staging/vulenerability_layers/" # yes, I know it's misspelled - should be temporary
+DATA_VULNERABILITY_PREFIX = "data/staging/vulenerability_layers/"  # yes, I know it's misspelled - should be temporary
 DATA_RESTRICTED_PREFIX = "data/private/"
 CASE_MAP_PREFIX = "widgets/private/case_count_maps/"
 
@@ -68,6 +68,7 @@ LAYER_FILES = (
     ("olderpersons_res_fac_valrole.geojson", MINIO_COVID_BUCKET, DATA_VULNERABILITY_PREFIX),
     ("olderpersons_res_fac_cct.geojson", MINIO_COVID_BUCKET, DATA_VULNERABILITY_PREFIX),
     ("adult_homeless_shelters_coct.geojson", MINIO_COVID_BUCKET, DATA_VULNERABILITY_PREFIX),
+    ("employment_density_survey_hex7.geojson", MINIO_COVID_BUCKET, DATA_VULNERABILITY_PREFIX),
 )
 
 HEX_COUNT_INDEX_PROPERTY = "index"
@@ -143,10 +144,12 @@ def get_case_data(minio_access, minio_secret):
 
 
 def filter_district_case_data(case_data_df, district_name, subdistrict_name):
-    district_filter = case_data_df[DISTRICT_COL].str.lower() == district_name if district_name != "*" else case_data_df[DATE_DIAGNOSIS_COL].notna()
+    district_filter = case_data_df[DISTRICT_COL].str.lower() == district_name if district_name != "*" else case_data_df[
+        DATE_DIAGNOSIS_COL].notna()
     logging.debug(f"district / all cases {district_filter.sum()} / {district_filter.shape[0]}")
 
-    district_filter &= case_data_df[SUBDISTRICT_COL].str.lower() == subdistrict_name if subdistrict_name != "*" else True
+    district_filter &= case_data_df[
+                           SUBDISTRICT_COL].str.lower() == subdistrict_name if subdistrict_name != "*" else True
     logging.debug(f"subdistrict / all cases {district_filter.sum()} / {district_filter.shape[0]}")
 
     return case_data_df[district_filter]
@@ -215,7 +218,8 @@ def calculate_latest_increase(case_data_df):
     previous_period_end = most_recent - REPORTING_PERIOD
     previous_period_start = previous_period_end - REPORTING_PERIOD
 
-    delta = daily_counts[previous_period_end:most_recent].median() - daily_counts[previous_period_start:previous_period_end].median()
+    delta = daily_counts[previous_period_end:most_recent].median() - daily_counts[
+                                                                     previous_period_start:previous_period_end].median()
     logging.debug(f"most_recent={most_recent}, previous_period_end={previous_period_end}, delta={delta}")
 
     return delta
