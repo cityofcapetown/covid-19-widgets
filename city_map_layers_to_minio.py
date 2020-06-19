@@ -332,13 +332,8 @@ if __name__ == "__main__":
             logging.debug(f"cases_df.columns=\n{filtered_df.columns}")
             filtered_df[df_col] = filtered_df[df_col].apply(sanitise_func)
 
-            make_nas_zero = (district_name == "*" or subdistrict_name == "*")
-            if make_nas_zero:
-                logging.warning("Making all NA spatial unit values 0")
-
             case_count_gdf = spatialise_case_data(filtered_df, df_col,
-                                                  data_gdf, gdf_property,
-                                                  fill_nas=make_nas_zero)
+                                                  data_gdf, gdf_property)
             layer_metadata = generate_metadata(filtered_df, df_col)
             logging.info(f"Count[ed] cases for '{layer_filename}'")
 
