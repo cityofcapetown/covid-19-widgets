@@ -118,14 +118,25 @@ HOTSPOT_LAYER_PROPERTIES_LOOKUP = collections.OrderedDict((
 
     # People at Risk
     ("Rental Stock - Houses", (
-        city_map_widget_to_minio.LayerType.POINT,
-        ("FULL_ADR", "OFC_SBRB_NAME", "SUB_TYPE"), ("Full Address", "Official Suburb", "SubType"),
-        ("purple", "home"), "cct_rental_stock_house.geojson", False, False, None
+        city_map_widget_to_minio.LayerType.CHOROPLETH,
+        ("index", "Count",
+         'House-Free Standing', 'House-Row House', 'House-Semi-Detached',
+         'Maisonette-Row Maisonette', 'Maisonette-Semi-Detached'),
+        ("Hex ID", "Number of Houses",
+         'Free Standing', 'Row House', 'Semi-Detached House',
+         'Row Maisonette', 'Semi-Detached Maisonette'),
+        ("Purples",), "city_hostal_counts.geojson", False, False, None
     )),
     ("Rental Stock - Flats", (
-        city_map_widget_to_minio.LayerType.POINT,
-        ("BLCK_NAME", "FLAT_NAME", "TYPE",), ("Block Name", "Flat Name", "Type"),
-        ("purple", "building"), "cct_rental_stock_flats.geojson", False, False, None
+        city_map_widget_to_minio.LayerType.CHOROPLETH,
+        ("index", "Count", 'Flat', 'Hostel', 'Old Age Home'),
+        ("Hex ID", "Total Blocks of Flats", 'Flats', 'Hostels', 'Old Age Homes'),
+        ("Purples",), "city_hostal_counts.geojson", False, False, None
+    )),
+    ("Rental Stock - Hostels", (
+        city_map_widget_to_minio.LayerType.CHOROPLETH,
+        ("index", "Count",), ("Hex ID", "Number of Hostel Blocks",),
+        ("Purples",), "city_hostal_counts.geojson", False, False, None
     )),
     ("Areas of Informality", (
         city_map_widget_to_minio.LayerType.POLYGON,
