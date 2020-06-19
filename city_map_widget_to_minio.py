@@ -39,54 +39,54 @@ LAYER_PROPERTIES_LOOKUP = collections.OrderedDict((
     ("Active Covid-19 Cases by L7 Hex", (
         LayerType.CHOROPLETH,
         (HEX_COUNT_INDEX_PROPERTY, city_map_layers_to_minio.ACTIVE_CASE_COUNT_COL), ("Hex ID", "Presumed Active Cases"),
-        "OrRd", city_map_layers_to_minio.HEX_L7_COUNT_SUFFIX, True, True, city_map_layers_to_minio.ACTIVE_METADATA_KEY
+        ("OrRd",), city_map_layers_to_minio.HEX_L7_COUNT_SUFFIX, True, True, city_map_layers_to_minio.ACTIVE_METADATA_KEY
     )),
     ("Active Covid-19 Cases by Ward", (
         LayerType.CHOROPLETH,
         (WARD_COUNT_NAME_PROPERTY, city_map_layers_to_minio.ACTIVE_CASE_COUNT_COL),
         ("Ward Name", "Presumed Active Cases"),
-        "BuPu", city_map_layers_to_minio.WARD_COUNT_SUFFIX, False, True, city_map_layers_to_minio.ACTIVE_METADATA_KEY
+        ("BuPu",), city_map_layers_to_minio.WARD_COUNT_SUFFIX, False, True, city_map_layers_to_minio.ACTIVE_METADATA_KEY
     )),
     ("Active Covid-19 Cases by District", (
         LayerType.CHOROPLETH,
         (DISTRICT_NAME_PROPERTY, city_map_layers_to_minio.ACTIVE_CASE_COUNT_COL),
         ("Healthcare District Name", "Presumed Active Cases"),
-        "YlGn", city_map_layers_to_minio.DISTRICT_COUNT_SUFFIX, False, True,
+        ("YlGn",), city_map_layers_to_minio.DISTRICT_COUNT_SUFFIX, False, True,
         city_map_layers_to_minio.ACTIVE_METADATA_KEY
     )),
     ("All Covid-19 Cases by L7 Hex", (
         LayerType.CHOROPLETH,
         (HEX_COUNT_INDEX_PROPERTY, city_map_layers_to_minio.CASE_COUNT_COL), ("Hex ID", "All Cases"),
-        "OrRd", city_map_layers_to_minio.HEX_L7_COUNT_SUFFIX, False, True,
+        ("OrRd",), city_map_layers_to_minio.HEX_L7_COUNT_SUFFIX, False, True,
         city_map_layers_to_minio.CUMULATIVE_METADATA_KEY
     )),
     ("All Covid-19 Cases by Ward", (
         LayerType.CHOROPLETH,
         (WARD_COUNT_NAME_PROPERTY, city_map_layers_to_minio.CASE_COUNT_COL), ("Ward Name", "All Cases"),
-        "BuPu", city_map_layers_to_minio.WARD_COUNT_SUFFIX, False, True,
+        ("BuPu",), city_map_layers_to_minio.WARD_COUNT_SUFFIX, False, True,
         city_map_layers_to_minio.CUMULATIVE_METADATA_KEY
     )),
     ("All Covid-19 Cases by District", (
         LayerType.CHOROPLETH,
         (DISTRICT_NAME_PROPERTY, city_map_layers_to_minio.ACTIVE_CASE_COUNT_COL),
         ("Healthcare District Name", "Presumed Active Cases"),
-        "YlGn", city_map_layers_to_minio.DISTRICT_COUNT_SUFFIX, False, True,
+        ("YlGn",), city_map_layers_to_minio.DISTRICT_COUNT_SUFFIX, False, True,
         city_map_layers_to_minio.CUMULATIVE_METADATA_KEY
     )),
     ("Informal Settlements", (
         LayerType.POLYGON,
         ("INF_STLM_NAME",), ("Informal Settlement Name",),
-        None, "informal_settlements.geojson", False, False, None
+        ("purple",), "informal_settlements.geojson", False, False, None
     )),
     ("Healthcare Facilities", (
         LayerType.POINT,
         ("NAME", "ADR",), ("Healthcare Facility Name", "Address",),
-        None, "health_care_facilities.geojson", False, False, None
+        ("red", "clinic-medical"), "health_care_facilities.geojson", False, False, None
     )),
     ("Healthcare Districts", (
         LayerType.POLYGON,
         ("CITY_HLTH_RGN_NAME", ), ("Healthcare District Name",),
-        None, "health_districts.geojson", False, False, None
+        ("red",), "health_districts.geojson", False, False, None
     )),
 ))
 
@@ -166,7 +166,7 @@ def generate_map_features(layers_dict, layer_properties=LAYER_PROPERTIES_LOOKUP)
     for title, (layer_path, count_gdf, layer_metadata) in layers_dict.items():
         (layer_type,
          layer_lookup_fields, layer_lookup_aliases,
-         colour_scheme, layer_suffix, visible_by_default,
+         display_properties, layer_suffix, visible_by_default,
          has_metadata, metadata_key) = layer_properties[title]
 
         # Everything gets packed into a feature group
@@ -178,6 +178,7 @@ def generate_map_features(layers_dict, layer_properties=LAYER_PROPERTIES_LOOKUP)
 
         if layer_type in {LayerType.CHOROPLETH, LayerType.POLYGON}:
             layer_lookup_key, choropleth_key = layer_lookup_fields if layer_type is LayerType.CHOROPLETH else (None, None,)
+            colour_scheme, *_ = display_properties
 
             choropleth = folium.features.Choropleth(
                 layer_path,
@@ -194,7 +195,8 @@ def generate_map_features(layers_dict, layer_properties=LAYER_PROPERTIES_LOOKUP)
             ) if layer_type is LayerType.CHOROPLETH else folium.features.Choropleth(
                 layer_path,
                 name=title,
-                show=visible_by_default
+                show=visible_by_default,
+                fill_color=colour_scheme,
             )
 
             # Monkey patching the choropleth GeoJSON to *not* embed
@@ -210,6 +212,22 @@ def generate_map_features(layers_dict, layer_properties=LAYER_PROPERTIES_LOOKUP)
 
             layer_feature_group.add_child(choropleth.geojson)
         elif layer_type is LayerType.POINT:
+            colour, icon = display_properties
+
+            marker_callback = f"""
+            function(feature) {{
+                var coords = feature.geometry.coordinates;
+    
+                var icon = L.AwesomeMarkers.icon({{
+                    icon: "{icon}", prefix: "fa", markerColor: "{colour}"
+                }});
+    
+                marker = L.marker(new L.LatLng(coords[1], coords[0]));
+                marker.setIcon(icon);
+    
+                return marker;
+            }};"""
+
             tooltip_item_array = "['" + "'],['".join([
                 "','".join((col, alias,))
                 for col, alias in zip(layer_lookup_fields, layer_lookup_aliases)
@@ -237,7 +255,7 @@ def generate_map_features(layers_dict, layer_properties=LAYER_PROPERTIES_LOOKUP)
 
             markers = geojson_markers.GeoJsonMarkers(
                 count_gdf.reset_index(), embed=True,
-                tooltip_callback=tooltip_callback,
+                callback=marker_callback, tooltip_callback=tooltip_callback,
                 name=title, show=visible_by_default
             )
             markers.embed = False
@@ -247,7 +265,7 @@ def generate_map_features(layers_dict, layer_properties=LAYER_PROPERTIES_LOOKUP)
 
         # If this is a visible layer, calculating the centroids
         centroids = list(count_gdf.geometry.map(
-           lambda shape: (shape.centroid.y.round(4), shape.centroid.x.round(4))
+           lambda shape: (shape.centroid.y, shape.centroid.x)
         )) if visible_by_default else []
 
         # Adding missing count from metadata
