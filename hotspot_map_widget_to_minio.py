@@ -243,7 +243,7 @@ def generate_district_map_features():
 
 def assign_features(map_features):
     features_groups_dict = {
-        layer_name: [folium.features.FeatureGroup(name=layer_name, show=True), False]
+        layer_name: [folium.features.FeatureGroup(name=f"<small><strong>{layer_name}</strong></small>", show=True), False]
         for layer_name in CATEGORY_BUCKET.values()
     }
 
