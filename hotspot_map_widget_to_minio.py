@@ -18,7 +18,8 @@ HOTSPOT_LAYER_PROPERTIES_LOOKUP = collections.OrderedDict((
     ("Active Covid-19 Cases by L8 Hex", (
         city_map_widget_to_minio.LayerType.CHOROPLETH,
         (HEX_COUNT_INDEX_PROPERTY, city_map_layers_to_minio.ACTIVE_CASE_COUNT_COL), ("Hex ID", "Presumed Active Cases"),
-        ("OrRd",), city_map_layers_to_minio.HEX_L8_COUNT_SUFFIX, True, True, city_map_layers_to_minio.ACTIVE_METADATA_KEY
+        ("OrRd",), city_map_layers_to_minio.HEX_L8_COUNT_SUFFIX, True, True,
+        city_map_layers_to_minio.ACTIVE_METADATA_KEY
     )),
     ("Active Covid-19 Cases by District", (
         city_map_widget_to_minio.LayerType.CHOROPLETH,
@@ -56,12 +57,12 @@ HOTSPOT_LAYER_PROPERTIES_LOOKUP = collections.OrderedDict((
     ("Healthcare Facilities", (
         city_map_widget_to_minio.LayerType.POINT,
         ("NAME", "ADR",), ("Healthcare Facility Name", "Address",),
-        ("red", "medkit"), "health_care_facilities.geojson", False, False, None
+        ("red", "plus-square"), "health_care_facilities.geojson", False, False, None
     )),
     ("Testing Facilities", (
         city_map_widget_to_minio.LayerType.POINT,
         ("FACILITY_N", "STREET_ADD", "OWNERSHIP"), ("Healthcare Facility Name", "Address", "Ownership"),
-        ("red", "viruses"), "wcpg_testing_facilities.geojson", False, False, None
+        ("red", "stethoscope"), "wcpg_testing_facilities.geojson", False, False, None
     )),
 
     # Population Density
@@ -104,6 +105,16 @@ HOTSPOT_LAYER_PROPERTIES_LOOKUP = collections.OrderedDict((
         ("Name", "Bus", "ParkRide", "Taxi", "Train",), ("Name", "Bus", "Park and Ride", "Taxi", "Train"),
         ("green",), "public_transport_interchanges.geojson", False, False, None
     )),
+    ("Public Transport Activity Levels", (
+        city_map_widget_to_minio.LayerType.CHOROPLETH,
+        ("Id", "gridcode",), ("Grid ID", "Activity Score",),
+        ("Greens",), "public_transport_activity_levels_poly.geojson", False, False, None
+    )),
+    ("Public Transport Activity Levels by L8 Hex", (
+        city_map_widget_to_minio.LayerType.CHOROPLETH,
+        ("HX_L8", "gridcode",), ("Hex ID", "Activity Score",),
+        ("Greens",), "public_transport_activity_levels_hex8.geojson", False, False, None
+    )),
     ("Designated Trading Location", (
         city_map_widget_to_minio.LayerType.POLYGON,
         ("LOC_NAME",), ("Location Name",),
@@ -131,10 +142,20 @@ HOTSPOT_LAYER_PROPERTIES_LOOKUP = collections.OrderedDict((
         ("AOI_NAME", "OTH_NAME", "AOI_TYPE"), ("Area Name", "Other Name", "Area Type",),
         ("purple",), "areas_of_informality_2019.geojson", False, False, None
     )),
+    # ("Elderly Population Density", (
+    #     city_map_widget_to_minio.LayerType.CHOROPLETH,
+    #     ('GRID_ID', "CNT_AGE_BIN_55PLUS"), ("Grid ID", "People older than 55 years",),
+    #     ("Purples",), "sl_snth_pop_aggr_sqkm_grid.geojson", False, False, None
+    # )),
     ("Elderly Population Density", (
         city_map_widget_to_minio.LayerType.CHOROPLETH,
-        ('GRID_ID', "CNT_AGE_BIN_55PLUS"), ("Grid ID", "People older than 55 years",),
-        ("Purples",), "sl_snth_pop_aggr_sqkm_grid.geojson", False, False, None
+        ('Id', "gridcode"), ("Grid ID", "Older Population Score",),
+        ("Purples",), "hdx_pop_estimates_elderly.geojson", False, False, None
+    )),
+    ("Elderly Population Density by L8 Hex", (
+        city_map_widget_to_minio.LayerType.CHOROPLETH,
+        ("HX_L8", "gridcode"), ("Hex ID", "Older Population Score",),
+        ("Purples",), "hdx_pop_estimates_elderly_hex8.geojson", False, False, None
     )),
     ("Old Age Facilities (per Valuations Roll)", (
         city_map_widget_to_minio.LayerType.POLYGON,
@@ -162,6 +183,8 @@ CATEGORY_BUCKET = {
     "Retail Stores": "Places of Risk",
     "Shopping Centres": "Places of Risk",
     "Public Transport Interchanges": "Places of Risk",
+    "Public Transport Activity Levels": "Places of Risk",
+    "Public Transport Activity Levels by L8 Hex": "Places of Risk",
     "Designated Trading Locations": "Places of Risk",
     "SASSA Local Offices": "Places of Risk",
 
@@ -169,6 +192,8 @@ CATEGORY_BUCKET = {
     "Rental Stock - Flats": "People at Risk",
     "Rental Stock - Houses": "People at Risk",
     "Areas of Informality": "People at Risk",
+    "Elderly Population Density": "People at Risk",
+    "Elderly Population Density by L8 Hex": "People at Risk",
     "Old Age Facilities (per Valuations Roll)": "People at Risk",
     "Old Age Facilities (City)": "People at Risk",
     "Adult Homeless Shelter": "People at Risk",
