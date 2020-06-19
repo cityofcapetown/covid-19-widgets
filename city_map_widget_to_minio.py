@@ -193,6 +193,7 @@ def generate_map_features(layers_dict, layer_properties=LAYER_PROPERTIES_LOOKUP)
                 line_opacity=0,
                 bins=_get_choropleth_bins(count_gdf[choropleth_key]),
                 nan_fill_opacity=0,
+                fill_opacity=0.7,
             ) if layer_type is LayerType.CHOROPLETH else folium.features.Choropleth(
                 layer_path,
                 name=title,

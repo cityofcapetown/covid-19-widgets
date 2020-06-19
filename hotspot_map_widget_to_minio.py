@@ -18,40 +18,40 @@ HOTSPOT_LAYER_PROPERTIES_LOOKUP = collections.OrderedDict((
     ("Active Covid-19 Cases by L8 Hex", (
         city_map_widget_to_minio.LayerType.CHOROPLETH,
         (HEX_COUNT_INDEX_PROPERTY, city_map_layers_to_minio.ACTIVE_CASE_COUNT_COL), ("Hex ID", "Presumed Active Cases"),
-        ("OrRd",), city_map_layers_to_minio.HEX_L8_COUNT_SUFFIX, True, True,
+        ("Greys",), city_map_layers_to_minio.HEX_L8_COUNT_SUFFIX, True, True,
         city_map_layers_to_minio.ACTIVE_METADATA_KEY
     )),
     ("Active Covid-19 Cases by District", (
         city_map_widget_to_minio.LayerType.CHOROPLETH,
         (DISTRICT_NAME_PROPERTY, city_map_layers_to_minio.ACTIVE_CASE_COUNT_COL),
         ("Healthcare District Name", "Presumed Active Cases"),
-        ("YlGn",), city_map_layers_to_minio.DISTRICT_COUNT_SUFFIX, False, True,
+        ("Greys",), city_map_layers_to_minio.DISTRICT_COUNT_SUFFIX, False, True,
         city_map_layers_to_minio.ACTIVE_METADATA_KEY
     )),
     ("All Covid-19 Cases by L8 Hex", (
         city_map_widget_to_minio.LayerType.CHOROPLETH,
         (HEX_COUNT_INDEX_PROPERTY, city_map_layers_to_minio.CASE_COUNT_COL), ("Hex ID", "All Cases"),
-        ("OrRd",), city_map_layers_to_minio.HEX_L8_COUNT_SUFFIX, False, True,
+        ("Greys",), city_map_layers_to_minio.HEX_L8_COUNT_SUFFIX, False, True,
         city_map_layers_to_minio.CUMULATIVE_METADATA_KEY
     )),
     ("All Covid-19 Cases by District", (
         city_map_widget_to_minio.LayerType.CHOROPLETH,
         (DISTRICT_NAME_PROPERTY, city_map_layers_to_minio.CASE_COUNT_COL),
         ("Healthcare District Name", "All Cases"),
-        ("YlGn",), city_map_layers_to_minio.DISTRICT_COUNT_SUFFIX, False, True,
+        ("Greys",), city_map_layers_to_minio.DISTRICT_COUNT_SUFFIX, False, True,
         city_map_layers_to_minio.CUMULATIVE_METADATA_KEY
     )),
     ("Covid-19 Mortality by L8 Hex", (
         city_map_widget_to_minio.LayerType.CHOROPLETH,
         (HEX_COUNT_INDEX_PROPERTY, city_map_layers_to_minio.DEATHS_COUNT_COL), ("Hex ID", "Deaths"),
-        ("OrRd",), city_map_layers_to_minio.HEX_L8_COUNT_SUFFIX, False, True,
+        ("Greys",), city_map_layers_to_minio.HEX_L8_COUNT_SUFFIX, False, True,
         city_map_layers_to_minio.DEATHS_METADATA_KEY
     )),
     ("Covid-19 Mortality by District", (
         city_map_widget_to_minio.LayerType.CHOROPLETH,
         (DISTRICT_NAME_PROPERTY, city_map_layers_to_minio.DEATHS_COUNT_COL),
         ("Healthcare District Name", "Deaths"),
-        ("YlGn",), city_map_layers_to_minio.DISTRICT_COUNT_SUFFIX, False, True,
+        ("Greys",), city_map_layers_to_minio.DISTRICT_COUNT_SUFFIX, False, True,
         city_map_layers_to_minio.DEATHS_METADATA_KEY
     )),
     ("Healthcare Facilities", (
