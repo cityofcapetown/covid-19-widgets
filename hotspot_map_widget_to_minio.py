@@ -15,39 +15,39 @@ HEX_COUNT_INDEX_PROPERTY = "index"
 DISTRICT_NAME_PROPERTY = "CITY_HLTH_RGN_NAME"
 
 HOTSPOT_LAYER_PROPERTIES_LOOKUP = collections.OrderedDict((
-    ("Active Covid-19 Cases by L8 Hex", (
+    ("Active Covid-19 Cases (hexes)", (
         city_map_widget_to_minio.LayerType.CHOROPLETH,
         (HEX_COUNT_INDEX_PROPERTY, city_map_layers_to_minio.ACTIVE_CASE_COUNT_COL), ("Hex ID", "Presumed Active Cases"),
         ("Greys",), city_map_layers_to_minio.HEX_L8_COUNT_SUFFIX, True, True,
         city_map_layers_to_minio.ACTIVE_METADATA_KEY
     )),
-    ("Active Covid-19 Cases by District", (
+    ("Active Covid-19 Cases (district)", (
         city_map_widget_to_minio.LayerType.CHOROPLETH,
         (DISTRICT_NAME_PROPERTY, city_map_layers_to_minio.ACTIVE_CASE_COUNT_COL),
         ("Healthcare District Name", "Presumed Active Cases"),
         ("Greys",), city_map_layers_to_minio.DISTRICT_COUNT_SUFFIX, False, True,
         city_map_layers_to_minio.ACTIVE_METADATA_KEY
     )),
-    ("All Covid-19 Cases by L8 Hex", (
+    ("All Covid-19 Cases (hexes)", (
         city_map_widget_to_minio.LayerType.CHOROPLETH,
         (HEX_COUNT_INDEX_PROPERTY, city_map_layers_to_minio.CASE_COUNT_COL), ("Hex ID", "All Cases"),
         ("Greys",), city_map_layers_to_minio.HEX_L8_COUNT_SUFFIX, False, True,
         city_map_layers_to_minio.CUMULATIVE_METADATA_KEY
     )),
-    ("All Covid-19 Cases by District", (
+    ("All Covid-19 Cases (district)", (
         city_map_widget_to_minio.LayerType.CHOROPLETH,
         (DISTRICT_NAME_PROPERTY, city_map_layers_to_minio.CASE_COUNT_COL),
         ("Healthcare District Name", "All Cases"),
         ("Greys",), city_map_layers_to_minio.DISTRICT_COUNT_SUFFIX, False, True,
         city_map_layers_to_minio.CUMULATIVE_METADATA_KEY
     )),
-    ("Covid-19 Mortality by L8 Hex", (
+    ("Covid-19 Mortality (hexes)", (
         city_map_widget_to_minio.LayerType.CHOROPLETH,
         (HEX_COUNT_INDEX_PROPERTY, city_map_layers_to_minio.DEATHS_COUNT_COL), ("Hex ID", "Deaths"),
         ("Greys",), city_map_layers_to_minio.HEX_L8_COUNT_SUFFIX, False, True,
         city_map_layers_to_minio.DEATHS_METADATA_KEY
     )),
-    ("Covid-19 Mortality by District", (
+    ("Covid-19 Mortality (district)", (
         city_map_widget_to_minio.LayerType.CHOROPLETH,
         (DISTRICT_NAME_PROPERTY, city_map_layers_to_minio.DEATHS_COUNT_COL),
         ("Healthcare District Name", "Deaths"),
@@ -59,7 +59,7 @@ HOTSPOT_LAYER_PROPERTIES_LOOKUP = collections.OrderedDict((
         ("NAME", "ADR",), ("Healthcare Facility Name", "Address",),
         ("red", "plus-square"), "health_care_facilities.geojson", False, False, None
     )),
-    ("Testing Facilities", (
+    ("WCPG Testing Facilities", (
         city_map_widget_to_minio.LayerType.POINT,
         ("FACILITY_N", "STREET_ADD", "OWNERSHIP"), ("Healthcare Facility Name", "Address", "Ownership"),
         ("red", "stethoscope"), "wcpg_testing_facilities.geojson", False, False, None
@@ -73,7 +73,7 @@ HOTSPOT_LAYER_PROPERTIES_LOOKUP = collections.OrderedDict((
     )),
 
     # Vulnerability Indicies
-    ("WC Vulnerability Index", (
+    ("WCPG SEVI", (
         city_map_widget_to_minio.LayerType.CHOROPLETH,
         ("index", "Cluster_SE",), ("Hex ID", "Vulnerability Score",),
         ("Reds",), "province_sevi_hex9.geojson", False, False, None
@@ -90,7 +90,7 @@ HOTSPOT_LAYER_PROPERTIES_LOOKUP = collections.OrderedDict((
         ("Store_Name", "Store_Group", "Address"), ("Store Name", "Store Group", "Address",),
         ("green", "shopping-basket"), "retail_stores.geojson", False, False, None
     )),
-    ("Shopping Centres", (
+    ("Shopping Centres (>5k sq.m)", (
         city_map_widget_to_minio.LayerType.POINT,
         ("Centre_nam", "Physical_a",), ("Centre Name", "Address",),
         ("green", "shopping-cart"), "shopping_centres_above_5000sqm_rode_2020.geojson", False, False, None
@@ -100,17 +100,17 @@ HOTSPOT_LAYER_PROPERTIES_LOOKUP = collections.OrderedDict((
         ("Name", "Bus", "ParkRide", "Taxi", "Train",), ("Name", "Bus", "Park and Ride", "Taxi", "Train"),
         ("green",), "public_transport_interchanges.geojson", False, False, None
     )),
-    ("Public Transport Activity Levels", (
+    ("Public Transport Activity", (
         city_map_widget_to_minio.LayerType.CHOROPLETH,
         ("index", "gridcode",), ("Hex ID", "Activity Score",),
         ("Greens",), "public_transport_activity_levels_hex9.geojson", False, False, None
     )),
-    ("Designated Trading Location", (
+    ("Trading Locations", (
         city_map_widget_to_minio.LayerType.POLYGON,
         ("LOC_NAME",), ("Location Name",),
         ("green",), "trading_location.geojson", False, False, None
     )),
-    ("SASSA Local Offices", (
+    ("SASSA Offices", (
         city_map_widget_to_minio.LayerType.POINT,
         ("Name", "Status"), ("Name", "Status"),
         ("green", "building"), "sassa_local_office_coc.geojson", False, False, None
@@ -123,7 +123,7 @@ HOTSPOT_LAYER_PROPERTIES_LOOKUP = collections.OrderedDict((
     )),
 
     # People at Risk
-    ("Rental Stock - Houses", (
+    ("Rental Stock (houses)", (
         city_map_widget_to_minio.LayerType.CHOROPLETH,
         ("index", "Count",
          'House-Free Standing', 'House-Row House', 'House-Semi-Detached',
@@ -133,13 +133,13 @@ HOTSPOT_LAYER_PROPERTIES_LOOKUP = collections.OrderedDict((
          'Row Maisonettes', 'Semi-Detached Maisonettes',),
         ("Purples",), "city_house_counts.geojson", False, False, None
     )),
-    ("Rental Stock - Flats", (
+    ("Rental Stock (flats)", (
         city_map_widget_to_minio.LayerType.CHOROPLETH,
         ("index", "Count", 'Flat', 'Hostel', 'Old Age Home'),
         ("Hex ID", "Total Blocks of Flats", 'Flats', 'Hostels', 'Old Age Homes'),
         ("Purples",), "city_flats_counts.geojson", False, False, None
     )),
-    ("Rental Stock - Hostels", (
+    ("Rental Stock (hostels)", (
         city_map_widget_to_minio.LayerType.CHOROPLETH,
         ("index", "Count",), ("Hex ID", "Number of Hostel Blocks",),
         ("Purples",), "city_hostel_counts.geojson", False, False, None
@@ -159,7 +159,7 @@ HOTSPOT_LAYER_PROPERTIES_LOOKUP = collections.OrderedDict((
     #     ('index', "gridcode"), ("Hex ID", "Older Population Score",),
     #     ("Purples",), "hdx_pop_estimates_elderly_hex9.geojson", False, False, None
     # )),
-    ("Old Age Facilities (per Valuations Roll)", (
+    ("Old Age Facilities (by use)", (
         city_map_widget_to_minio.LayerType.POLYGON,
         ("v_ou_cd", "v_su_ext_gla_tot"), ("Valuations Use Code", "Size (sq m)",),
         ("purple",), "olderpersons_res_fac_valrole.geojson", False, False, None
@@ -183,26 +183,24 @@ CATEGORY_BUCKET = {
     # "Places of Risk",
     "WCED Schools": "Places of Risk",
     "Retail Stores": "Places of Risk",
-    "Shopping Centres": "Places of Risk",
+    "Shopping Centres (>5k sq.m)": "Places of Risk",
     "Public Transport Interchanges": "Places of Risk",
-    "Public Transport Activity Levels": "Places of Risk",
-    "Public Transport Activity Levels by L8 Hex": "Places of Risk",
-    "Designated Trading Locations": "Places of Risk",
-    "SASSA Local Offices": "Places of Risk",
+    "Public Transport Activity": "Places of Risk",
+    "Trading Locations": "Places of Risk",
+    "SASSA Offices": "Places of Risk",
 
     # "People at Risk",
-    "Rental Stock - Flats": "People at Risk",
-    "Rental Stock - Houses": "People at Risk",
-    "Rental Stock - Hostels": "People at Risk",
+    "Rental Stock (flats)": "People at Risk",
+    "Rental Stock (houses)": "People at Risk",
+    "Rental Stock (hostels)": "People at Risk",
     "Areas of Informality": "People at Risk",
-    "Elderly Population Density": "People at Risk",
-    "Elderly Population Density by L8 Hex": "People at Risk",
-    "Old Age Facilities (per Valuations Roll)": "People at Risk",
-    "Old Age Facilities (City)": "People at Risk",
+    #"Elderly Population Density": "People at Risk",
+    "Old Age Facilities (by use)": "People at Risk",
+    "City Old Age Facilities": "People at Risk",
     "Adult Homeless Shelter": "People at Risk",
 
     # Vulnerability Indices
-    "WC Vulnerability Index": "Vulnerability Indices",
+    "WCPG SEVI": "Vulnerability Indices",
 }
 
 BIN_QUANTILES = [0, 0, 0.5, 0.75, 0.9, 0.99, 1]
