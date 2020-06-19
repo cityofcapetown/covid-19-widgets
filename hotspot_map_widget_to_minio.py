@@ -73,11 +73,6 @@ HOTSPOT_LAYER_PROPERTIES_LOOKUP = collections.OrderedDict((
     )),
 
     # Vulnerability Indicies
-    ("CCT Vulnerability Index", (
-        city_map_widget_to_minio.LayerType.CHOROPLETH,
-        ("SAL_CODE", "VLNR_IDX",), ("SAL Code", "Vulnerability Score",),
-        ("Reds",), "cct_soc_vuln_index_targeted_adj2.geojson", False, False, None
-    )),
     ("WC Vulnerability Index", (
         city_map_widget_to_minio.LayerType.CHOROPLETH,
         ("id", "Cluster_SE",), ("SAL Code", "Vulnerability Score",),
@@ -189,7 +184,6 @@ CATEGORY_BUCKET = {
     "Adult Homeless Shelter": "People at Risk",
 
     # Vulnerability Indices
-    "CCT Vulnerability Index": "Vulnerability Indices",
     "WC Vulnerability Index": "Vulnerability Indices",
 }
 
