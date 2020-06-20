@@ -64,6 +64,11 @@ HOTSPOT_LAYER_PROPERTIES_LOOKUP = collections.OrderedDict((
     #     ("FACILITY_N", "STREET_ADD", "OWNERSHIP"), ("Healthcare Facility Name", "Address", "Ownership"),
     #     ("red", "stethoscope"), "wcpg_testing_facilities.geojson", False, False, None
     # )),
+    ("Healthcare Districts", (
+        city_map_widget_to_minio.LayerType.POLYGON,
+        ("CITY_HLTH_RGN_NAME",), ("Healthcare District Name",),
+        ("red",), "health_districts.geojson", False, False, None
+    )),
 
     # Population Density
     ("2019 Population Estimate", (
@@ -194,7 +199,7 @@ CATEGORY_BUCKET = {
     "<small>Rental Stock (houses)</small>": "PEOPLE AT RISK",
     "<small>Rental Stock (hostels)</small>": "PEOPLE AT RISK",
     "<small>Areas of Informality</small>": "PEOPLE AT RISK",
-    #"Elderly Population Density": "PEOPLE AT RISK",
+    # "Elderly Population Density": "PEOPLE AT RISK",
     "<small>Old Age Facilities (by use)</small>": "PEOPLE AT RISK",
     "<small>City Old Age Facilities</small>": "PEOPLE AT RISK",
     "<small>Adult Homeless Shelter</small>": "PEOPLE AT RISK",
@@ -210,8 +215,22 @@ MAP_RIGHT_PADDING = 200
 MAP_FILENAME = "hotspot_map_widget.html"
 
 
-def generate_district_map_features():
+def generate_base_map_features(tempdir, minimap=False):
     features = []
+
+    # Health SubDistrict Outlines
+    health_district_layer_path = os.path.join(tempdir, city_map_layers_to_minio.CT_HEALTH_DISTRICT_FILENAME)
+    health_district_outline = folium.features.Choropleth(
+        health_district_layer_path,
+        name="Health Subdistricts",
+        show=True,
+        fill_opacity=0,
+        line_color="blue"
+    )
+    health_district_outline.geojson.embed = False
+    health_district_outline.geojson.embed_link = city_map_layers_to_minio.CT_HEALTH_DISTRICT_FILENAME
+    health_district_outline.geojson.control = False
+
     # Base Layers
     features += [
         folium.TileLayer(
@@ -223,7 +242,8 @@ def generate_district_map_features():
             name='Terrain',
             tiles='https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
             attr='Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
-        )
+        ),
+        health_district_outline.geojson
     ]
 
     # Minimap
@@ -235,7 +255,7 @@ def generate_district_map_features():
             ),
             zoom_level_fixed=7,
         )
-    ]
+    ] if minimap else []
 
     for feature in features:
         yield feature, None
@@ -243,7 +263,8 @@ def generate_district_map_features():
 
 def assign_features(map_features):
     features_groups_dict = {
-        layer_name: [folium.features.FeatureGroup(name=f"<small><strong>{layer_name}</strong></small>", show=True), False]
+        layer_name: [folium.features.FeatureGroup(name=f"<small><strong>{layer_name}</strong></small>", show=True),
+                     False]
         for layer_name in CATEGORY_BUCKET.values()
     }
 
@@ -312,7 +333,7 @@ if __name__ == "__main__":
         logging.info("G[ot] layers")
 
         logging.info("Generat[ing] map")
-        district_map_features = generate_district_map_features() if subdistrict_name != "*" else []
+        district_map_features = generate_base_map_features(tempdir, minimap=(subdistrict_name != "*"))
 
         assigned_feature_groups = assign_features(map_features)
         map_feature_generator = itertools.chain(district_map_features,
