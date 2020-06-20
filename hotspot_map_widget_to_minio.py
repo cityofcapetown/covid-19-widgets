@@ -59,11 +59,11 @@ HOTSPOT_LAYER_PROPERTIES_LOOKUP = collections.OrderedDict((
         ("NAME", "ADR",), ("Healthcare Facility Name", "Address",),
         ("red", "plus-square"), "health_care_facilities.geojson", False, False, None
     )),
-    ("WCPG Testing Facilities", (
-        city_map_widget_to_minio.LayerType.POINT,
-        ("FACILITY_N", "STREET_ADD", "OWNERSHIP"), ("Healthcare Facility Name", "Address", "Ownership"),
-        ("red", "stethoscope"), "wcpg_testing_facilities.geojson", False, False, None
-    )),
+    # ("WCPG Testing Facilities", (
+    #     city_map_widget_to_minio.LayerType.POINT,
+    #     ("FACILITY_N", "STREET_ADD", "OWNERSHIP"), ("Healthcare Facility Name", "Address", "Ownership"),
+    #     ("red", "stethoscope"), "wcpg_testing_facilities.geojson", False, False, None
+    # )),
 
     # Population Density
     ("2019 Population Estimate", (
