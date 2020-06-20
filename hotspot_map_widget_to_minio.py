@@ -18,27 +18,27 @@ HOTSPOT_LAYER_PROPERTIES_LOOKUP = collections.OrderedDict((
     ("Active Covid-19 Cases (hexes)", (
         city_map_widget_to_minio.LayerType.CHOROPLETH,
         (HEX_COUNT_INDEX_PROPERTY, city_map_layers_to_minio.ACTIVE_CASE_COUNT_COL), ("Hex ID", "Presumed Active Cases"),
-        ("Greys",), city_map_layers_to_minio.HEX_L8_COUNT_SUFFIX, True, True,
+        ("Reds",), city_map_layers_to_minio.HEX_L8_COUNT_SUFFIX, True, True,
         city_map_layers_to_minio.ACTIVE_METADATA_KEY
     )),
     ("Active Covid-19 Cases (district)", (
         city_map_widget_to_minio.LayerType.CHOROPLETH,
         (DISTRICT_NAME_PROPERTY, city_map_layers_to_minio.ACTIVE_CASE_COUNT_COL),
         ("Healthcare District Name", "Presumed Active Cases"),
-        ("Greys",), city_map_layers_to_minio.DISTRICT_COUNT_SUFFIX, False, True,
+        ("Reds",), city_map_layers_to_minio.DISTRICT_COUNT_SUFFIX, False, True,
         city_map_layers_to_minio.ACTIVE_METADATA_KEY
     )),
     ("All Covid-19 Cases (hexes)", (
         city_map_widget_to_minio.LayerType.CHOROPLETH,
         (HEX_COUNT_INDEX_PROPERTY, city_map_layers_to_minio.CASE_COUNT_COL), ("Hex ID", "All Cases"),
-        ("Greys",), city_map_layers_to_minio.HEX_L8_COUNT_SUFFIX, False, True,
+        ("Reds",), city_map_layers_to_minio.HEX_L8_COUNT_SUFFIX, False, True,
         city_map_layers_to_minio.CUMULATIVE_METADATA_KEY
     )),
     ("All Covid-19 Cases (district)", (
         city_map_widget_to_minio.LayerType.CHOROPLETH,
         (DISTRICT_NAME_PROPERTY, city_map_layers_to_minio.CASE_COUNT_COL),
         ("Healthcare District Name", "All Cases"),
-        ("Greys",), city_map_layers_to_minio.DISTRICT_COUNT_SUFFIX, False, True,
+        ("Reds",), city_map_layers_to_minio.DISTRICT_COUNT_SUFFIX, False, True,
         city_map_layers_to_minio.CUMULATIVE_METADATA_KEY
     )),
     ("Covid-19 Mortality (hexes)", (
@@ -76,7 +76,7 @@ HOTSPOT_LAYER_PROPERTIES_LOOKUP = collections.OrderedDict((
     ("WCPG SEVI", (
         city_map_widget_to_minio.LayerType.CHOROPLETH,
         ("index", "Cluster_SE",), ("Hex ID", "Vulnerability Score",),
-        ("Reds",), "province_sevi_hex9.geojson", False, False, None
+        ("Oranges",), "province_sevi_hex9.geojson", False, False, None
     )),
 
     # Places of Risk
