@@ -120,12 +120,12 @@ HOTSPOT_LAYER_PROPERTIES_LOOKUP = collections.OrderedDict((
         ("Name", "Status"), ("Name", "Status"),
         ("green", "building"), "sassa_local_office_coc.geojson", False, False, None
     )),
-    ("Employment Density", (
-        city_map_widget_to_minio.LayerType.CHOROPLETH,
-        ("index", "MedianEmployees", "MedianEmployeesPerFloorArea", "MaxEmployees", "SampleSize"),
-        ("Hex ID", "Median Employees", "Median Employees per Floor Size", "Biggset Employer", "Businesses Surveyed"),
-        ("Greens",), "employment_density_survey_hex7.geojson", False, False, None
-    )),
+    # ("Employment Density", (
+    #     city_map_widget_to_minio.LayerType.CHOROPLETH,
+    #     ("index", "MedianEmployees", "MedianEmployeesPerFloorArea", "MaxEmployees", "SampleSize"),
+    #     ("Hex ID", "Median Employees", "Median Employees per Floor Size", "Biggset Employer", "Businesses Surveyed"),
+    #     ("Greens",), "employment_density_survey_hex7.geojson", False, False, None
+    # )),
 
     # People at Risk
     ("Rental Stock (houses)", (
