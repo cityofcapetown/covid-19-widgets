@@ -73,14 +73,14 @@ HOTSPOT_LAYER_PROPERTIES_LOOKUP = collections.OrderedDict((
     # Population Density
     ("2019 Population Estimate", (
         city_map_widget_to_minio.LayerType.CHOROPLETH,
-        ("index", "PopDensity2019",), ("Hex ID", "People / sq.m",),
+        ("index", "PopDensity2019PerSqkm",), ("Hex ID", "People / sq.km",),
         ("Blues",), "sl_du_pop_est_2019_hex9.geojson", False, False, None
     )),
 
     # Vulnerability Indicies
     ("WCPG SEVI", (
         city_map_widget_to_minio.LayerType.CHOROPLETH,
-        ("index", "Cluster_SE",), ("Hex ID", "Vulnerability Score",),
+        ("index", "Cluster_SE_Rounded",), ("Hex ID", "Vulnerability Score",),
         ("Oranges",), "province_sevi_hex9.geojson", False, False, None
     )),
 
