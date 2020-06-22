@@ -219,6 +219,8 @@ BIN_QUANTILES = [0, 0, 0.5, 0.75, 0.9, 0.99, 1]
 MAP_ZOOM = 9
 DISTRICT_MAP_ZOOM = 10
 MAP_RIGHT_PADDING = 200
+MINIMAP_WIDTH = 150
+MINIMAP_PADDING = 20
 MAP_FILENAME = "hotspot_map_widget.html"
 
 
@@ -260,6 +262,8 @@ def generate_base_map_features(tempdir, minimap=False):
                 tiles='https://stamen-tiles-{s}.a.ssl.fastly.net/toner-background/{z}/{x}/{y}{r}.png',
                 attr='Map tiles by <a href="http://stamen.com">Stamen Design</a>, <a href="http://creativecommons.org/licenses/by/3.0">CC BY 3.0</a> &mdash; Map data &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
             ),
+            width=MINIMAP_WIDTH,
+            position="bottomleft",
             zoom_level_fixed=7,
         )
     ] if minimap else []
@@ -333,10 +337,13 @@ if __name__ == "__main__":
                                                 tempdir,
                                                 secrets["minio"]["edge"]["access"],
                                                 secrets["minio"]["edge"]["secret"],
-                                                layer_properties=HOTSPOT_LAYER_PROPERTIES_LOOKUP)
+                                                layer_properties=HOTSPOT_LAYER_PROPERTIES_LOOKUP,)
         }
-        map_features = list(city_map_widget_to_minio.generate_map_features(map_layers_dict,
-                                                                           layer_properties=HOTSPOT_LAYER_PROPERTIES_LOOKUP))
+        map_features = list(
+            city_map_widget_to_minio.generate_map_features(map_layers_dict,
+                                                           layer_properties=HOTSPOT_LAYER_PROPERTIES_LOOKUP,
+                                                           float_left_offset=f"{MINIMAP_WIDTH + MINIMAP_PADDING}px")
+        )
         logging.info("G[ot] layers")
 
         logging.info("Generat[ing] map")
@@ -348,7 +355,7 @@ if __name__ == "__main__":
 
         map_zoom = DISTRICT_MAP_ZOOM if subdistrict_name != "*" else MAP_ZOOM
         data_map = city_map_widget_to_minio.generate_map(map_feature_generator,
-                                                         map_zoom=map_zoom, map_right_padding=MAP_RIGHT_PADDING)
+                                                         map_zoom=map_zoom, map_right_padding=MAP_RIGHT_PADDING, )
         logging.info("Generat[ed] map")
 
         logging.info("Writ[ing] to Minio")

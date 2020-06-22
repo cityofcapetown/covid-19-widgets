@@ -88,7 +88,7 @@ def marker_data_generator(request_df):
     )
 
 
-def get_prototype_div(dept_geospatial_proportion, start_time, top=95):
+def get_prototype_div(dept_geospatial_proportion, start_time, top="95%"):
     prototype_message = f"Displaying {dept_geospatial_proportion:.1%} of all requests, since {start_time.isoformat()}"
 
     div = float_div.FloatDiv(

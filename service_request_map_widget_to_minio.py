@@ -175,7 +175,7 @@ def generate_map(layer_tuples):
                 "<span style='font-size: 20px; color:#FF0000'>" 
                     f"Requests not displayed: {opened_non_spatial} ({(opened_non_spatial / opened_total):.1%})" 
                 "</span>"
-            ), top=95)
+            ), top="95%")
             choropleth_feature_group.add_child(div)
 
         choropleth_feature_group.add_to(m)

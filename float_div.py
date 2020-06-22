@@ -9,8 +9,8 @@ class FloatDiv(folium.map.Layer):
                 <style>
                     #{{this.get_name()}} {
                         position:absolute;
-                        top:{{this.top}}%;
-                        left:{{this.left}}%;
+                        top:{{this.top}};
+                        left:{{this.left}};
                         }
                 </style>
             {% endmacro %}
@@ -47,7 +47,7 @@ class FloatDiv(folium.map.Layer):
             {% endmacro %}
             """)
 
-    def __init__(self, content, top=10, left=0):
+    def __init__(self, content, top="10%", left="0%"):
         super(FloatDiv, self).__init__()
         self._name = 'FloatDiv'
         self.content = content

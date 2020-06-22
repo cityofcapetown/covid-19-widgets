@@ -164,7 +164,7 @@ def _get_choropleth_bins(count_series):
     return bins
 
 
-def generate_map_features(layers_dict, layer_properties=LAYER_PROPERTIES_LOOKUP):
+def generate_map_features(layers_dict, layer_properties=LAYER_PROPERTIES_LOOKUP, float_left_offset="0%"):
     # Going layer by layer
     for title, (layer_path, count_gdf, layer_metadata) in layers_dict.items():
         (layer_type,
@@ -283,7 +283,7 @@ def generate_map_features(layers_dict, layer_properties=LAYER_PROPERTIES_LOOKUP)
                 "<span style='font-size: 20px; color:#FF0000'>"
                 f"Cases not displayed: {cases_not_displayed} ({cases_not_displayed / total_count:.1%} of total)"
                 "</span>"
-            ), top=95)
+            ), top="95%", left=float_left_offset)
             layer_feature_group.add_child(div)
 
         yield layer_feature_group, centroids
