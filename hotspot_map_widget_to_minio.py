@@ -344,7 +344,7 @@ if __name__ == "__main__":
         map_features = list(
             city_map_widget_to_minio.generate_map_features(map_layers_dict,
                                                            layer_properties=HOTSPOT_LAYER_PROPERTIES_LOOKUP,
-                                                           float_left_offset=f"{MINIMAP_WIDTH + MINIMAP_PADDING}px")
+                                                           float_left_offset=float_left_offset)
         )
         logging.info("G[ot] layers")
 
