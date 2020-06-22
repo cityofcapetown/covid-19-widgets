@@ -339,6 +339,8 @@ if __name__ == "__main__":
                                                 secrets["minio"]["edge"]["secret"],
                                                 layer_properties=HOTSPOT_LAYER_PROPERTIES_LOOKUP,)
         }
+
+        float_left_offset = (MINIMAP_WIDTH + MINIMAP_PADDING) if subdistrict_name != "*" else "0%"
         map_features = list(
             city_map_widget_to_minio.generate_map_features(map_layers_dict,
                                                            layer_properties=HOTSPOT_LAYER_PROPERTIES_LOOKUP,
