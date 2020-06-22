@@ -73,14 +73,14 @@ HOTSPOT_LAYER_PROPERTIES_LOOKUP = collections.OrderedDict((
     # Population Density
     ("2019 Population Estimate", (
         city_map_widget_to_minio.LayerType.CHOROPLETH,
-        ("index", "PopDensity2019PerSqkm",), ("Hex ID", "People / sq.km",),
+        (HEX_COUNT_INDEX_PROPERTY, "PopDensity2019PerSqkm",), ("Hex ID", "People / sq.km",),
         ("Blues",), "sl_du_pop_est_2019_hex9.geojson", False, False, None
     )),
 
     # Vulnerability Indicies
     ("WCPG SEVI", (
         city_map_widget_to_minio.LayerType.CHOROPLETH,
-        ("index", "Cluster_SE_Rounded",), ("Hex ID", "Vulnerability Score",),
+        (HEX_COUNT_INDEX_PROPERTY, "Cluster_SE_Rounded",), ("Hex ID", "Vulnerability Score",),
         ("Oranges",), "province_sevi_hex9.geojson", False, False, None
     )),
 
@@ -102,7 +102,7 @@ HOTSPOT_LAYER_PROPERTIES_LOOKUP = collections.OrderedDict((
     )),
     ("Public Transport Activity", (
         city_map_widget_to_minio.LayerType.CHOROPLETH,
-        ("index", "gridcode",), ("Hex ID", "Activity Score",),
+        (HEX_COUNT_INDEX_PROPERTY, "gridcode",), ("Hex ID", "Activity Score",),
         ("Greens",), "public_transport_activity_levels_hex9.geojson", False, False, None
     )),
     ("Trading Locations", (
@@ -128,15 +128,15 @@ HOTSPOT_LAYER_PROPERTIES_LOOKUP = collections.OrderedDict((
     # )),
     ("Employment Density", (
         city_map_widget_to_minio.LayerType.CHOROPLETH,
-        ("index", "EmploymentDensityPerSqkm",),
-        ("Hex ID", "Employees / sq.km", ),
+        (HEX_COUNT_INDEX_PROPERTY, "EmploymentDensityPerSqkm",),
+        ("Hex ID", "Employees / sq.km",),
         ("Greens",), "hh_emp_incomegrp_sp_tz2018_hex8.geojson", False, False, None
     )),
 
     # People at Risk
     ("Rental Stock (houses)", (
         city_map_widget_to_minio.LayerType.CHOROPLETH,
-        ("index", "Count",
+        (HEX_COUNT_INDEX_PROPERTY, "Count",
          'House-Free Standing', 'House-Row House', 'House-Semi-Detached',
          'Maisonette-Row Maisonette', 'Maisonette-Semi-Detached',),
         ("Hex ID", "Number of Houses",
@@ -146,13 +146,13 @@ HOTSPOT_LAYER_PROPERTIES_LOOKUP = collections.OrderedDict((
     )),
     ("Rental Stock (flats)", (
         city_map_widget_to_minio.LayerType.CHOROPLETH,
-        ("index", "Count", 'Flat', 'Hostel', 'Old Age Home'),
+        (HEX_COUNT_INDEX_PROPERTY, "Count", 'Flat', 'Hostel', 'Old Age Home'),
         ("Hex ID", "Total Blocks of Flats", 'Flats', 'Hostels', 'Old Age Homes'),
         ("Purples",), "city_flats_counts.geojson", False, False, None
     )),
     ("Rental Stock (hostels)", (
         city_map_widget_to_minio.LayerType.CHOROPLETH,
-        ("index", "Count",), ("Hex ID", "Number of Hostel Blocks",),
+        (HEX_COUNT_INDEX_PROPERTY, "Count",), ("Hex ID", "Number of Hostel Blocks",),
         ("Purples",), "city_hostel_counts.geojson", False, False, None
     )),
     ("Areas of Informality", (
