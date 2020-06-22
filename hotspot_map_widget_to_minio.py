@@ -90,11 +90,6 @@ HOTSPOT_LAYER_PROPERTIES_LOOKUP = collections.OrderedDict((
         ("SCHL", "SUB", "QUINT"), ("School Name", "Suburb", "Quintile",),
         ("green", "book"), "wced_metro_schools_2019.geojson", False, False, None
     )),
-    ("Retail Stores", (
-        city_map_widget_to_minio.LayerType.POINT,
-        ("Store_Name", "Store_Group", "Address"), ("Store Name", "Store Group", "Address",),
-        ("green", "shopping-basket"), "retail_stores.geojson", False, False, None
-    )),
     ("Shopping Centres (>5k sq.m)", (
         city_map_widget_to_minio.LayerType.POINT,
         ("Centre_nam", "Physical_a",), ("Centre Name", "Address",),
@@ -119,6 +114,11 @@ HOTSPOT_LAYER_PROPERTIES_LOOKUP = collections.OrderedDict((
         city_map_widget_to_minio.LayerType.POINT,
         ("Name", "Status"), ("Name", "Status"),
         ("green", "building"), "sassa_local_office_coc.geojson", False, False, None
+    )),
+    ("SASSA Paypoint (Shops)", (
+        city_map_widget_to_minio.LayerType.POINT,
+        ("Store_Name", "Store_Group", "Address"), ("Store Name", "Store Group", "Address",),
+        ("green", "shopping-basket"), "retail_stores.geojson", False, False, None
     )),
     # ("Employment Density", (
     #     city_map_widget_to_minio.LayerType.CHOROPLETH,
