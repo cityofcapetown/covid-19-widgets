@@ -126,6 +126,12 @@ HOTSPOT_LAYER_PROPERTIES_LOOKUP = collections.OrderedDict((
     #     ("Hex ID", "Median Employees", "Median Employees per Floor Size", "Biggset Employer", "Businesses Surveyed"),
     #     ("Greens",), "employment_density_survey_hex7.geojson", False, False, None
     # )),
+    ("Employment Density", (
+        city_map_widget_to_minio.LayerType.CHOROPLETH,
+        ("index", "EmploymentDensityPerSqkm",),
+        ("Hex ID", "Employees / sq.km", ),
+        ("Greens",), "hh_emp_incomegrp_sp_tz2018_hex8.geojson", False, False, None
+    )),
 
     # People at Risk
     ("Rental Stock (houses)", (
