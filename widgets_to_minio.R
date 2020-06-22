@@ -335,10 +335,12 @@ rsa_demographic <- rsa_demographic %>%
 ct_raw_age_confirmed_cases <- ct_all_cases  %>%
     select(Agegroup) %>%
     separate(Agegroup, sep = "[ ]", into = c("age"), extra = "drop") %>%
+    filter(age >= 0) %>%
     mutate(age_interval = findInterval(age, age_brackets, rightmost.closed = TRUE)) %>%
+    drop_na(age_interval) %>%
   mutate(age_interval = age_bracket_labels[age_interval]) %>%
   group_by(age_interval) %>%
-  summarise(ct_raw_age_confirmed_cases = n()) %>%
+  summarise(ct_raw_age_confirmed_cases = n(), .groups = "keep") %>%
   ungroup()
 
 # cape town case fatality pop pyramid ---------------
