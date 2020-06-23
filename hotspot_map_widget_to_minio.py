@@ -170,15 +170,11 @@ HOTSPOT_LAYER_PROPERTIES_LOOKUP = collections.OrderedDict((
     #     ('index', "gridcode"), ("Hex ID", "Older Population Score",),
     #     ("Purples",), "hdx_pop_estimates_elderly_hex9.geojson", False, False, None
     # )),
-    ("Old Age Facilities (by use)", (
-        city_map_widget_to_minio.LayerType.POLYGON,
-        ("v_ou_cd", "v_su_ext_gla_tot"), ("Valuations Use Code", "Size (sq m)",),
-        ("purple",), "olderpersons_res_fac_valrole.geojson", False, False, None
-    )),
-    ("City Old Age Facilities", (
+    ("Old Age Facilities", (
         city_map_widget_to_minio.LayerType.POINT,
-        ("Name_of_Or", "Physical_A", "Service_Ty"), ("Name", "Physical Address", "Service Type",),
-        ("purple", "leaf"), "olderpersons_res_fac_cct.geojson", False, False, None
+        ('FacilityName', 'Address', 'PeopleCount', 'RoomCount', 'BedCount', 'Operator',),
+        ("Name", "Physical Address", "Number of residents", "Number of Rooms", "Number of Beds", "Operator"),
+        ("purple", "leaf"), "combined_senior_citizens_layer.geojson", False, False, None
     )),
     ("Adult Homeless Shelters", (
         city_map_widget_to_minio.LayerType.POINT,

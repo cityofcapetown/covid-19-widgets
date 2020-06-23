@@ -65,11 +65,10 @@ LAYER_FILES = (
     ("city_hostel_counts.geojson", MINIO_COVID_BUCKET, DATA_VULNERABILITY_PREFIX),
     ("areas_of_informality_2019.geojson", MINIO_COVID_BUCKET, DATA_VULNERABILITY_PREFIX),
     ("hdx_pop_estimates_elderly_hex9.geojson", MINIO_COVID_BUCKET, DATA_VULNERABILITY_PREFIX),
-    ("olderpersons_res_fac_valrole.geojson", MINIO_COVID_BUCKET, DATA_VULNERABILITY_PREFIX),
-    ("olderpersons_res_fac_cct.geojson", MINIO_COVID_BUCKET, DATA_VULNERABILITY_PREFIX),
     ("adult_homeless_shelters_coct.geojson", MINIO_COVID_BUCKET, DATA_VULNERABILITY_PREFIX),
     ("employment_density_survey_hex7.geojson", MINIO_COVID_BUCKET, DATA_VULNERABILITY_PREFIX),
-    ("hh_emp_incomegrp_sp_tz2018_hex8.geojson", MINIO_COVID_BUCKET, DATA_VULNERABILITY_PREFIX)
+    ("hh_emp_incomegrp_sp_tz2018_hex8.geojson", MINIO_COVID_BUCKET, DATA_VULNERABILITY_PREFIX),
+    ("combined_senior_citizens_layer.geojson", MINIO_COVID_BUCKET, DATA_VULNERABILITY_PREFIX)
 )
 
 HEX_COUNT_INDEX_PROPERTY = "index"
