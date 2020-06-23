@@ -337,7 +337,7 @@ if __name__ == "__main__":
                                                 layer_properties=HOTSPOT_LAYER_PROPERTIES_LOOKUP,)
         }
 
-        float_left_offset = f"{MINIMAP_WIDTH + MINIMAP_PADDING}%" if subdistrict_name != "*" else "0%"
+        float_left_offset = f"{MINIMAP_WIDTH + MINIMAP_PADDING}px" if subdistrict_name != "*" else "0%"
         map_features = list(
             city_map_widget_to_minio.generate_map_features(map_layers_dict,
                                                            layer_properties=HOTSPOT_LAYER_PROPERTIES_LOOKUP,
