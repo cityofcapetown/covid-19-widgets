@@ -87,7 +87,8 @@ HOTSPOT_LAYER_PROPERTIES_LOOKUP = collections.OrderedDict((
     # Places of Risk
     ("WCED Schools", (
         city_map_widget_to_minio.LayerType.POINT,
-        ("SCHL", "SUB", "QUINT"), ("School Name", "Suburb", "Quintile",),
+        ("SCHL", "SUB", "ASS2019", "TYPE_", "QUINT"),
+        ("School Name", "Suburb", "Number of Learners", "Type", "Quintile",),
         ("green", "book"), "wced_metro_schools_2019.geojson", False, False, None
     )),
     ("Shopping Centres (>5k sq.m)", (
