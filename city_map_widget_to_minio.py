@@ -175,7 +175,7 @@ def generate_map_features(layers_dict, layer_properties=LAYER_PROPERTIES_LOOKUP,
 
         # Everything gets packed into a feature group
         layer_feature_group = folium.features.FeatureGroup(
-            name=f"<small>{title}</small>",
+            name=f"{title}",
             show=visible_by_default
         )
         *_, layer_filename = os.path.split(layer_path)
@@ -188,7 +188,7 @@ def generate_map_features(layers_dict, layer_properties=LAYER_PROPERTIES_LOOKUP,
             choropleth = folium.features.Choropleth(
                 layer_path,
                 data=count_gdf.reset_index(),
-                name=f"<small>{title}</small>",
+                name=title,
                 key_on=f"feature.properties.{layer_lookup_key}",
                 columns=[layer_lookup_key, choropleth_key],
                 fill_color=colour_scheme,
@@ -200,7 +200,7 @@ def generate_map_features(layers_dict, layer_properties=LAYER_PROPERTIES_LOOKUP,
                 fill_opacity=0.7,
             ) if layer_type is LayerType.CHOROPLETH else folium.features.Choropleth(
                 layer_path,
-                name=f"<small>{title}</small>",
+                name=title,
                 show=visible_by_default,
                 fill_color=colour_scheme,
             )
@@ -262,7 +262,7 @@ def generate_map_features(layers_dict, layer_properties=LAYER_PROPERTIES_LOOKUP,
             markers = geojson_markers.GeoJsonMarkers(
                 count_gdf.reset_index(), embed=True,
                 callback=marker_callback, tooltip_callback=tooltip_callback,
-                name=f"<small>{title}</small>", show=visible_by_default
+                name=f"{title}", show=visible_by_default
             )
             markers.embed = False
             markers.embed_link = layer_filename
@@ -315,11 +315,15 @@ def generate_map(map_features, map_zoom=MAP_ZOOM, map_right_padding=MAP_RIGHT_PA
     # Setting the map zoom using any visible layers
     m.fit_bounds(map_centroids, padding_bottom_right=(0, map_right_padding), max_zoom=map_zoom)
 
+    return m
+
+
+def add_layer_control_to_map(map):
     # Layer Control
     layer_control = folium.LayerControl(collapsed=False)
-    layer_control.add_to(m)
+    layer_control.add_to(map)
 
-    return m
+    return map
 
 
 def get_leaflet_dep_file(url, tempdir, http_session, minio_access, minio_secret):
@@ -352,7 +356,8 @@ def get_leaflet_dep_file(url, tempdir, http_session, minio_access, minio_secret)
     return new_path
 
 
-def pull_out_leaflet_deps(tempdir, proxy_username, proxy_password, minio_access, minio_secret):
+def pull_out_leaflet_deps(tempdir, proxy_username, proxy_password, minio_access, minio_secret,
+                          extra_js_deps=[], extra_css_deps=[]):
     http_session = requests.Session()
 
     proxy_string = f'http://{proxy_username}:{proxy_password}@{CITY_PROXY_DOMAIN}/'
@@ -363,12 +368,12 @@ def pull_out_leaflet_deps(tempdir, proxy_username, proxy_password, minio_access,
 
     js_libs = [
         (key, get_leaflet_dep_file(url, tempdir, http_session, minio_access, minio_secret))
-        for key, url in folium.folium._default_js
+        for key, url in folium.folium._default_js + extra_js_deps
     ]
 
     css_libs = [
         (key, get_leaflet_dep_file(url, tempdir, http_session, minio_access, minio_secret))
-        for key, url in folium.folium._default_css
+        for key, url in folium.folium._default_css + extra_css_deps
     ]
 
     return js_libs, css_libs
@@ -442,6 +447,7 @@ if __name__ == "__main__":
         logging.info("Generat[ing] map")
         map_feature_generator = generate_map_features(map_layers_dict)
         data_map = generate_map(map_feature_generator)
+        data_map = add_layer_control_to_map(data_map)
         logging.info("Generat[ed] map")
 
         logging.info("Writ[ing] to Minio")

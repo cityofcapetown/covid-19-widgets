@@ -10,6 +10,7 @@ import folium.plugins
 
 import city_map_layers_to_minio
 import city_map_widget_to_minio
+import tree_layer_control
 
 HEX_COUNT_INDEX_PROPERTY = "index"
 DISTRICT_NAME_PROPERTY = "CITY_HLTH_RGN_NAME"
@@ -183,31 +184,37 @@ HOTSPOT_LAYER_PROPERTIES_LOOKUP = collections.OrderedDict((
     )),
 ))
 
-CATEGORY_BUCKET = {
+CATEGORY_BUCKETS = [
+    "POPULATION DENSITY",
+    "VULNERABILITY INDICES",
+    "PLACES OF RISK",
+    "PEOPLE AT RISK",
+]
+CATEGORY_BUCKET_MAP = {
     # Population Density
-    "<small>2019 Population Estimate</small>": "POPULATION DENSITY",
+    "2019 Population Estimate": "POPULATION DENSITY",
 
     # "PLACES OF RISK",
-    "<small>WCED Schools</small>": "PLACES OF RISK",
-    "<small>Retail Stores</small>": "PLACES OF RISK",
-    "<small>Shopping Centres (>5k sq.m)</small>": "PLACES OF RISK",
-    "<small>Public Transport Interchanges</small>": "PLACES OF RISK",
-    "<small>Public Transport Activity</small>": "PLACES OF RISK",
-    "<small>Trading Locations</small>": "PLACES OF RISK",
-    "<small>SASSA Offices</small>": "PLACES OF RISK",
+    "WCED Schools": "PLACES OF RISK",
+    "Shopping Centres (>5k sq.m)": "PLACES OF RISK",
+    "Public Transport Interchanges": "PLACES OF RISK",
+    "Public Transport Activity": "PLACES OF RISK",
+    "Trading Locations": "PLACES OF RISK",
+    "SASSA Offices": "PLACES OF RISK",
+    'SASSA Paypoint (Shops)': "PLACES OF RISK",
+    'Employment Density': "PLACES OF RISK",
 
     # "PEOPLE AT RISK",
-    "<small>Rental Stock (flats)</small>": "PEOPLE AT RISK",
-    "<small>Rental Stock (houses)</small>": "PEOPLE AT RISK",
-    "<small>Rental Stock (hostels)</small>": "PEOPLE AT RISK",
-    "<small>Areas of Informality</small>": "PEOPLE AT RISK",
+    "Rental Stock (flats)": "PEOPLE AT RISK",
+    "Rental Stock (houses)": "PEOPLE AT RISK",
+    "Rental Stock (hostels)": "PEOPLE AT RISK",
+    "Areas of Informality": "PEOPLE AT RISK",
     # "Elderly Population Density": "PEOPLE AT RISK",
-    "<small>Old Age Facilities (by use)</small>": "PEOPLE AT RISK",
-    "<small>City Old Age Facilities</small>": "PEOPLE AT RISK",
-    "<small>Adult Homeless Shelter</small>": "PEOPLE AT RISK",
+    "Old Age Facilities": "PEOPLE AT RISK",
+    "Adult Homeless Shelters": "PEOPLE AT RISK",
 
     # "VULNERABILITY INDICES"
-    "<small>WCPG SEVI</small>": "VULNERABILITY INDICES",
+    "WCPG SEVI": "VULNERABILITY INDICES",
 }
 
 BIN_QUANTILES = [0, 0, 0.5, 0.75, 0.9, 0.99, 1]
@@ -268,29 +275,45 @@ def generate_base_map_features(tempdir, minimap=False):
         yield feature, None
 
 
-def assign_features(map_features):
-    features_groups_dict = {
-        layer_name: [folium.features.FeatureGroup(name=f"<small><strong>{layer_name}</strong></small>", show=True),
-                     False]
-        for layer_name in CATEGORY_BUCKET.values()
+def add_tree_layer_control_to_map(map):
+    base_layers = []
+    overlays = []
+    category_overlays = {
+        bucket: [] for bucket in CATEGORY_BUCKETS
     }
 
-    for feature, centroid in map_features:
-        if feature.tile_name in CATEGORY_BUCKET:
-            category_group = CATEGORY_BUCKET[feature.tile_name]
-            feature_group, added = features_groups_dict[category_group]
-            if not added:
-                yield feature_group, None
+    for item in map._children.values():
+        if not isinstance(item, folium.map.Layer) or not item.control:
+            continue
 
-                # Marking it as added
-                features_groups_dict[category_group][1] = True
-
-            sub_group = folium.plugins.FeatureGroupSubGroup(feature_group, name=feature.tile_name, show=feature.show)
-            feature.add_to(sub_group)
-
-            yield sub_group, centroid
+        key = item.layer_name
+        item.layer_name = f" {key}"
+        if not item.overlay:
+            base_layers += [item]
+        elif key in CATEGORY_BUCKET_MAP:
+            category = CATEGORY_BUCKET_MAP[key]
+            category_overlays[category] += [item]
         else:
-            yield feature, centroid
+            logging.warning(f"Putting '{key}' in the top layer - it is uncategorised!")
+            overlays += [item]
+
+    for category, category_items in category_overlays.items():
+        overlays += [
+            '<div class="leaflet-control-layers-separator"></div>',
+            {f"<i> {category}</i>": category_items}
+        ]
+
+    tlc = tree_layer_control.TreeLayerControl(
+        base_tree_entries=list(reversed(base_layers)), overlay_tree_entries=overlays,
+        overlay_tree_entries_properties={
+            f"<i> {bucket}</i>": {"selectAllCheckbox": True, "collapsed": True,} for bucket in CATEGORY_BUCKETS
+        },
+        collapsed=False, namedToggle=True,
+    )
+
+    tlc.add_to(map)
+
+    return map
 
 
 if __name__ == "__main__":
@@ -316,11 +339,15 @@ if __name__ == "__main__":
     # Has to be in the outer scope as the tempdir is used in multiple places
     with tempfile.TemporaryDirectory() as tempdir:
         logging.info("Fetch[ing] Folium dependencies")
+        extra_js_tuple = [(tree_layer_control.TreeLayerControl._js_key, tree_layer_control.TreeLayerControl._js_link),]
+        extra_css_tuple = [(tree_layer_control.TreeLayerControl._css_key, tree_layer_control.TreeLayerControl._css_link),]
         js_libs, css_libs = city_map_widget_to_minio.pull_out_leaflet_deps(tempdir,
                                                                            secrets["proxy"]["username"],
                                                                            secrets["proxy"]["password"],
                                                                            secrets["minio"]["edge"]["access"],
-                                                                           secrets["minio"]["edge"]["secret"])
+                                                                           secrets["minio"]["edge"]["secret"],
+                                                                           extra_js_deps=extra_js_tuple,
+                                                                           extra_css_deps=extra_css_tuple)
         logging.info("Fetch[ed] Folium dependencies")
 
         logging.info("G[etting] layers")
@@ -333,7 +360,7 @@ if __name__ == "__main__":
                                                 tempdir,
                                                 secrets["minio"]["edge"]["access"],
                                                 secrets["minio"]["edge"]["secret"],
-                                                layer_properties=HOTSPOT_LAYER_PROPERTIES_LOOKUP,)
+                                                layer_properties=HOTSPOT_LAYER_PROPERTIES_LOOKUP, )
         }
 
         float_left_offset = f"{MINIMAP_WIDTH + MINIMAP_PADDING}px" if subdistrict_name != "*" else "0%"
@@ -347,13 +374,12 @@ if __name__ == "__main__":
         logging.info("Generat[ing] map")
         district_map_features = generate_base_map_features(tempdir, minimap=(subdistrict_name != "*"))
 
-        assigned_feature_groups = assign_features(map_features)
-        map_feature_generator = itertools.chain(district_map_features,
-                                                assigned_feature_groups)
+        map_feature_generator = itertools.chain(district_map_features, map_features)
 
         map_zoom = DISTRICT_MAP_ZOOM if subdistrict_name != "*" else MAP_ZOOM
         data_map = city_map_widget_to_minio.generate_map(map_feature_generator,
                                                          map_zoom=map_zoom, map_right_padding=MAP_RIGHT_PADDING, )
+        data_map = add_tree_layer_control_to_map(data_map)
         logging.info("Generat[ed] map")
 
         logging.info("Writ[ing] to Minio")

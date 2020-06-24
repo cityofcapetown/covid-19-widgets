@@ -16,7 +16,7 @@ MINIO_CLASSIFICATION = minio_utils.DataClassification.EDGE
 DATA_PUBLIC_PREFIX = "data/public/"
 DATA_VULNERABILITY_PREFIX = "data/staging/vulenerability_layers/"  # yes, I know it's misspelled - should be temporary
 DATA_RESTRICTED_PREFIX = "data/private/"
-CASE_MAP_PREFIX = "widgets/private/case_count_maps/"
+CASE_MAP_PREFIX = "widgets/staging/case_count_maps/"
 
 PROV_CASE_DATA_FILENAME = "wc_all_cases.csv"
 PROV_CASE_FILE_ENCODING = "iso-8859-1"
