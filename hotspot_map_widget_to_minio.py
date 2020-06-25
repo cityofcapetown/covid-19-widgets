@@ -161,16 +161,11 @@ HOTSPOT_LAYER_PROPERTIES_LOOKUP = collections.OrderedDict((
         ("AOI_NAME", "OTH_NAME", "AOI_TYPE"), ("Area Name", "Other Name", "Area Type",),
         ("purple",), "areas_of_informality_2019.geojson", False, False, None
     )),
-    # ("Elderly Population Density", (
-    #     city_map_widget_to_minio.LayerType.CHOROPLETH,
-    #     ('GRID_ID', "CNT_AGE_BIN_55PLUS"), ("Grid ID", "People older than 55 years",),
-    #     ("Purples",), "sl_snth_pop_aggr_sqkm_grid.geojson", False, False, None
-    # )),
-    # ("Elderly Population Density", (
-    #     city_map_widget_to_minio.LayerType.CHOROPLETH,
-    #     ('index', "gridcode"), ("Hex ID", "Older Population Score",),
-    #     ("Purples",), "hdx_pop_estimates_elderly_hex9.geojson", False, False, None
-    # )),
+    ("Elderly Population Density", (
+        city_map_widget_to_minio.LayerType.CHOROPLETH,
+        ('index', "DensityPerSqkm"), ("Hex ID", "Density  / sq.km",),
+        ("Purples",), "cpop_gt55.geojson", False, False, None
+    )),
     ("Old Age Facilities", (
         city_map_widget_to_minio.LayerType.POINT,
         ('FacilityName', 'Address', 'PeopleCount', 'RoomCount', 'BedCount', 'Operator',),
@@ -209,7 +204,7 @@ CATEGORY_BUCKET_MAP = {
     "Rental Stock (houses)": "PEOPLE AT RISK",
     "Rental Stock (hostels)": "PEOPLE AT RISK",
     "Areas of Informality": "PEOPLE AT RISK",
-    # "Elderly Population Density": "PEOPLE AT RISK",
+    "Elderly Population Density": "PEOPLE AT RISK",
     "Old Age Facilities": "PEOPLE AT RISK",
     "Adult Homeless Shelters": "PEOPLE AT RISK",
 
