@@ -215,12 +215,19 @@ def calculate_latest_increase(case_data_df):
     daily_counts = case_data_df.groupby(DATE_DIAGNOSIS_COL).count()[DIED_COL].rename("DailyCases")
     logging.debug(f"daily_counts=\n{daily_counts}")
 
+    # Doing the time period Maths
     most_recent = daily_counts.index.max() - REPORTING_DELAY
     previous_period_end = most_recent - REPORTING_PERIOD
     previous_period_start = previous_period_end - REPORTING_PERIOD
 
-    delta = daily_counts[previous_period_end:most_recent].median() - daily_counts[
-                                                                     previous_period_start:previous_period_end].median()
+    # Getting the median values. If NaN, it means there weren't any cases in that period
+    most_recent_period_median = daily_counts[previous_period_end:most_recent].median()
+    most_recent_period_median = most_recent_period_median if pandas.notna(most_recent_period_median) else 0
+
+    previous_period_median = daily_counts[previous_period_start:previous_period_end].median()
+    previous_period_median = previous_period_median if pandas.notna(previous_period_median) else 0
+
+    delta = most_recent_period_median - previous_period_median
     logging.debug(f"most_recent={most_recent}, previous_period_end={previous_period_end}, delta={delta}")
 
     return delta
