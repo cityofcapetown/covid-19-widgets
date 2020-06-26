@@ -74,7 +74,7 @@ HOTSPOT_LAYER_PROPERTIES_LOOKUP = collections.OrderedDict((
     # Population Density
     ("2019 Population Estimate", (
         city_map_widget_to_minio.LayerType.CHOROPLETH,
-        (HEX_COUNT_INDEX_PROPERTY, "PopDensity2019PerSqkm",), ("Hex ID", "People / sq.km",),
+        (HEX_COUNT_INDEX_PROPERTY, "PopDensity2019PerSqkm",), ("Hex ID", "People / km²",),
         ("Blues",), "sl_du_pop_est_2019_hex9.geojson", False, False, None
     )),
 
@@ -91,7 +91,7 @@ HOTSPOT_LAYER_PROPERTIES_LOOKUP = collections.OrderedDict((
         ("SCHL", "SUB", "QUINT"), ("School Name", "Suburb", "Quintile",),
         ("green", "book"), "wced_metro_schools_2019.geojson", False, False, None
     )),
-    ("Shopping Centres (>5k sq.m)", (
+    ("Shopping Centres (>5k m²)", (
         city_map_widget_to_minio.LayerType.POINT,
         ("Centre_nam", "Physical_a",), ("Centre Name", "Address",),
         ("green", "shopping-cart"), "shopping_centres_above_5000sqm_rode_2020.geojson", False, False, None
@@ -130,7 +130,7 @@ HOTSPOT_LAYER_PROPERTIES_LOOKUP = collections.OrderedDict((
     ("Employment Density", (
         city_map_widget_to_minio.LayerType.CHOROPLETH,
         (HEX_COUNT_INDEX_PROPERTY, "EmploymentDensityPerSqkm",),
-        ("Hex ID", "Employees / sq.km",),
+        ("Hex ID", "Employees / km²",),
         ("Greens",), "hh_emp_incomegrp_sp_tz2018_hex8.geojson", False, False, None
     )),
 
@@ -161,9 +161,9 @@ HOTSPOT_LAYER_PROPERTIES_LOOKUP = collections.OrderedDict((
         ("AOI_NAME", "OTH_NAME", "AOI_TYPE"), ("Area Name", "Other Name", "Area Type",),
         ("purple",), "areas_of_informality_2019.geojson", False, False, None
     )),
-    ("Elderly Population Density", (
+    ("Elderly Population Density Estimate", (
         city_map_widget_to_minio.LayerType.CHOROPLETH,
-        ('index', "DensityPerSqkm"), ("Hex ID", "Density  / sq.km",),
+        ('index', "DensityPerSqkm"), ("Hex ID", "People older than 55  / km²",),
         ("Purples",), "cpop_gt55.geojson", False, False, None
     )),
     ("Old Age Facilities", (
@@ -191,7 +191,7 @@ CATEGORY_BUCKET_MAP = {
 
     # "PLACES OF RISK",
     "WCED Schools": "PLACES OF RISK",
-    "Shopping Centres (>5k sq.m)": "PLACES OF RISK",
+    "Shopping Centres (>5k m²)": "PLACES OF RISK",
     "Public Transport Interchanges": "PLACES OF RISK",
     "Public Transport Activity": "PLACES OF RISK",
     "Trading Locations": "PLACES OF RISK",
@@ -204,7 +204,7 @@ CATEGORY_BUCKET_MAP = {
     "Rental Stock (houses)": "PEOPLE AT RISK",
     "Rental Stock (hostels)": "PEOPLE AT RISK",
     "Areas of Informality": "PEOPLE AT RISK",
-    "Elderly Population Density": "PEOPLE AT RISK",
+    "Elderly Population Density Estimate": "PEOPLE AT RISK",
     "Old Age Facilities": "PEOPLE AT RISK",
     "Adult Homeless Shelters": "PEOPLE AT RISK",
 
