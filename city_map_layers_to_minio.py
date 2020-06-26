@@ -104,8 +104,9 @@ CASE_COUNT_KEY = "CountCol"
 NOT_SPATIAL_CASE_COUNT = "not_spatial_count"
 CASE_COUNT_TOTAL = "total_count"
 LATEST_INCREASE = "latest_increase"
+LATEST_RELATIVE_INCREASE = "latest_relative_increase"
 
-REPORTING_PERIOD = pandas.Timedelta(days=3)
+REPORTING_PERIOD = pandas.Timedelta(days=7)
 REPORTING_DELAY = pandas.Timedelta(days=3)
 
 
@@ -211,7 +212,7 @@ def spatialise_case_data(case_data_df, case_data_groupby_index, data_gdf, data_g
     return case_count_gdf
 
 
-def calculate_latest_increase(case_data_df):
+def calculate_latest_increase(case_data_df, relative=False):
     daily_counts = case_data_df.groupby(DATE_DIAGNOSIS_COL).count()[DIED_COL].rename("DailyCases")
     logging.debug(f"daily_counts=\n{daily_counts}")
 
@@ -228,6 +229,8 @@ def calculate_latest_increase(case_data_df):
     previous_period_median = previous_period_median if pandas.notna(previous_period_median) else 0
 
     delta = most_recent_period_median - previous_period_median
+    delta /= previous_period_median if relative else 1
+
     logging.debug(f"most_recent={most_recent}, previous_period_end={previous_period_end}, delta={delta}")
 
     return delta
@@ -239,7 +242,8 @@ def generate_metadata(case_data_df, case_data_groupby_index):
             CASE_COUNT_KEY: case_count_col,
             NOT_SPATIAL_CASE_COUNT: int(metadata_df[case_data_groupby_index].isna().sum()),
             CASE_COUNT_TOTAL: int(metadata_df.shape[0]),
-            LATEST_INCREASE: int(calculate_latest_increase(metadata_df))
+            LATEST_INCREASE: int(calculate_latest_increase(metadata_df)),
+            LATEST_RELATIVE_INCREASE: float(calculate_latest_increase(metadata_df, relative=True))
         }
         for metadata_key, case_count_col, metadata_df in (
             (CUMULATIVE_METADATA_KEY, CASE_COUNT_COL, case_data_df),
