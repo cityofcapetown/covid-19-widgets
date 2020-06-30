@@ -1,6 +1,6 @@
 ###################
 #
-# Widget to plot the self assessment of the business units ability to deliver daily tasks
+# Widget to plot the self assessment OHS cases
 #
 ##################
 
