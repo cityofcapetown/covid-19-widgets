@@ -90,6 +90,7 @@ DISTRICT_COL = "District"
 SUBDISTRICT_COL = "Subdistrict"
 DATE_DIAGNOSIS_COL = "Date.of.Diagnosis"
 DATE_DEATH_COL = "Date.of.Death"
+DATE_ADMITTED_COL = "Admission.Date"
 DIED_COL = "Died"
 
 ACTIVE_METADATA_KEY = "Active"
@@ -140,7 +141,9 @@ def get_case_data(minio_access, minio_secret):
         )
 
         case_data_df = pandas.read_csv(temp_datafile.name, encoding=PROV_CASE_FILE_ENCODING)
-        case_data_df[DATE_DIAGNOSIS_COL] = pandas.to_datetime(case_data_df[DATE_DIAGNOSIS_COL])
+
+        for col in (DATE_DIAGNOSIS_COL, DATE_ADMITTED_COL, DATE_DEATH_COL):
+            case_data_df[col] = pandas.to_datetime(case_data_df[col])
 
     return case_data_df
 
