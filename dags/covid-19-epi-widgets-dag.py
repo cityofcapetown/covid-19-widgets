@@ -24,7 +24,7 @@ startup_cmd = (
 )
 
 dag_interval = timedelta(hours=1)
-dag = DAG('covid-19-city-map-widgets',
+dag = DAG('covid-19-epi-widgets',
           start_date=DAG_STARTDATE,
           catchup=False,
           default_args=default_args,
@@ -129,6 +129,17 @@ city_hotspot_map_plot_operators = [
     )
     for district_filename_prefix, district_name, subdistrict_tuples in DISTRICT_TUPLES
     for subdistrict_filename_prefix, subdistrict_name in subdistrict_tuples
+]
+
+SUBDISTRICT_STATS_TABLE = 'subdistrict-stats-table'
+subdistrict_table_operators = [
+    covid_19_widget_task(
+        SUBDISTRICT_STATS_TABLE,
+        task_cmdline_args=[district_filename_prefix, district_name, "all", '*']
+    )
+    # only done on a per district basis, for the City, for now
+    for district_filename_prefix, district_name, _ in DISTRICT_TUPLES
+    if district_filename_prefix != "prov"
 ]
 
 # Dependencies
