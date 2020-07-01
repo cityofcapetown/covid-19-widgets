@@ -76,7 +76,7 @@ function {formatter_name}(cell){{
 
 STATS_WIDGET_NAME = "covid19_subdistrict_stats_table"
 STATS_WIDGET_TITLE = "City of Cape Town Covid-19 Summary Statistics"
-STATS_WIDGET_PREFIX = "widgets/private/stats_widget/"
+STATS_WIDGET_PREFIX = "widgets/private/subdistrict_stats_table_widgets/"
 
 
 def get_subdistrict_populations(minio_access, minio_secret):
