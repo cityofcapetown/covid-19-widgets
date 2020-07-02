@@ -204,8 +204,6 @@ def spatialise_case_data(case_data_df, case_data_groupby_index, data_gdf, data_g
         case_count_gdf[col] = counts
         if fill_nas:
             case_count_gdf[col].fillna(0, inplace=True)
-        else:
-            case_count_gdf.dropna(subset=[col], inplace=True)
 
         logging.debug(
             f"case_count_gdf.sort_values(by='{col}', ascending=False).head(5)=\n"
