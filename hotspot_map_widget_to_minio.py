@@ -121,12 +121,11 @@ HOTSPOT_LAYER_PROPERTIES_LOOKUP = collections.OrderedDict((
         ("Store_Name", "Store_Group", "Address"), ("Store Name", "Store Group", "Address",),
         ("green", "shopping-basket"), "retail_stores.geojson", False, False, None
     )),
-    # ("Employment Density", (
-    #     city_map_widget_to_minio.LayerType.CHOROPLETH,
-    #     ("index", "MedianEmployees", "MedianEmployeesPerFloorArea", "MaxEmployees", "SampleSize"),
-    #     ("Hex ID", "Median Employees", "Median Employees per Floor Size", "Biggset Employer", "Businesses Surveyed"),
-    #     ("Greens",), "employment_density_survey_hex7.geojson", False, False, None
-    # )),
+    ("Employer Sample", (
+        city_map_widget_to_minio.LayerType.POINT,
+        ('NAME_CMP', 'BUSINESS', 'TOTAL_EMPL'), ("Name of Company", "Type of Business", "Total Employees"),
+        ("green", "briefcase"), "employment_density_survey_20200515.geojson", False, False, None
+    )),
     ("Employment Density", (
         city_map_widget_to_minio.LayerType.CHOROPLETH,
         (HEX_COUNT_INDEX_PROPERTY, "EmploymentDensityPerSqkm",),
@@ -198,6 +197,7 @@ CATEGORY_BUCKET_MAP = {
     "SASSA Offices": "PLACES OF RISK",
     'SASSA Paypoint (Shops)': "PLACES OF RISK",
     'Employment Density': "PLACES OF RISK",
+    "Employer Sample": "PLACES OF RISK",
 
     # "PEOPLE AT RISK",
     "Rental Stock (flats)": "PEOPLE AT RISK",
@@ -210,6 +210,45 @@ CATEGORY_BUCKET_MAP = {
 
     # "VULNERABILITY INDICES"
     "WCPG SEVI": "VULNERABILITY INDICES",
+}
+
+marker_icon_create_function_template = '''
+   function(cluster) {{
+     var styleSheetExists = false;
+     for (var i =0; i < document.styleSheets.length; i++) {{
+        if (document.styleSheets[i].name == '{name}') {{
+            styleSheetExists = true;
+            break;
+        }}
+     }}
+     if (!styleSheetExists) {{
+        var element = document.createElement('style');
+        element.type = 'text/css';
+        document.getElementsByTagName('head')[0].appendChild(element);
+        styleSheet = document.styleSheets[document.styleSheets.length - 1];
+        styleSheet.name = '{name}';
+        styleSheet.insertRule('.{name} {{ background-color: {background_colour} }}', 0);
+        styleSheet.insertRule('.{name} div {{ background-color: {background_colour} }}', 0);
+     }}
+     
+     var childCount = cluster.getChildCount()
+     var innerMarkerSize = Math.min(Math.max(childCount, 20), 90);
+     var outerMarkerSize = Math.min(Math.max(childCount + 10, 30), 100);
+     var divSizeString = '"width:' + innerMarkerSize + 'px;height:' + innerMarkerSize + 'px;"'
+     var spanSizeString = '"line-height:' + innerMarkerSize + 'px"'
+   
+     return L.divIcon({{html: '<div style=' + divSizeString + '><span style=' + spanSizeString + '>' + childCount + '</span></div>',
+                        className: 'marker-cluster {name}',
+                        iconSize: new L.Point(outerMarkerSize, outerMarkerSize)}});
+    }}
+'''
+
+MARKER_ICON_PROPERTIES = {
+    "POPULATION DENSITY": {"name": "marker-cluster-pop-density", "background_colour": "rgba(87, 144, 193, 0.6)"},
+    "VULNERABILITY INDICES": {"name": "marker-cluster-vulnerability-indices",
+                              "background_colour": "rgba(227, 125, 74, 0.6)"},
+    "PLACES OF RISK": {"name": "marker-cluster-places-of-risk", "background_colour": "rgba(111, 173, 37, 0.6)"},
+    "PEOPLE AT RISK": {"name": "marker-cluster-people-at-risk", "background_colour": "rgba(209, 82, 184, 0.6)"},
 }
 
 BIN_QUANTILES = [0, 0, 0.5, 0.75, 0.9, 0.99, 1]
@@ -268,6 +307,45 @@ def generate_base_map_features(tempdir, minimap=False):
 
     for feature in features:
         yield feature, None
+
+
+def create_marker_clusters(features):
+    category_clusters = {
+        bucket: folium.plugins.MarkerCluster(
+            control=False,
+            icon_create_function=marker_icon_create_function_template.format(**MARKER_ICON_PROPERTIES[bucket]),
+            disableClusteringAtZoom=13, spiderfyOnMaxZoom=False
+        )
+        for bucket in CATEGORY_BUCKETS
+    }
+    # Adding the clusters to the map features
+    features = [(cluster, None) for cluster in category_clusters.values()] + features
+
+    geojson_marker_features = [
+        (feature, centroid) for feature, centroid in features
+        if (feature.layer_name in CATEGORY_BUCKET_MAP and
+            HOTSPOT_LAYER_PROPERTIES_LOOKUP[feature.layer_name][0] is city_map_widget_to_minio.LayerType.POINT)
+    ]
+
+    for feature, centroids in geojson_marker_features:
+        logging.debug(f"Moving '{feature.layer_name}' into a marker cluster")
+        # Removing the feature from the map features
+        feature_tuple = (feature, centroids)
+        feature_index = features.index(feature_tuple)
+        features.remove(feature_tuple)
+
+        # Getting the cluster for that category
+        cluster = category_clusters[CATEGORY_BUCKET_MAP[feature.layer_name]]
+
+        # Creating the subgroup, and adding the feature to it
+        feature_subgroup = folium.plugins.FeatureGroupSubGroup(cluster, show=feature.show, name=feature.layer_name)
+        feature_subgroup.add_child(feature)
+
+        # Adding the subgroup to the cluster and the map
+        cluster.add_child(feature_subgroup)
+        features.insert(feature_index, (feature_subgroup, centroids))
+
+    return features
 
 
 def add_tree_layer_control_to_map(map):
@@ -334,8 +412,10 @@ if __name__ == "__main__":
     # Has to be in the outer scope as the tempdir is used in multiple places
     with tempfile.TemporaryDirectory() as tempdir:
         logging.info("Fetch[ing] Folium dependencies")
-        extra_js_tuple = [(tree_layer_control.TreeLayerControl._js_key, tree_layer_control.TreeLayerControl._js_link),]
-        extra_css_tuple = [(tree_layer_control.TreeLayerControl._css_key, tree_layer_control.TreeLayerControl._css_link),]
+        extra_js_tuple = [(tree_layer_control.TreeLayerControl._js_key, tree_layer_control.TreeLayerControl._js_link), ]
+        extra_css_tuple = [
+            (tree_layer_control.TreeLayerControl._css_key, tree_layer_control.TreeLayerControl._css_link),
+        ]
         js_libs, css_libs = city_map_widget_to_minio.pull_out_leaflet_deps(tempdir,
                                                                            secrets["proxy"]["username"],
                                                                            secrets["proxy"]["password"],
@@ -365,6 +445,10 @@ if __name__ == "__main__":
                                                            float_left_offset=float_left_offset)
         )
         logging.info("G[ot] layers")
+
+        logging.info("Add[ing] Marker Clusters")
+        map_features = create_marker_clusters(map_features)
+        logging.info("Add[ed] Marker Clusters")
 
         logging.info("Generat[ing] map")
         district_map_features = generate_base_map_features(tempdir, minimap=(subdistrict_name != "*"))

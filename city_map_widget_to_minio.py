@@ -368,12 +368,12 @@ def pull_out_leaflet_deps(tempdir, proxy_username, proxy_password, minio_access,
 
     js_libs = [
         (key, get_leaflet_dep_file(url, tempdir, http_session, minio_access, minio_secret))
-        for key, url in folium.folium._default_js + extra_js_deps
+        for key, url in (folium.folium._default_js + extra_js_deps)
     ]
 
     css_libs = [
         (key, get_leaflet_dep_file(url, tempdir, http_session, minio_access, minio_secret))
-        for key, url in folium.folium._default_css + extra_css_deps
+        for key, url in (folium.folium._default_css + extra_css_deps)
     ]
 
     return js_libs, css_libs
