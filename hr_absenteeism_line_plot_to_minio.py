@@ -229,7 +229,9 @@ if __name__ == "__main__":
     for department in directorate_departments:
         logging.info(f"Generat[ing] plot for '{department}'...")
         department_file_prefix = department[:department.index("(")] if "(" in department else department
-        department_file_prefix = department_file_prefix.strip().lower().replace(" ", "_")
+        department_file_prefix = (
+            department_file_prefix.strip().lower().replace(" ", "_").replace("&", "and").replace(":", "")
+        )
         logging.debug(f"department_file_prefix={department_file_prefix}")
 
         dept_df = directorate_filter_df(hr_filtered_df, "*", department)
