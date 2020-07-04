@@ -19,7 +19,6 @@ STAFF_NUMBER_COL_NAME = "StaffNumber"
 DATE_COL_NAME = "Date"
 STATUS_COL = "Categories"
 SUCCINCT_STATUS_COL = "SuccinctStatus"
-ESSENTIAL_COL = "EssentialStaff"
 ASSESSED_COL = "AssessedStaff"
 
 ISO_TIMESTAMP_FORMAT = "%Y-%m-%dT%H:%M"
@@ -140,7 +139,6 @@ def get_latest_values_dict(hr_df, hr_master_df, prefix="city"):
     staff_sick = current_hr_df[STATUS_COL].isin(SICK_STATUSES).sum() if staff_reported > 0 else 0
     staff_covid = current_hr_df[STATUS_COL].isin(COVID_STATUSES).sum() if staff_reported > 0 else 0
 
-    staff_essential = hr_master_df[ESSENTIAL_COL].sum()
     staff_assessed = hr_master_df[ASSESSED_COL].sum()
 
     business_continuity_dict = {
@@ -150,7 +148,6 @@ def get_latest_values_dict(hr_df, hr_master_df, prefix="city"):
         f"{prefix}_staff_working_remotely": str(staff_working_remotely),
         f"{prefix}_staff_sick": str(staff_sick),
         f"{prefix}_staff_covid": str(staff_covid),
-        f"{prefix}_staff_essential": str(staff_essential),
         f"{prefix}_staff_assessed": str(staff_assessed)
     }
     logging.debug(f"business_continuity_dict=\n{pprint.pformat(business_continuity_dict)}")
