@@ -221,7 +221,10 @@ if __name__ == "__main__":
 
     plot_tuples = [(plot_html, plot_filename)]
 
-    directorate_departments = hr_filtered_df[DEPARTMENT_COL].unique() if directorate_title != "*" else []
+    directorate_departments = [
+        val for val in hr_filtered_df[DEPARTMENT_COL].unique()
+        if pandas.notna(val)
+    ] if directorate_title != "*" else []
     logging.debug(f"Departments: {', '.join(map(str,directorate_departments))}")
     for department in directorate_departments:
         logging.info(f"Generat[ing] plot for '{department}'...")
