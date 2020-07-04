@@ -80,27 +80,17 @@ def get_plot_df(succinct_hr_df):
     plot_df = plot_df[
         plot_df[DATE_COL_NAME].apply(lambda date: date not in za_holidays) &
         (pandas.to_datetime(plot_df[DATE_COL_NAME]).dt.weekday != 6)  # Sunday
-        ]
+    ]
+    plot_df[DATE_COL_NAME] = pandas.to_datetime(plot_df[DATE_COL_NAME])
 
     return plot_df
 
 
-def generate_plot(plot_df, sast_tz='Africa/Johannesburg'):
-    start_date = datetime.datetime.combine(
-        plot_df[DATE_COL_NAME].min(), datetime.datetime.min.time()
-    )
-    end_date = datetime.datetime.combine(
-        pandas.Timestamp.now(tz=sast_tz).date(), datetime.datetime.min.time()
-    )
+def generate_plot(plot_df):
+    start_date = plot_df[DATE_COL_NAME].max() - pandas.Timedelta(days=28)
+    end_date = plot_df[DATE_COL_NAME].max() + pandas.Timedelta(days=1)
+    logging.debug(f"x axis range: {start_date} - {end_date}")
 
-    TOOLTIPS = [
-        ("Date", "@Date{%F}"),
-        ("Staff Absent", f"@{ABSENTEEISM_RATE_COL}{{0.0 %}}"),
-        ("Covid-19 Exposure", f"@{COVID_SICK_COL}{{0.0 %}}"),
-        ("Staff Assessed", f"@{DAY_COUNT_COL}{{0 a}}")
-    ]
-    hover_tool = HoverTool(tooltips=TOOLTIPS,
-                           formatters={'@Date': 'datetime'})
     # Main plot
     line_plot = figure(
         title=None,
@@ -110,7 +100,6 @@ def generate_plot(plot_df, sast_tz='Africa/Johannesburg'):
         y_range=(0, 1.05),
         toolbar_location=None,
     )
-    line_plot.add_tools(hover_tool)
 
     # Adding count on the right
     line_plot.extra_y_ranges = {"count_range": Range1d(start=0, end=plot_df[DAY_COUNT_COL].max() * 1.1)}
@@ -145,6 +134,16 @@ def generate_plot(plot_df, sast_tz='Africa/Johannesburg'):
     ]
     legend = Legend(items=legend_items, location="center", orientation="horizontal", padding=2, margin=2)
     line_plot.add_layout(legend, "below")
+
+    # Tooltip
+    tooltips = [
+        ("Date", "@Date{%F}"),
+        ("Staff Absent", f"@{ABSENTEEISM_RATE_COL}{{0.0 %}}"),
+        ("Covid-19 Exposure", f"@{COVID_SICK_COL}{{0.0 %}}"),
+        ("Staff Assessed", f"@{DAY_COUNT_COL}{{0 a}}")
+    ]
+    hover_tool = HoverTool(tooltips=tooltips, mode='vline', renderers=[count_vbar], formatters={'@Date': 'datetime'})
+    line_plot.add_tools(hover_tool)
 
     plot_html = file_html(line_plot, CDN, "Business Continuity HR Capacity Time Series")
 
