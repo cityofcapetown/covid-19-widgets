@@ -84,12 +84,21 @@ def merge_df(hr_df, hr_master_df):
     return combined_df
 
 
-def directorate_filter_df(hr_df, directorate_title):
+def directorate_filter_df(hr_df, directorate_title, department_title=None):
+    logging.debug(f"hr_df.shape={hr_df.shape}")
     filtered_df = (
         hr_df.query(
             f"Directorate.str.lower() == '{directorate_title.lower()}'"
         ) if directorate_title != "*" else hr_df
     )
+    logging.debug(f"(post directorate filter) filtered_df.shape={filtered_df.shape}")
+
+    filtered_df = (
+        filtered_df.query(
+            f"Department.str.lower() == '{department_title.lower()}'"
+        ) if department_title else filtered_df
+    )
+    logging.debug(f"(post dept filter) filtered_df.shape={filtered_df.shape}")
 
     return filtered_df
 

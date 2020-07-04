@@ -23,6 +23,7 @@ MINIO_CLASSIFICATION = minio_utils.DataClassification.EDGE
 
 DATA_RESTRICTED_PREFIX = "data/private/"
 
+DEPARTMENT_COL = "Department"
 DATE_COL_NAME = "Date"
 STATUS_COL = "Categories"
 SUCCINCT_STATUS_COL = "SuccinctStatus"
@@ -57,6 +58,7 @@ def make_statuses_succinct_again(hr_df):
 
 
 def get_plot_df(succinct_hr_df):
+    succinct_hr_df = succinct_hr_df.copy()
     succinct_hr_df[DATE_COL_NAME] = succinct_hr_df[DATE_COL_NAME].dt.date
     plot_df = (
         succinct_hr_df.groupby(DATE_COL_NAME)
@@ -211,15 +213,37 @@ if __name__ == "__main__":
     hr_succinct_df = make_statuses_succinct_again(hr_filtered_df)
     logging.info("...Add[ed] succinct status column.")
 
-    logging.info("Generat[ing] absenteeism plot...")
+    logging.info("Generat[ing] directorate absenteeism plot...")
     absenteeism_df = get_plot_df(hr_succinct_df)
     plot_html = generate_plot(absenteeism_df)
-    logging.info("...Generat[ed] absenteeism plot")
+    plot_filename = f"{directorate_file_prefix}_{PLOT_FILENAME_SUFFIX}"
+    logging.info("...Generat[ed] directorate absenteeism plot")
+
+    plot_tuples = [(plot_html, plot_filename)]
+
+    directorate_departments = hr_filtered_df[DEPARTMENT_COL].unique() if directorate_title != "*" else []
+    logging.debug(f"Departments: {', '.join(map(str,directorate_departments))}")
+    for department in directorate_departments:
+        logging.info(f"Generat[ing] plot for '{department}'...")
+        department_file_prefix = department[:department.index("(")] if "(" in department else department
+        department_file_prefix = department_file_prefix.strip().lower().replace(" ", "_")
+        logging.debug(f"department_file_prefix={department_file_prefix}")
+
+        dept_df = directorate_filter_df(hr_filtered_df, "*", department)
+        dept_succint_df = make_statuses_succinct_again(dept_df)
+        absenteeism_df = get_plot_df(dept_succint_df)
+        plot_html = generate_plot(absenteeism_df)
+
+        plot_filename = f"{directorate_file_prefix}_{department_file_prefix}_{PLOT_FILENAME_SUFFIX}"
+
+        plot_tuples += [(plot_html, plot_filename)]
+
+        logging.info(f"...Generat[ed] plot for '{department}'")
 
     logging.info("Writ[ing] everything to Minio...")
-    plot_filename = f"{directorate_file_prefix}_{PLOT_FILENAME_SUFFIX}"
-    write_to_minio(plot_html, plot_filename,
-                   secrets["minio"]["edge"]["access"], secrets["minio"]["edge"]["secret"])
+    for html, filename  in plot_tuples:
+        write_to_minio(html, filename,
+                       secrets["minio"]["edge"]["access"], secrets["minio"]["edge"]["secret"])
     logging.info("...Wr[ote] everything to Minio")
 
     logging.info("...Done!")
