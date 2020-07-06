@@ -92,11 +92,15 @@ SUBDISTRICT_COL = "Subdistrict"
 DATE_DIAGNOSIS_COL = "Date.of.Diagnosis"
 DATE_DEATH_COL = "Date.of.Death"
 DATE_ADMITTED_COL = "Admission.Date"
+HOSPITALISED_COL = "Hospitalised"
+ICU_COL = "Admitted.to.ICU"
 DIED_COL = "Died"
 
 ACTIVE_METADATA_KEY = "Active"
 CUMULATIVE_METADATA_KEY = "All"
 DEATHS_METADATA_KEY = "Deaths"
+HOSPITALISED_METADATA_KEY = "Hospitalised"
+ICU_METADATA_KEY = "ICU"
 
 ACTIVE_CASE_COUNT_COL = "ActiveCaseCount"
 CASE_COUNT_COL = "CaseCount"
@@ -184,24 +188,39 @@ def filter_deaths_case_data(case_data_df):
     return case_data_df[death_filter]
 
 
+def filter_hospitalised_case_data(case_data_df):
+    hospital_filter = case_data_df[HOSPITALISED_COL] == "Yes"
+
+    logging.debug(f"Hospitalised / Total cases {hospital_filter.sum()} / {hospital_filter.shape[0]}")
+
+    return case_data_df[hospital_filter]
+
+
+def filter_icu_case_data(case_data_df):
+    icu_filter = case_data_df[ICU_COL] == "Yes"
+
+    logging.debug(f"Admitted to ICU / Total cases {icu_filter.sum()} / {icu_filter.shape[0]}")
+
+    return case_data_df[icu_filter]
+
+
+CASE_COL_FILTER_FUNC_MAP = ((
+    (CASE_COUNT_COL, (lambda df: df, CUMULATIVE_METADATA_KEY)),
+    (ACTIVE_CASE_COUNT_COL, (filter_active_case_data, ACTIVE_METADATA_KEY)),
+    (DEATHS_COUNT_COL, (filter_deaths_case_data, DEATHS_METADATA_KEY)),
+    (HOSPITALISED_COL, (filter_hospitalised_case_data, HOSPITALISED_METADATA_KEY)),
+    (ICU_COL, (filter_icu_case_data, ICU_METADATA_KEY))
+))
+
+
 def spatialise_case_data(case_data_df, case_data_groupby_index, data_gdf, data_gdf_index, fill_nas=False):
-    case_counts = case_data_df.groupby(
-        case_data_groupby_index
-    ).count()[DATE_DIAGNOSIS_COL].rename(CASE_COUNT_COL)
-
-    active_case_counts = filter_active_case_data(case_data_df).groupby(
-        case_data_groupby_index
-    ).count()[DATE_DIAGNOSIS_COL].rename(ACTIVE_CASE_COUNT_COL)
-
-    fatal_case_counts = filter_deaths_case_data(case_data_df).groupby(
-        case_data_groupby_index
-    ).count()[DATE_DEATH_COL].rename(DEATHS_COUNT_COL)
-
     case_count_gdf = data_gdf.copy().set_index(data_gdf_index)
 
-    for col, counts in ((CASE_COUNT_COL, case_counts),
-                        (ACTIVE_CASE_COUNT_COL, active_case_counts),
-                        (DEATHS_COUNT_COL, fatal_case_counts)):
+    for col, (filter_case_data_func, _) in CASE_COL_FILTER_FUNC_MAP:
+        counts = filter_case_data_func(case_data_df).assign(**{col: 1}).groupby(
+            case_data_groupby_index
+        ).sum()[col]
+
         case_count_gdf[col] = counts
         if fill_nas:
             case_count_gdf[col].fillna(0, inplace=True)
@@ -210,6 +229,9 @@ def spatialise_case_data(case_data_df, case_data_groupby_index, data_gdf, data_g
             f"case_count_gdf.sort_values(by='{col}', ascending=False).head(5)=\n"
             f"{case_count_gdf.sort_values(by=col, ascending=False).head(5)}"
         )
+
+    # Removing what we can
+    case_count_gdf.dropna(subset=[col for col, _ in CASE_COL_FILTER_FUNC_MAP], how="all", inplace=True)
 
     return case_count_gdf
 
@@ -242,16 +264,14 @@ def generate_metadata(case_data_df, case_data_groupby_index):
     metadata_dict = {
         metadata_key: {
             CASE_COUNT_KEY: case_count_col,
-            NOT_SPATIAL_CASE_COUNT: int(metadata_df[case_data_groupby_index].isna().sum()),
-            CASE_COUNT_TOTAL: int(metadata_df.shape[0]),
-            LATEST_INCREASE: int(calculate_latest_increase(metadata_df)),
-            LATEST_RELATIVE_INCREASE: float(calculate_latest_increase(metadata_df, relative=True))
+            NOT_SPATIAL_CASE_COUNT: int(
+                filter_case_data_func(case_data_df)[case_data_groupby_index].isna().sum()
+            ),
+            CASE_COUNT_TOTAL: int(filter_case_data_func(case_data_df).shape[0]),
+            LATEST_INCREASE: int(calculate_latest_increase(filter_case_data_func(case_data_df))),
+            LATEST_RELATIVE_INCREASE: float(calculate_latest_increase(filter_case_data_func(case_data_df), relative=True))
         }
-        for metadata_key, case_count_col, metadata_df in (
-            (CUMULATIVE_METADATA_KEY, CASE_COUNT_COL, case_data_df),
-            (ACTIVE_METADATA_KEY, ACTIVE_CASE_COUNT_COL, filter_active_case_data(case_data_df)),
-            (DEATHS_METADATA_KEY, DEATHS_COUNT_COL, filter_deaths_case_data(case_data_df)),
-        )
+        for case_count_col, (filter_case_data_func, metadata_key) in CASE_COL_FILTER_FUNC_MAP
     }
     logging.debug(f"metadata_dict={metadata_dict}")
 
