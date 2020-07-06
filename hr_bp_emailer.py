@@ -31,19 +31,19 @@ DATE_COL = "Date"
 DIRECTORATE_COL = "Directorate"
 CATEGORY_COL = "Categories"
 EVALUATION_COL = "Evaluation"
-ORG_HIERACHY = ["Directorate", "Department", "Branch", "Section", "Division", "Div Sub Area", "Unit", "Subunit"]
+ORG_HIERACHY = ["Directorate", "Department", "Branch", "Section",]
 ESSENTIAL_COL = "EssentialStaff"
 ASSESSED_COL = "AssessedStaff"
 APPROVER_COL = "Approver"
 APPROVER_STAFF_NO_COL = "ApproverStaffNumber"
-HR_PEOPLE_SHARE_COLS = [HR_STAFFNUMBER, DATE_COL, "Position", "First name", "Last name", "Org Unit Name",
+HR_PEOPLE_SHARE_COLS = [HR_STAFFNUMBER, DATE_COL, "Position", 'Employee', "Org Unit Name",
                         APPROVER_COL, APPROVER_STAFF_NO_COL,
                         CATEGORY_COL, EVALUATION_COL,
                         *ORG_HIERACHY,
                         "FebMostCommonClockingLocation", ]
 APPROVER_MASTER_COL = "Approver Name"
 APPROVER_MASTER_STAFF_NO_COL = "Approver Staff No"
-HR_MISSING_PEOPLE_SHARE_COLS = [HR_STAFFNUMBER, "Position", "First name", "Last name", "Org Unit Name",
+HR_MISSING_PEOPLE_SHARE_COLS = [HR_STAFFNUMBER, "Position", 'Employee', "Org Unit Name",
                                 APPROVER_MASTER_COL, APPROVER_MASTER_STAFF_NO_COL,
                                 *ORG_HIERACHY,
                                 "FebMostCommonClockingLocation"]
@@ -242,12 +242,13 @@ def get_email_stats(directorate_merged_df, directorate_master_df):
 
     # Merging in approver name and sorting
     directorate_master_df[HR_STAFFNUMBER] = directorate_master_df[HR_STAFFNUMBER].astype(str)
+    logging.debug(directorate_master_df.columns)
     approver_stats_df = approver_stats_df.merge(
-        directorate_master_df[["First name", "Last name", HR_STAFFNUMBER]],
+        directorate_master_df[['Employee', HR_STAFFNUMBER]],
         left_index=True, right_on=HR_STAFFNUMBER,
         validate="one_to_one"
     ).sort_values(
-        by=["Not Assessed", "Last name"],
+        by=["Not Assessed", "Employee"],
         ascending=False
     )
     logging.debug(f"approver_stats_df.head(10)=\n{approver_stats_df.head(10)}")
@@ -304,7 +305,7 @@ def render_email(email_template, receiver_dict, directorate,
     message_id = str(uuid.uuid4())
 
     approver_details_df = approver_details_df[approver_details_df["Not Assessed"] > 0][
-        ["First name", "Last name", "StaffNumber", "Not Assessed", "Assessed", "Total"]
+        ['Employee', "StaffNumber", "Not Assessed", "Assessed", "Total"]
     ]
 
     body_dict = dict(
