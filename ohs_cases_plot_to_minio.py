@@ -108,7 +108,7 @@ def generate_plot(ohs_plot_df, sast_tz='Africa/Johannesburg'):
 
     fig.update_yaxes(
         title="Cumulative Positive Cases",
-        dtick=10,
+       # dtick=10,
         tickfont=dict(
             size=10,
         )
