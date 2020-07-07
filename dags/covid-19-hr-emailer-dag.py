@@ -62,7 +62,7 @@ k8s_run_args = {
 
 def covid_19_widget_task(task_name, task_args, task_kwargs={}):
     """Factory for k8sPodOperator"""
-    directorate_sanitised = task_args[0].lower.replace(" ", "-").replace("&", "and")
+    directorate_sanitised = task_args[0].lower().replace(" ", "-").replace("&", "and")
     name = "covid-19-hr-emailer-{}-{}".format(task_name, directorate_sanitised)
     run_args = {**k8s_run_args.copy(), **task_kwargs}
     run_cmd = "bash -c '{} && \"$COVID_19_WIDGETS_DIR\"/bin/{}.sh {{{{ ds }}}} \"{}\"'".format(
