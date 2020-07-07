@@ -182,7 +182,7 @@ def generate_map_features(layers_dict, layer_properties=LAYER_PROPERTIES_LOOKUP,
 
         if layer_type in {LayerType.CHOROPLETH, LayerType.POLYGON}:
             layer_lookup_key, choropleth_key = layer_lookup_fields[:2] if layer_type is LayerType.CHOROPLETH else (
-            None, None,)
+                None, None,)
             colour_scheme, *_ = display_properties
 
             choropleth = folium.features.Choropleth(
@@ -202,7 +202,8 @@ def generate_map_features(layers_dict, layer_properties=LAYER_PROPERTIES_LOOKUP,
                 layer_path,
                 name=title,
                 show=visible_by_default,
-                fill_color=colour_scheme,
+                fill_opacity=0,
+                line_color=colour_scheme,
             )
 
             # Monkey patching the choropleth GeoJSON to *not* embed
