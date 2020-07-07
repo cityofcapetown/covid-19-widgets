@@ -31,7 +31,7 @@ dag = DAG('covid-19-hr-emailer',
           catchup=False,
           default_args=default_args,
           schedule_interval=dag_interval,
-          concurrency=1)
+          concurrency=2)
 
 # env variables for inside the k8s pod
 k8s_run_env = {
