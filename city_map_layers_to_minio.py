@@ -16,6 +16,7 @@ MINIO_CLASSIFICATION = minio_utils.DataClassification.EDGE
 DATA_PUBLIC_PREFIX = "data/public/"
 DATA_VULNERABILITY_PREFIX = "data/staging/vulenerability_layers/"  # yes, I know it's misspelled - should be temporary
 DATA_RESTRICTED_PREFIX = "data/private/"
+DATA_COMMUNITY_RESPONSE_PREFIX = "data/staging/community_response/"
 CASE_MAP_PREFIX = "widgets/private/case_count_maps/"
 
 PROV_CASE_DATA_FILENAME = "wc_all_cases.csv"
@@ -72,6 +73,8 @@ LAYER_FILES = (
     ("cpop_gt55.geojson", MINIO_COVID_BUCKET, DATA_VULNERABILITY_PREFIX),
     ("employment_density_survey_20200515.geojson", MINIO_COVID_BUCKET, DATA_VULNERABILITY_PREFIX),
     ("official_suburbs.geojson", MINIO_COVID_BUCKET, DATA_PUBLIC_PREFIX),
+    ("coct_cbt.geojson", MINIO_COVID_BUCKET, DATA_COMMUNITY_RESPONSE_PREFIX),
+    ("ct_cans.geojson", MINIO_COVID_BUCKET, DATA_COMMUNITY_RESPONSE_PREFIX),
 )
 
 HEX_COUNT_INDEX_PROPERTY = "index"

@@ -181,6 +181,18 @@ HOTSPOT_LAYER_PROPERTIES_LOOKUP = collections.OrderedDict((
         ("Name_of_Or", "Service_Ty", "Physical_a"), ("Name of Organisation", "Service Type", "Address"),
         ("purple", "bed"), "adult_homeless_shelters_coct.geojson", False, False, None
     )),
+
+    # Society Response
+    ("Community-based Teams", (
+        city_map_widget_to_minio.LayerType.POLYGON,
+        ("CBTName",), ("CBT Name",),
+        ("aqua",), "coct_cbt.geojson", False, False, None
+    )),
+    ("Community Action Networks", (
+        city_map_widget_to_minio.LayerType.POLYGON,
+        ("CanName",), ("CAN Name",),
+        ("aqua",), "ct_cans.geojson", False, False, None
+    ))
 ))
 
 CATEGORY_BUCKETS = [
@@ -188,6 +200,7 @@ CATEGORY_BUCKETS = [
     "VULNERABILITY INDICES",
     "PLACES OF RISK",
     "PEOPLE AT RISK",
+    "SOCIETY RESPONSE",
 ]
 CATEGORY_BUCKET_MAP = {
     # Population Density
@@ -215,6 +228,10 @@ CATEGORY_BUCKET_MAP = {
 
     # "VULNERABILITY INDICES"
     "WCPG SEVI": "VULNERABILITY INDICES",
+
+    # Society Response
+    "Community-based Teams": "SOCIETY RESPONSE",
+    "Community Action Networks": "SOCIETY RESPONSE",
 }
 
 marker_icon_create_function_template = '''
@@ -254,6 +271,7 @@ MARKER_ICON_PROPERTIES = {
                               "background_colour": "rgba(227, 125, 74, 0.6)"},
     "PLACES OF RISK": {"name": "marker-cluster-places-of-risk", "background_colour": "rgba(111, 173, 37, 0.6)"},
     "PEOPLE AT RISK": {"name": "marker-cluster-people-at-risk", "background_colour": "rgba(209, 82, 184, 0.6)"},
+    "COMMUNITY RESPONSE": {"name": "marker-cluster-community-response", "background_colour": "rgba(0, 255, 255, 0.6)"},
 }
 
 BIN_QUANTILES = [0, 0, 0.5, 0.75, 0.9, 0.99, 1]
@@ -384,7 +402,7 @@ def add_tree_layer_control_to_map(map):
     tlc = tree_layer_control.TreeLayerControl(
         base_tree_entries=list(reversed(base_layers)), overlay_tree_entries=overlays,
         overlay_tree_entries_properties={
-            f"<i> {bucket}</i>": {"selectAllCheckbox": True, "collapsed": True,} for bucket in CATEGORY_BUCKETS
+            f"<i> {bucket}</i>": {"selectAllCheckbox": True, "collapsed": True, } for bucket in CATEGORY_BUCKETS
         },
         collapsed=False, namedToggle=True,
     )
