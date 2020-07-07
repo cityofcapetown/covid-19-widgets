@@ -90,10 +90,10 @@ DIRECTORATE_LIST = {
     ("city", "*"),
     ("city_manager", 'CITY MANAGER'),
     ("water_and_waste", 'WATER AND WASTE'),
-    # ("energy_and_climate_change", 'ENERGY AND CLIMATE CHANGE'),
+    ("energy_and_climate_change", 'ENERGY AND CLIMATE CHANGE'),
     ("finance", 'FINANCE'),
-    # ("safety_and_security", "SAFETY AND SECURITY"),
-    # ("community_services_and_health", 'COMMUNITY SERVICES and HEALTH'),
+    ("safety_and_security", "SAFETY AND SECURITY"),
+    ("community_services_and_health", 'COMMUNITY SERVICES and HEALTH'),
     ("transport", "TRANSPORT"),
     ("corporate_services", "CORPORATE SERVICES"),
     ("urban_management", "URBAN MANAGEMENT"),
@@ -102,26 +102,42 @@ DIRECTORATE_LIST = {
     ("spatial_planning_and_environment", "SPATIAL PLANNING AND ENVIRONMENT")
 }
 
+# These directorates aren't covered by the HR form
+HR_FORM_BLACKLIST = {
+    "energy_and_climate_change", "safety_and_security", "community_services_and_health"
+}
+
 LATEST_VALUES = 'hr-latest-values'
 latest_values_operators = [
     covid_19_widget_task(
         LATEST_VALUES,
-        task_cmdline_args=directorate_args
-    ) for directorate_args in DIRECTORATE_LIST
+        task_cmdline_args=(directorate_file_prefix, directorate_name)
+    ) for directorate_file_prefix, directorate_name in DIRECTORATE_LIST
+    if directorate_file_prefix not in HR_FORM_BLACKLIST
 ]
 
 ABSENTEEISM_LINE_PLOT = 'hr-absenteeism-plot'
 absenteeism_operators = [
     covid_19_widget_task(
         ABSENTEEISM_LINE_PLOT,
-        task_cmdline_args=directorate_args
-    ) for directorate_args in DIRECTORATE_LIST
+        task_cmdline_args=(directorate_file_prefix, directorate_name)
+    ) for directorate_file_prefix, directorate_name in DIRECTORATE_LIST
+    if directorate_file_prefix not in HR_FORM_BLACKLIST
 ]
 
 BUSUNIT_STATUS_PLOT = 'hr-busunit-status-plot'
 busunit_operators = [
     covid_19_widget_task(
         BUSUNIT_STATUS_PLOT,
-        task_cmdline_args=directorate_args
-    ) for directorate_args in DIRECTORATE_LIST
+        task_cmdline_args=(directorate_file_prefix, directorate_name)
+    ) for directorate_file_prefix, directorate_name in DIRECTORATE_LIST
+    if directorate_file_prefix not in HR_FORM_BLACKLIST
+]
+
+OHS_FORM_PLOT = "ohs-cases-plot"
+ohs_plot_operator = [
+    covid_19_widget_task(
+        OHS_FORM_PLOT,
+        task_cmdline_args=(directorate_file_prefix, directorate_name)
+    ) for directorate_file_prefix, directorate_name in DIRECTORATE_LIST
 ]

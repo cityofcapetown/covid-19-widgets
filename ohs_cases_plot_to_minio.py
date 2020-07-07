@@ -20,9 +20,6 @@ from db_utils import minio_utils
 import holidays
 import pandas as pd
 
-import hr_data_last_values_to_minio
-from hr_data_last_values_to_minio import WORKING_STATUS, NOT_WORKING_STATUS, directorate_filter_df, merge_df
-
 MINIO_BUCKET = "covid"
 MINIO_CLASSIFICATION = minio_utils.DataClassification.EDGE
 
@@ -35,6 +32,7 @@ ISO_TIMESTAMP_FORMAT = "%Y-%m-%dT%H:%M"
 
 WIDGETS_RESTRICTED_PREFIX = "widgets/private/"
 PLOT_FILENAME_SUFFIX = "ohs_cases_plot.html"
+
 
 def get_plot_df(minio_key, minio_access, minio_secret):
     '''
@@ -49,9 +47,10 @@ def get_plot_df(minio_key, minio_access, minio_secret):
             minio_secret=minio_secret,
             data_classification=MINIO_CLASSIFICATION,
         )
-        data_df = pd.read_csv(temp_datafile.name)
+        data_df = pd.read_csv(temp_datafile.name, sep="~")
 
     return data_df
+
 
 def filter_df(ohs_df, directorate_title):
     filtered_df = (
@@ -60,8 +59,9 @@ def filter_df(ohs_df, directorate_title):
         ) if directorate_title != "*" else ohs_df
     )
     logging.debug(f"filtered_df.head(10)=\n{filtered_df.head(10)}")
-        
+
     return filtered_df
+
 
 def ohs_data_munge(filtered_df):
     '''
@@ -75,22 +75,22 @@ def ohs_data_munge(filtered_df):
     ohs_group_pos_df = ohs_group_pos_df.sort_values("date_of_diagnosis")
     # Create column for accumulative sum
     ohs_group_pos_df["acc_sum"] = ohs_group_pos_df["created"].cumsum()
-    
-    #today = pd.to_datetime("today")
-    today = date.today()
-    
-    # Create an index range starting on 26 March 2020 (day before lockdown)
-    idx = pd.date_range('2020-03-26', today)
 
-    ohs_plot_df =  ohs_group_pos_df.set_index('date_of_diagnosis')
+    # today = pd.to_datetime("today")
+    today = date.today()
+
+    # Create an index range starting on 1 March 2020 
+    idx = pd.date_range('2020-03-01', today)
+
+    ohs_plot_df = ohs_group_pos_df.set_index('date_of_diagnosis')
 
     ohs_plot_df = ohs_plot_df[["acc_sum"]]
-    
+
     # Not all dates have values.  Use forward fill to add missing values
     ohs_plot_df = ohs_plot_df.reindex(idx).ffill()
 
     ohs_plot_df = ohs_plot_df.reset_index()
-     
+
     return ohs_plot_df
 
 
@@ -98,40 +98,40 @@ def generate_plot(ohs_plot_df, sast_tz='Africa/Johannesburg'):
     fig = go.Figure()
 
     fig.add_trace(
-            go.Bar(
-                x=ohs_plot_df["index"], 
-                y=ohs_plot_df["acc_sum"], 
-                marker_color="#3D85C6",  
-                opacity=0.6,
-            )
+        go.Bar(
+            x=ohs_plot_df["index"],
+            y=ohs_plot_df["acc_sum"],
+            marker_color="#3D85C6",
+            opacity=0.6,
+        )
     )
 
     fig.update_yaxes(
-            title="Total Accumulative Positive Cases",
-            dtick = 10,
-            tickfont=dict(
-                size=10,
-            )
+        title="Cumulative Positive Cases",
+        dtick=10,
+        tickfont=dict(
+            size=10,
+        )
     )
 
     fig.update_xaxes(
-            title = "date",
-            type="date",
-            tickfont=dict(
+        title="date",
+        type="date",
+        tickfont=dict(
             size=10,
-            )
+        )
     )
 
     fig.update_layout(
-            plot_bgcolor=('#fff'),
-            hoverlabel = dict(
-                        bgcolor='black',
-                        font=dict(color='white',
-                        size=10,
-                        family='Arial')
-            ),
-            xaxis_tickformat = '%Y-%m-%d',
-            margin={dim: 10 for dim in ("l", "r", "b", "t")},
+        plot_bgcolor=('#fff'),
+        hoverlabel=dict(
+            bgcolor='black',
+            font=dict(color='white',
+                      size=10,
+                      family='Arial')
+        ),
+        xaxis_tickformat='%Y-%m-%d',
+        margin={dim: 10 for dim in ("l", "r", "b", "t")},
     )
 
     with tempfile.NamedTemporaryFile("r") as temp_html_file:
@@ -165,6 +165,7 @@ def write_to_minio(data, minio_filename, minio_access, minio_secret):
 
         assert result
 
+
 if __name__ == "__main__":
     logging.basicConfig(level=logging.DEBUG,
                         format='%(asctime)s-%(module)s.%(funcName)s [%(levelname)s]: %(message)s')
@@ -184,13 +185,13 @@ if __name__ == "__main__":
 
     logging.info("Fetch[ing] data...")
     data_df = get_plot_df(OHS_DATA_FILENAME,
-                                secrets["minio"]["edge"]["access"],
-                                secrets["minio"]["edge"]["secret"])
+                          secrets["minio"]["edge"]["access"],
+                          secrets["minio"]["edge"]["secret"])
     logging.info("...Fetch[ed] data.")
-    
+
     logging.info("Filter[ing] data...")
     ohs_filter_df = filter_df(data_df, directorate_title)
-    logging.info("...Fetch[ed] data.")     
+    logging.info("...Fetch[ed] data.")
 
     logging.info("Mung[ing] data for plotting...")
     ohs_plot_df = ohs_data_munge(ohs_filter_df)
