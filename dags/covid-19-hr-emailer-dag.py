@@ -60,11 +60,14 @@ k8s_run_args = {
 }
 
 
-def covid_19_widget_task(task_name, task_kwargs={}):
+def covid_19_widget_task(task_name, task_args, task_kwargs={}):
     """Factory for k8sPodOperator"""
-    name = "covid-19-hr-emailer-{}".format(task_name)
+    directorate_sanitised = task_args[0].lower.replace(" ", "-").replace("&", "and")
+    name = "covid-19-hr-emailer-{}-{}".format(task_name, directorate_sanitised)
     run_args = {**k8s_run_args.copy(), **task_kwargs}
-    run_cmd = "bash -c '{} && \"$COVID_19_WIDGETS_DIR\"/bin/{}.sh {{{{ ds }}}}'".format(startup_cmd, task_name)
+    run_cmd = "bash -c '{} && \"$COVID_19_WIDGETS_DIR\"/bin/{}.sh {{{{ ds }}}} \"{}\"'".format(
+        startup_cmd, task_name, '" "'.join(task_args)
+    )
 
     operator = KubernetesPodOperator(
         cmds=["bash", "-cx"],
@@ -79,6 +82,24 @@ def covid_19_widget_task(task_name, task_kwargs={}):
     return operator
 
 
+DIRECTORATE_SET = {
+    # "WATER AND WASTE",
+    # "COMMUNITY SERVICES and HEALTH",
+    # "SAFETY AND SECURITY",
+    # "ENERGY AND CLIMATE CHANGE",
+    "FINANCE",
+    "CORPORATE SERVICES",
+    "TRANSPORT",
+    "ECONOMIC OPPORTUNITIES &ASSET MANAGEMENT",
+    "SPATIAL PLANNING AND ENVIRONMENT",
+    "HUMAN SETTLEMENTS",
+    "URBAN MANAGEMENT",
+    "CITY MANAGER",
+}
+
 # Defining tasks
 EMAIL_TASK = 'hr-bp-emailer'
-email_operator = covid_19_widget_task(EMAIL_TASK)
+email_operators = [
+    covid_19_widget_task(EMAIL_TASK, task_args=[directorate])
+    for directorate in DIRECTORATE_SET
+]

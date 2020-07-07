@@ -17,6 +17,8 @@ import holidays
 import jinja2
 import pandas
 
+from hr_data_last_values_to_minio import directorate_filter_df
+
 BUCKET = "covid"
 CLASSIFICATION = minio_utils.DataClassification.EDGE
 HR_TRANSACTIONAL_FILENAME_PATH = "data/private/business_continuity_people_status.csv"
@@ -109,10 +111,14 @@ DIRECTORATE_DETAILS_DICT = {
         {"receiver_name": ["Leonie"],
          "receiver_email": ["Leonie.Kroese@capetown.gov.za"],
          "cc_email": HR_CREW + ["Lele.Sithole@capetown.gov.za"]},
+    # "HUMAN SETTLEMENTS":
+    #     {"receiver_name": ["Gerard"],
+    #      "receiver_email": ["Gerard.Joyce@capetown.gov.za"],
+    #      "cc_email": HR_CREW + ["Lele.Sithole@capetown.gov.za"]},
     "HUMAN SETTLEMENTS":
-        {"receiver_name": ["Gerard"],
-         "receiver_email": ["Gerard.Joyce@capetown.gov.za"],
-         "cc_email": HR_CREW + ["Lele.Sithole@capetown.gov.za"]},
+        {"receiver_name": ["Gordon"],
+         "receiver_email": ["gordon.inggs@capetown.gov.za"],
+         "cc_email": []},
     "URBAN MANAGEMENT":
         {"receiver_name": ["Sibusiso"],
          "receiver_email": ["Sibusiso.Mayekiso@capetown.gov.za"],
@@ -167,10 +173,13 @@ def get_exchange_auth(username, password):
 def get_today_directorate_df(data_df, directorate, filter_date=None, date_filter=True):
     logging.debug(f"data_df.head(5)=\n{data_df.head(5)}")
     logging.debug(f"directorate={directorate}, filter_date={filter_date}")
-    query_df = data_df.loc[
-        (data_df[DIRECTORATE_COL] == directorate) &
-        ((data_df[DATE_COL] == filter_date) if date_filter else True)
+
+    query_df = directorate_filter_df(data_df, directorate)
+    if date_filter:
+        query_df = query_df.loc[
+            data_df[DATE_COL] == filter_date
         ]
+
     logging.debug(f"query_df.head(5)=\n{query_df.head(5)}")
 
     return query_df
@@ -415,12 +424,17 @@ if __name__ == "__main__":
     parser.add_argument('-r', '--report-date', required=True,
                         help='''Date for which the report should run. Should be an ISO8601 date, e.g. 2020-04-28''')
 
+    parser.add_argument('-o', '--directorate', required=True,
+                        help='''Directorate which this report should cover''')
+
     parser.add_argument('-d', '--not-a-drill', required=False, default=False, action="store_true",
                         help="""Boolean flag indicating the emails *should* actually be sent.""")
 
     args, _ = parser.parse_known_args()
     report_date = pandas.to_datetime(args.report_date, format="%Y-%m-%d")
     report_date_str = report_date.strftime(ISO8601_DATE_FORMAT)
+
+    directorate = args.directorate
 
     dry_run = not args.not_a_drill
     logging.warning(f"**This {'is' if dry_run else '*is not*'} a drill**")
@@ -468,58 +482,59 @@ if __name__ == "__main__":
     logging.info("Load[ed] email template")
 
     logging.info("Generat[ing] directorate level emails")
-    for directorate, directorate_dict in DIRECTORATE_DETAILS_DICT.items():
-        # Getting directorate level data
-        hr_combined_people_df[DATE_COL] = pandas.to_datetime(
-            hr_combined_people_df[DATE_COL], format="%Y-%m-%dT%H:%M:%S"
-        ).dt.strftime(ISO8601_DATE_FORMAT)
-        directorate_people_df = get_today_directorate_df(hr_combined_people_df, directorate, report_date_str)
-        directorate_master_people_df = get_today_directorate_df(hr_master_df, directorate, date_filter=False)
+    directorate_dict = DIRECTORATE_DETAILS_DICT[directorate]
 
-        hr_org_unit_df[DATE_COL] = pandas.to_datetime(
-            hr_org_unit_df[DATE_COL], format=ISO8601_DATE_FORMAT
-        ).dt.strftime(ISO8601_DATE_FORMAT)
-        directorate_org_df = get_today_directorate_df(hr_org_unit_df, directorate, report_date_str)
+    # Getting directorate level data
+    hr_combined_people_df[DATE_COL] = pandas.to_datetime(
+        hr_combined_people_df[DATE_COL], format="%Y-%m-%dT%H:%M:%S"
+    ).dt.strftime(ISO8601_DATE_FORMAT)
+    directorate_people_df = get_today_directorate_df(hr_combined_people_df, directorate, report_date_str)
+    directorate_master_people_df = get_today_directorate_df(hr_master_df, directorate, date_filter=False)
 
-        if directorate_people_df.shape[0] == 0 or directorate_org_df.shape[0] == 0:
-            logging.debug("Skipping because one of the DFs is empty...")
-            continue
+    hr_org_unit_df[DATE_COL] = pandas.to_datetime(
+        hr_org_unit_df[DATE_COL], format=ISO8601_DATE_FORMAT
+    ).dt.strftime(ISO8601_DATE_FORMAT)
+    directorate_org_df = get_today_directorate_df(hr_org_unit_df, directorate, report_date_str)
 
-        # Various DF calculations
-        directorate_people_df = directorate_people_df
-        directorate_missing_people_df = get_missing_workers_df(directorate_people_df, directorate_master_people_df)
-        directorate_org_pivot_df = get_pivot_df(directorate_org_df)
+    if directorate_people_df.shape[0] == 0 or directorate_org_df.shape[0] == 0:
+        logging.debug("Skipping because one of the DFs is empty...")
+        sys.exit(0)
 
-        assessed_workers, total_workers, approver_details = get_email_stats(directorate_people_df,
-                                                                            directorate_master_people_df)
+    # Various DF calculations
+    directorate_people_df = directorate_people_df
+    directorate_missing_people_df = get_missing_workers_df(directorate_people_df, directorate_master_people_df)
+    directorate_org_pivot_df = get_pivot_df(directorate_org_df)
 
-        # Attachment file generator
-        directorate_files = (
-            filename
-            for data_files in (
-                write_employee_file((
-                    (PRESENT_EMPLOYEES_SHEETNAME, directorate_people_df[HR_PEOPLE_SHARE_COLS]),
-                    (MISSING_EMPLOYEES_SHEETNAME, directorate_missing_people_df[HR_MISSING_PEOPLE_SHARE_COLS])
-                )),
-                write_org_file(directorate_org_pivot_df)
-            )
-            for filename in data_files
+    assessed_workers, total_workers, approver_details = get_email_stats(directorate_people_df,
+                                                                        directorate_master_people_df)
+
+    # Attachment file generator
+    directorate_files = (
+        filename
+        for data_files in (
+            write_employee_file((
+                (PRESENT_EMPLOYEES_SHEETNAME, directorate_people_df[HR_PEOPLE_SHARE_COLS]),
+                (MISSING_EMPLOYEES_SHEETNAME, directorate_missing_people_df[HR_MISSING_PEOPLE_SHARE_COLS])
+            )),
+            write_org_file(directorate_org_pivot_df)
         )
+        for filename in data_files
+    )
 
-        # Rendering email
+    # Rendering email
 
-        message_id, email_message_dict, *data_filenames = render_email(hr_email_template,
-                                                                       directorate_dict,
-                                                                       directorate,
-                                                                       assessed_workers,
-                                                                       total_workers,
-                                                                       approver_details,
-                                                                       report_date_str)
+    message_id, email_message_dict, *data_filenames = render_email(hr_email_template,
+                                                                   directorate_dict,
+                                                                   directorate,
+                                                                   assessed_workers,
+                                                                   total_workers,
+                                                                   approver_details,
+                                                                   report_date_str)
 
-        # And finally, sending the email
-        attachment_zip = zip(data_filenames, directorate_files)
-        result = send_email(exchange_account, email_message_dict, attachment_zip, message_id, dry_run)
+    # And finally, sending the email
+    attachment_zip = zip(data_filenames, directorate_files)
+    result = send_email(exchange_account, email_message_dict, attachment_zip, message_id, dry_run)
 
-        assert result, f"Email {message_id} did not send successfully"
+    assert result, f"Email {message_id} did not send successfully"
 
     logging.info("Generat[ed] directorate level emails")
