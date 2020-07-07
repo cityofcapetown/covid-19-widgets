@@ -71,6 +71,7 @@ LAYER_FILES = (
     ("combined_senior_citizens_layer.geojson", MINIO_COVID_BUCKET, DATA_VULNERABILITY_PREFIX),
     ("cpop_gt55.geojson", MINIO_COVID_BUCKET, DATA_VULNERABILITY_PREFIX),
     ("employment_density_survey_20200515.geojson", MINIO_COVID_BUCKET, DATA_VULNERABILITY_PREFIX),
+    ("official_suburbs.geojson", MINIO_COVID_BUCKET, DATA_PUBLIC_PREFIX),
 )
 
 HEX_COUNT_INDEX_PROPERTY = "index"
@@ -269,7 +270,8 @@ def generate_metadata(case_data_df, case_data_groupby_index):
             ),
             CASE_COUNT_TOTAL: int(filter_case_data_func(case_data_df).shape[0]),
             LATEST_INCREASE: int(calculate_latest_increase(filter_case_data_func(case_data_df))),
-            LATEST_RELATIVE_INCREASE: float(calculate_latest_increase(filter_case_data_func(case_data_df), relative=True))
+            LATEST_RELATIVE_INCREASE: float(
+                calculate_latest_increase(filter_case_data_func(case_data_df), relative=True))
         }
         for case_count_col, (filter_case_data_func, metadata_key) in CASE_COL_FILTER_FUNC_MAP
     }

@@ -70,6 +70,11 @@ HOTSPOT_LAYER_PROPERTIES_LOOKUP = collections.OrderedDict((
         ("CITY_HLTH_RGN_NAME",), ("Healthcare District Name",),
         ("red",), "health_districts.geojson", False, False, None
     )),
+    ("Official Suburbs", (
+        city_map_widget_to_minio.LayerType.POLYGON,
+        ("OFC_SBRB_NAME",), ("Official Suburb Name",),
+        ("black",), "official_suburbs.geojson", False, False, None
+    )),
 
     # Population Density
     ("2019 Population Estimate", (

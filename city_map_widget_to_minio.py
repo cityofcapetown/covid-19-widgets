@@ -89,6 +89,11 @@ LAYER_PROPERTIES_LOOKUP = collections.OrderedDict((
         ("CITY_HLTH_RGN_NAME",), ("Healthcare District Name",),
         ("red",), "health_districts.geojson", False, False, None
     )),
+    ("Official Suburbs", (
+        LayerType.POLYGON,
+        ("OFC_SBRB_NAME",), ("Official Suburb Name",),
+        ("black",), "official_suburbs.geojson", False, False, None
+    )),
 ))
 
 BIN_QUANTILES = [0, 0, 0.5, 0.75, 0.9, 0.99, 1]
