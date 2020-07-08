@@ -33,6 +33,7 @@ class LayerType(Enum):
     CHOROPLETH = "choropleth"
     POINT = "point"
     POLYGON = "polygon"
+    LABEL = "label"
 
 
 LAYER_PROPERTIES_LOOKUP = collections.OrderedDict((
@@ -268,6 +269,34 @@ def generate_map_features(layers_dict, layer_properties=LAYER_PROPERTIES_LOOKUP,
             markers = geojson_markers.GeoJsonMarkers(
                 count_gdf.reset_index(), embed=True,
                 callback=marker_callback, tooltip_callback=tooltip_callback,
+                name=f"{title}", show=visible_by_default
+            )
+            markers.embed = False
+            markers.embed_link = layer_filename
+
+            layer_feature_group.add_child(markers)
+        elif layer_type is LayerType.LABEL:
+            colour, *_ = display_properties
+            layer_lookup_key, *_ = layer_lookup_fields
+
+            marker_callback = f"""
+                        function(feature) {{
+                            var coords = feature.geometry.coordinates;
+                            var marker = L.marker(
+                              new L.LatLng(coords[1], coords[0]),
+                              {{zIndex: 9999, opacity: 0}},
+                            );
+                            marker.bindTooltip(
+                              feature.properties["{layer_lookup_key}"], 
+                              {{permanent: true, offset: [0, 0], opacity: 0.7, direction: "center"}}
+                            );
+
+                            return marker;
+                        }};"""
+
+            markers = geojson_markers.GeoJsonMarkers(
+                count_gdf.reset_index(), embed=True,
+                callback=marker_callback, tooltip=False,
                 name=f"{title}", show=visible_by_default
             )
             markers.embed = False
