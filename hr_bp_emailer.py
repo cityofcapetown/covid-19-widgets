@@ -111,14 +111,14 @@ DIRECTORATE_DETAILS_DICT = {
         {"receiver_name": ["Leonie"],
          "receiver_email": ["Leonie.Kroese@capetown.gov.za"],
          "cc_email": HR_CREW + ["Lele.Sithole@capetown.gov.za"]},
-    # "HUMAN SETTLEMENTS":
-    #     {"receiver_name": ["Gerard"],
-    #      "receiver_email": ["Gerard.Joyce@capetown.gov.za"],
-    #      "cc_email": HR_CREW + ["Lele.Sithole@capetown.gov.za"]},
     "HUMAN SETTLEMENTS":
-        {"receiver_name": ["Gordon"],
-         "receiver_email": ["gordon.inggs@capetown.gov.za"],
-         "cc_email": []},
+        {"receiver_name": ["Gerard"],
+         "receiver_email": ["Gerard.Joyce@capetown.gov.za"],
+         "cc_email": HR_CREW + ["Lele.Sithole@capetown.gov.za"]},
+    # "HUMAN SETTLEMENTS":
+    #     {"receiver_name": ["Gordon"],
+    #      "receiver_email": ["gordon.inggs@capetown.gov.za"],
+    #      "cc_email": []},
     "URBAN MANAGEMENT":
         {"receiver_name": ["Sibusiso"],
          "receiver_email": ["Sibusiso.Mayekiso@capetown.gov.za"],
