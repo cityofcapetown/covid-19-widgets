@@ -182,7 +182,7 @@ HOTSPOT_LAYER_PROPERTIES_LOOKUP = collections.OrderedDict((
         ("purple", "bed"), "adult_homeless_shelters_coct.geojson", False, False, None
     )),
 
-    # Society Response
+    # COMMUNITY RESPONSE
     ("Community-based Teams", (
         city_map_widget_to_minio.LayerType.POLYGON,
         ("CBTName",), ("CBT Name",),
@@ -200,7 +200,7 @@ CATEGORY_BUCKETS = [
     "VULNERABILITY INDICES",
     "PLACES OF RISK",
     "PEOPLE AT RISK",
-    "SOCIETY RESPONSE",
+    "COMMUNITY RESPONSE",
 ]
 CATEGORY_BUCKET_MAP = {
     # Population Density
@@ -229,9 +229,9 @@ CATEGORY_BUCKET_MAP = {
     # "VULNERABILITY INDICES"
     "WCPG SEVI": "VULNERABILITY INDICES",
 
-    # Society Response
-    "Community-based Teams": "SOCIETY RESPONSE",
-    "Community Action Networks": "SOCIETY RESPONSE",
+    # COMMUNITY RESPONSE
+    "Community-based Teams": "COMMUNITY RESPONSE",
+    "Community Action Networks": "COMMUNITY RESPONSE",
 }
 
 marker_icon_create_function_template = '''
