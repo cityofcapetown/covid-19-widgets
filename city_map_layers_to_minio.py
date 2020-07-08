@@ -73,6 +73,7 @@ LAYER_FILES = (
     ("cpop_gt55.geojson", MINIO_COVID_BUCKET, DATA_VULNERABILITY_PREFIX),
     ("employment_density_survey_20200515.geojson", MINIO_COVID_BUCKET, DATA_VULNERABILITY_PREFIX),
     ("official_suburbs.geojson", MINIO_COVID_BUCKET, DATA_PUBLIC_PREFIX),
+    ("official_suburb_labels.geojson", MINIO_COVID_BUCKET, DATA_PUBLIC_PREFIX),
     ("coct_cbt.geojson", MINIO_COVID_BUCKET, DATA_COMMUNITY_RESPONSE_PREFIX),
     ("ct_cans.geojson", MINIO_COVID_BUCKET, DATA_COMMUNITY_RESPONSE_PREFIX),
 )

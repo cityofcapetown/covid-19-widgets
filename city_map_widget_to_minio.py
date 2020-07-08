@@ -95,6 +95,11 @@ LAYER_PROPERTIES_LOOKUP = collections.OrderedDict((
         ("OFC_SBRB_NAME",), ("Official Suburb Name",),
         ("black",), "official_suburbs.geojson", False, False, None
     )),
+    ("Official Suburb Labels", (
+        LayerType.LABEL,
+        ("OFC_SBRB_NAME",), ("Official Suburb Name",),
+        ("black",), "official_suburb_labels.geojson", False, False, None
+    )),
 ))
 
 BIN_QUANTILES = [0, 0, 0.5, 0.75, 0.9, 0.99, 1]

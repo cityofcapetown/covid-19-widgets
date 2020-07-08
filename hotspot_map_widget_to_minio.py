@@ -75,6 +75,11 @@ HOTSPOT_LAYER_PROPERTIES_LOOKUP = collections.OrderedDict((
         ("OFC_SBRB_NAME",), ("Official Suburb Name",),
         ("black",), "official_suburbs.geojson", False, False, None
     )),
+    ("Official Suburb Labels", (
+        city_map_widget_to_minio.LayerType.LABEL,
+        ("OFC_SBRB_NAME",), ("Official Suburb Name",),
+        ("black",), "official_suburb_labels.geojson", False, False, None
+    )),
 
     # Population Density
     ("2019 Population Estimate", (
