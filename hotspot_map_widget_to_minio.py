@@ -80,6 +80,16 @@ HOTSPOT_LAYER_PROPERTIES_LOOKUP = collections.OrderedDict((
         ("OFC_SBRB_NAME",), ("Official Suburb Name",),
         ("black",), "official_suburb_labels.geojson", False, False, None
     )),
+    ("Major Roads", (
+        city_map_widget_to_minio.LayerType.POLYGON,
+        ("NAME",), ("Road Type",),
+        ("black",), "ct_roads.geojson", False, False, None
+    )),
+    ("Railways", (
+        city_map_widget_to_minio.LayerType.POLYGON,
+        ("NAME",), ("Railway Type",),
+        ("black",), "ct_railways.geojson", False, False, None
+    )),
 
     # Population Density
     ("2019 Population Estimate", (
