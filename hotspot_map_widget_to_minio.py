@@ -191,12 +191,24 @@ HOTSPOT_LAYER_PROPERTIES_LOOKUP = collections.OrderedDict((
     ("Community-based Teams", (
         city_map_widget_to_minio.LayerType.POLYGON,
         ("CBTName",), ("CBT Name",),
-        ("aqua",), "coct_cbt.geojson", False, False, None
+        ("cadetblue",), "coct_cbt.geojson", False, False, None
     )),
     ("Community Action Networks", (
         city_map_widget_to_minio.LayerType.POLYGON,
         ("CanName",), ("CAN Name",),
-        ("aqua",), "ct_cans.geojson", False, False, None
+        ("cadetblue",), "ct_cans.geojson", False, False, None
+    )),
+    ("NGO/NPOs", (
+        city_map_widget_to_minio.LayerType.POINT,
+        ('Name of Organisation', 'NPONumberCleaned',
+         'Contact Person', 'EmailCleaned', 'ContactNumberCleaned',
+         'CAN Network', 'Areas', 'Subcouncil Numer', 'Ward number',
+         'Permission received to Publish Organisation name'),
+        ("Organisation Name", "NPO Number",
+         "Contact Person", "Email", "Phone",
+         "Community Action Network", "ABSD Area", "Subcouncil", "Ward",
+         "Permission to Publish"),
+        ("cadetblue", "group"), "npo_publish_data.geojson", False, False, None
     ))
 ))
 
@@ -237,6 +249,7 @@ CATEGORY_BUCKET_MAP = {
     # COMMUNITY RESPONSE
     "Community-based Teams": "COMMUNITY RESPONSE",
     "Community Action Networks": "COMMUNITY RESPONSE",
+    "NGO/NPOs": "COMMUNITY RESPONSE"
 }
 
 marker_icon_create_function_template = '''
@@ -276,7 +289,7 @@ MARKER_ICON_PROPERTIES = {
                               "background_colour": "rgba(227, 125, 74, 0.6)"},
     "PLACES OF RISK": {"name": "marker-cluster-places-of-risk", "background_colour": "rgba(111, 173, 37, 0.6)"},
     "PEOPLE AT RISK": {"name": "marker-cluster-people-at-risk", "background_colour": "rgba(209, 82, 184, 0.6)"},
-    "COMMUNITY RESPONSE": {"name": "marker-cluster-community-response", "background_colour": "rgba(0, 255, 255, 0.6)"},
+    "COMMUNITY RESPONSE": {"name": "marker-cluster-community-response", "background_colour": "rgba(65, 103, 118, 0.7)"},
 }
 
 BIN_QUANTILES = [0, 0, 0.5, 0.75, 0.9, 0.99, 1]

@@ -76,6 +76,7 @@ LAYER_FILES = (
     ("official_suburb_labels.geojson", MINIO_COVID_BUCKET, DATA_PUBLIC_PREFIX),
     ("coct_cbt.geojson", MINIO_COVID_BUCKET, DATA_COMMUNITY_RESPONSE_PREFIX),
     ("ct_cans.geojson", MINIO_COVID_BUCKET, DATA_COMMUNITY_RESPONSE_PREFIX),
+    ("npo_publish_data.geojson", MINIO_COVID_BUCKET, DATA_COMMUNITY_RESPONSE_PREFIX),
 )
 
 HEX_COUNT_INDEX_PROPERTY = "index"
