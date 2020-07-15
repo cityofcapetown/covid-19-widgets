@@ -143,7 +143,7 @@ def get_subdistrict_stats(all_cases_df, subdistrict_pop_df):
                                        time_filter_col=city_map_layers_to_minio.DATE_DIAGNOSIS_COL,
                                        filter_date_end=previous_week)
 
-    previous_week_active_start = previous_week - pandas.Timedelta(weeks=1)
+    previous_week_active_start = previous_week - ACTIVE_DELAY
     logging.debug(f"Using '{previous_week_active_start}' as start of previous week's presumed active period")
     active_df = count_by_subdistrict(all_cases_df,
                                      time_filter_col=city_map_layers_to_minio.DATE_DIAGNOSIS_COL,
