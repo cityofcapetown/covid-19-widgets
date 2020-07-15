@@ -143,7 +143,7 @@ def get_subdistrict_stats(all_cases_df, subdistrict_pop_df):
                                        filter_date_end=previous_week)
 
     previous_week_active_start = previous_week - pandas.Timedelta(weeks=1)
-    logging.debug(f"Using '{previous_week}' as start of previous week's presumed active period")
+    logging.debug(f"Using '{previous_week_active_start}' as start of previous week's presumed active period")
     active_df = count_by_subdistrict(all_cases_df,
                                      time_filter_col=city_map_layers_to_minio.DATE_DIAGNOSIS_COL,
                                      filter_date_start=previous_week_active_start,
@@ -180,6 +180,8 @@ def generate_table_widget_data_df(stats_df):
             "Active (w/w)": f"{row[ACTIVE_CASES_COL]} ({row[ACTIVE_CASES_COL + DELTA_COL_SUFFIX]:+d})",
             "Hospitalised (w/w)": f"{row[HOSPITAL_CASES_COL]} ({row[HOSPITAL_CASES_COL + DELTA_COL_SUFFIX]:+d})",
             "Fatalities (w/w)": f"{row[FATAL_CASES_COL]} ({row[FATAL_CASES_COL + DELTA_COL_SUFFIX]:+d})",
+            "Fatalities Per 100k (w/w)": f"{row[FATAL_CASES_COL + PER_CAPITA_SUFFIX]} "
+                                         f"({row[FATAL_CASES_COL + PER_CAPITA_SUFFIX + DELTA_COL_SUFFIX]:+d})",
         }),
         axis=1
     )
