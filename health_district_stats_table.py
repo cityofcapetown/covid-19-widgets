@@ -1,3 +1,4 @@
+import itertools
 import json
 import os
 import pprint
@@ -165,6 +166,25 @@ def get_subdistrict_stats(all_cases_df, subdistrict_pop_df):
 
 
 def generate_table_widget_data_df(stats_df):
+    stats_df = stats_df.copy().astype(int)
+    logging.debug(f"stats_df=\n{stats_df}")
+
+    output_df = stats_df.sort_values(by=CASES_TOTAL_COL + DELTA_COL_SUFFIX, ascending=False).apply(
+        lambda row: pandas.Series({
+            "Total Cases (w/w)": f"{row[CASES_TOTAL_COL]} ({row[CASES_TOTAL_COL + DELTA_COL_SUFFIX]:+d})",
+            "Active (w/w)": f"{row[ACTIVE_CASES_COL]} ({row[ACTIVE_CASES_COL + DELTA_COL_SUFFIX]:+d})",
+            "Hospitalised (w/w)": f"{row[HOSPITAL_CASES_COL]} ({row[HOSPITAL_CASES_COL + DELTA_COL_SUFFIX]:+d})",
+            "Fatalities (w/w)": f"{row[FATAL_CASES_COL]} ({row[FATAL_CASES_COL + DELTA_COL_SUFFIX]:+d})",
+        }),
+        axis=1
+    )
+
+    return output_df
+
+
+def generate_per_capita_table_widget_data_df(stats_df):
+    stats_df = stats_df.copy()
+
     logging.debug(f"stats_df=\n{stats_df}")
     for col in STAT_COLS:
         stats_df[col + PER_CAPITA_SUFFIX] = (stats_df[col + PER_CAPITA_SUFFIX] * 1e5).round(0).astype(int)
@@ -174,13 +194,13 @@ def generate_table_widget_data_df(stats_df):
 
     output_df = stats_df.sort_values(by=CASES_TOTAL_COL + DELTA_COL_SUFFIX, ascending=False).apply(
         lambda row: pandas.Series({
-            "Total Cases (w/w)": f"{row[CASES_TOTAL_COL]} ({row[CASES_TOTAL_COL + DELTA_COL_SUFFIX]:+d})",
-            "Total Per 100k (w/w)": f"{row[CASES_TOTAL_COL + PER_CAPITA_SUFFIX]} "
+            "Total per 100k (w/w)": f"{row[CASES_TOTAL_COL + PER_CAPITA_SUFFIX]} "
                                     f"({row[CASES_TOTAL_COL + PER_CAPITA_SUFFIX + DELTA_COL_SUFFIX]:+d})",
-            "Active (w/w)": f"{row[ACTIVE_CASES_COL]} ({row[ACTIVE_CASES_COL + DELTA_COL_SUFFIX]:+d})",
-            "Hospitalised (w/w)": f"{row[HOSPITAL_CASES_COL]} ({row[HOSPITAL_CASES_COL + DELTA_COL_SUFFIX]:+d})",
-            "Fatalities (w/w)": f"{row[FATAL_CASES_COL]} ({row[FATAL_CASES_COL + DELTA_COL_SUFFIX]:+d})",
-            "Fatalities Per 100k (w/w)": f"{row[FATAL_CASES_COL + PER_CAPITA_SUFFIX]} "
+            "Active per 100k (w/w)": f"{row[ACTIVE_CASES_COL + PER_CAPITA_SUFFIX]} "
+                                     f"({row[ACTIVE_CASES_COL + PER_CAPITA_SUFFIX + DELTA_COL_SUFFIX]:+d})",
+            "Hospitalised per 100k (w/w)": f"{row[HOSPITAL_CASES_COL + PER_CAPITA_SUFFIX]} "
+                                           f"({row[HOSPITAL_CASES_COL + PER_CAPITA_SUFFIX + DELTA_COL_SUFFIX]:+d})",
+            "Fatalities per 100k (w/w)": f"{row[FATAL_CASES_COL + PER_CAPITA_SUFFIX]} "
                                          f"({row[FATAL_CASES_COL + PER_CAPITA_SUFFIX + DELTA_COL_SUFFIX]:+d})",
         }),
         axis=1
@@ -249,8 +269,13 @@ def generate_table_widget_data(table_data_df):
     return output_data, [sort_func] + style_funcs
 
 
-def create_table_widget_generator(district_prefix, output_data, js_funcs, proxy_username, proxy_password):
-    stats_widget_name = f"{district_prefix}_{STATS_WIDGET_NAME}"
+def create_table_widget_generator(district_prefix, output_data, js_funcs, proxy_username, proxy_password, extra_suffix=None):
+    widget_name_components = [district_prefix]
+    widget_name_components += [extra_suffix] if extra_suffix else []
+    widget_name_components += [STATS_WIDGET_NAME]
+
+    stats_widget_name = "_".join(widget_name_components)
+
     tw = table_widget.TableWidget(output_data, stats_widget_name, STATS_WIDGET_TITLE, js_funcs=js_funcs)
 
     return tw.output_file_generator(proxy_username, proxy_password, CITY_PROXY_DOMAIN)
@@ -307,16 +332,24 @@ if __name__ == "__main__":
 
     logging.info("Generat[ing] table widget dataframe")
     table_widget_data_df = generate_table_widget_data_df(subdistrict_df)
+    per_capita_table_widget_data_df = generate_per_capita_table_widget_data_df(subdistrict_df)
     logging.info("Generat[ed] table widget dataframe")
 
     logging.info("Generat[ing] table widget data")
     table_widget_data, table_widget_js_funcs = generate_table_widget_data(table_widget_data_df)
+    per_capita_table_widget_data, per_capita_table_widget_js_funcs = generate_table_widget_data(per_capita_table_widget_data_df)
     logging.info("Generat[ed] table widget data")
 
-    for tw_filename, tw_file_localpath in create_table_widget_generator(district_file_prefix, table_widget_data,
-                                                                        table_widget_js_funcs,
-                                                                        secrets["proxy"]["username"],
-                                                                        secrets["proxy"]["password"]):
+    table_widget_generators = itertools.chain(
+        create_table_widget_generator(district_file_prefix, table_widget_data, table_widget_js_funcs,
+                                      secrets["proxy"]["username"], secrets["proxy"]["password"]),
+        create_table_widget_generator(district_file_prefix,
+                                      per_capita_table_widget_data, per_capita_table_widget_js_funcs,
+                                      secrets["proxy"]["username"], secrets["proxy"]["password"],
+                                      extra_suffix="per_capita"),
+    )
+
+    for tw_filename, tw_file_localpath in table_widget_generators:
         logging.info(f"Upload[ing] {tw_filename} to Minio")
         write_table_widget_file_to_minio(tw_file_localpath,
                                          secrets["minio"]["edge"]["access"], secrets["minio"]["edge"]["secret"])
