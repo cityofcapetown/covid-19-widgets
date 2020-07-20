@@ -30,6 +30,12 @@ class TableWidget:
             .gridjs-table {
                 height: 100% !important
             }
+            #wrapper {
+                height: 100% !important
+            }
+            body {
+                height: 100% !important
+            }
         </style>
     </head>
 
