@@ -12,7 +12,7 @@ import folium
 import geopandas
 import requests
 
-import city_map_layers_to_minio
+import epi_map_case_layers_to_minio
 import float_div
 import geojson_markers
 
@@ -39,41 +39,41 @@ class LayerType(Enum):
 LAYER_PROPERTIES_LOOKUP = collections.OrderedDict((
     ("Active Covid-19 Cases by L7 Hex", (
         LayerType.CHOROPLETH,
-        (HEX_COUNT_INDEX_PROPERTY, city_map_layers_to_minio.ACTIVE_CASE_COUNT_COL), ("Hex ID", "Presumed Active Cases"),
-        ("OrRd",), city_map_layers_to_minio.HEX_L7_COUNT_SUFFIX, True, True,
-        city_map_layers_to_minio.ACTIVE_METADATA_KEY
+        (HEX_COUNT_INDEX_PROPERTY, epi_map_case_layers_to_minio.ACTIVE_CASE_COUNT_COL), ("Hex ID", "Presumed Active Cases"),
+        ("OrRd",), epi_map_case_layers_to_minio.HEX_L7_COUNT_SUFFIX, True, True,
+        epi_map_case_layers_to_minio.ACTIVE_METADATA_KEY
     )),
     ("Active Covid-19 Cases by Ward", (
         LayerType.CHOROPLETH,
-        (WARD_COUNT_NAME_PROPERTY, city_map_layers_to_minio.ACTIVE_CASE_COUNT_COL),
+        (WARD_COUNT_NAME_PROPERTY, epi_map_case_layers_to_minio.ACTIVE_CASE_COUNT_COL),
         ("Ward Name", "Presumed Active Cases"),
-        ("BuPu",), city_map_layers_to_minio.WARD_COUNT_SUFFIX, False, True, city_map_layers_to_minio.ACTIVE_METADATA_KEY
+        ("BuPu",), epi_map_case_layers_to_minio.WARD_COUNT_SUFFIX, False, True, epi_map_case_layers_to_minio.ACTIVE_METADATA_KEY
     )),
     ("Active Covid-19 Cases by District", (
         LayerType.CHOROPLETH,
-        (DISTRICT_NAME_PROPERTY, city_map_layers_to_minio.ACTIVE_CASE_COUNT_COL),
+        (DISTRICT_NAME_PROPERTY, epi_map_case_layers_to_minio.ACTIVE_CASE_COUNT_COL),
         ("Healthcare District Name", "Presumed Active Cases"),
-        ("YlGn",), city_map_layers_to_minio.DISTRICT_COUNT_SUFFIX, False, True,
-        city_map_layers_to_minio.ACTIVE_METADATA_KEY
+        ("YlGn",), epi_map_case_layers_to_minio.DISTRICT_COUNT_SUFFIX, False, True,
+        epi_map_case_layers_to_minio.ACTIVE_METADATA_KEY
     )),
     ("All Covid-19 Cases by L7 Hex", (
         LayerType.CHOROPLETH,
-        (HEX_COUNT_INDEX_PROPERTY, city_map_layers_to_minio.CASE_COUNT_COL), ("Hex ID", "All Cases"),
-        ("OrRd",), city_map_layers_to_minio.HEX_L7_COUNT_SUFFIX, False, True,
-        city_map_layers_to_minio.CUMULATIVE_METADATA_KEY
+        (HEX_COUNT_INDEX_PROPERTY, epi_map_case_layers_to_minio.CASE_COUNT_COL), ("Hex ID", "All Cases"),
+        ("OrRd",), epi_map_case_layers_to_minio.HEX_L7_COUNT_SUFFIX, False, True,
+        epi_map_case_layers_to_minio.CUMULATIVE_METADATA_KEY
     )),
     ("All Covid-19 Cases by Ward", (
         LayerType.CHOROPLETH,
-        (WARD_COUNT_NAME_PROPERTY, city_map_layers_to_minio.CASE_COUNT_COL), ("Ward Name", "All Cases"),
-        ("BuPu",), city_map_layers_to_minio.WARD_COUNT_SUFFIX, False, True,
-        city_map_layers_to_minio.CUMULATIVE_METADATA_KEY
+        (WARD_COUNT_NAME_PROPERTY, epi_map_case_layers_to_minio.CASE_COUNT_COL), ("Ward Name", "All Cases"),
+        ("BuPu",), epi_map_case_layers_to_minio.WARD_COUNT_SUFFIX, False, True,
+        epi_map_case_layers_to_minio.CUMULATIVE_METADATA_KEY
     )),
     ("All Covid-19 Cases by District", (
         LayerType.CHOROPLETH,
-        (DISTRICT_NAME_PROPERTY, city_map_layers_to_minio.ACTIVE_CASE_COUNT_COL),
+        (DISTRICT_NAME_PROPERTY, epi_map_case_layers_to_minio.ACTIVE_CASE_COUNT_COL),
         ("Healthcare District Name", "Presumed Active Cases"),
-        ("YlGn",), city_map_layers_to_minio.DISTRICT_COUNT_SUFFIX, False, True,
-        city_map_layers_to_minio.CUMULATIVE_METADATA_KEY
+        ("YlGn",), epi_map_case_layers_to_minio.DISTRICT_COUNT_SUFFIX, False, True,
+        epi_map_case_layers_to_minio.CUMULATIVE_METADATA_KEY
     )),
     ("Informal Settlements", (
         LayerType.POLYGON,
@@ -121,7 +121,7 @@ def get_layers(district_file_prefix, subdistrict_file_prefix, tempdir, minio_acc
         local_path = os.path.join(tempdir, layer_filename)
 
         layer_minio_path = (
-            f"{city_map_layers_to_minio.CASE_MAP_PREFIX}"
+            f"{epi_map_case_layers_to_minio.CASE_MAP_PREFIX}"
             f"{layer_filename}"
         )
         minio_utils.minio_to_file(
@@ -140,7 +140,7 @@ def get_layers(district_file_prefix, subdistrict_file_prefix, tempdir, minio_acc
             metadata_filename = os.path.splitext(layer_filename)[0] + ".json"
             metadata_local_path = os.path.join(tempdir, metadata_filename)
             metadata_minio_path = (
-                f"{city_map_layers_to_minio.CASE_MAP_PREFIX}"
+                f"{epi_map_case_layers_to_minio.CASE_MAP_PREFIX}"
                 f"{metadata_filename}"
             )
 
@@ -161,7 +161,7 @@ def get_layers(district_file_prefix, subdistrict_file_prefix, tempdir, minio_acc
 
 
 def _get_choropleth_bins(count_series):
-    bins = [0]
+    bins = [count_series.min() - 1]
     data_edges = list(count_series.quantile(BIN_QUANTILES).values)
 
     bins += [
@@ -170,7 +170,7 @@ def _get_choropleth_bins(count_series):
 
     # Adding extra padding if we have a bi-modal plot (colorbrewer needs 3 bins, at least)
     if len(bins) <= 3:
-        bins.insert(0, 0)
+        bins.insert(0, count_series.min() - 1)
 
     return bins
 
@@ -316,8 +316,8 @@ def generate_map_features(layers_dict, layer_properties=LAYER_PROPERTIES_LOOKUP,
 
         # Adding missing count from metadata
         if metadata_key in layer_metadata:
-            cases_not_displayed = layer_metadata[metadata_key][city_map_layers_to_minio.NOT_SPATIAL_CASE_COUNT]
-            total_count = layer_metadata[metadata_key][city_map_layers_to_minio.CASE_COUNT_TOTAL]
+            cases_not_displayed = layer_metadata[metadata_key][epi_map_case_layers_to_minio.NOT_SPATIAL_CASE_COUNT]
+            total_count = layer_metadata[metadata_key][epi_map_case_layers_to_minio.CASE_COUNT_TOTAL]
 
             div = float_div.FloatDiv(content=(
                 "<span style='font-size: 20px; color:#FF0000'>"
@@ -380,7 +380,7 @@ def get_leaflet_dep_file(url, tempdir, http_session, minio_access, minio_secret)
     minio_utils.file_to_minio(
         filename=local_path,
         filename_prefix_override=(
-            f"{city_map_layers_to_minio.CASE_MAP_PREFIX}"
+            f"{epi_map_case_layers_to_minio.CASE_MAP_PREFIX}"
             f"{DEP_DIR}/"
         ),
         minio_bucket=MINIO_BUCKET,
@@ -432,7 +432,7 @@ def write_map_to_minio(city_map, district_file_prefix, subdistrict_file_prefix, 
     result = minio_utils.file_to_minio(
         filename=local_path,
         filename_prefix_override=(
-            f"{city_map_layers_to_minio.CASE_MAP_PREFIX}"
+            f"{epi_map_case_layers_to_minio.CASE_MAP_PREFIX}"
         ),
         minio_bucket=MINIO_BUCKET,
         minio_key=minio_access,

@@ -8,7 +8,7 @@ import tempfile
 
 import folium.plugins
 
-import city_map_layers_to_minio
+import epi_map_case_layers_to_minio
 import city_map_widget_to_minio
 import tree_layer_control
 
@@ -18,42 +18,81 @@ DISTRICT_NAME_PROPERTY = "CITY_HLTH_RGN_NAME"
 HOTSPOT_LAYER_PROPERTIES_LOOKUP = collections.OrderedDict((
     ("Active Covid-19 Cases (hexes)", (
         city_map_widget_to_minio.LayerType.CHOROPLETH,
-        (HEX_COUNT_INDEX_PROPERTY, city_map_layers_to_minio.ACTIVE_CASE_COUNT_COL), ("Hex ID", "Presumed Active Cases"),
-        ("Reds",), city_map_layers_to_minio.HEX_L8_COUNT_SUFFIX, True, True,
-        city_map_layers_to_minio.ACTIVE_METADATA_KEY
+        (HEX_COUNT_INDEX_PROPERTY,
+         epi_map_case_layers_to_minio.ACTIVE_CASE_COUNT_COL,
+         epi_map_case_layers_to_minio.ACTIVE_CASE_COUNT_COL + epi_map_case_layers_to_minio.DELTA_SUFFIX),
+        ("Hex ID", "Presumed Active Cases", "Change in Presumed Active Cases"),
+        ("Reds",), epi_map_case_layers_to_minio.HEX_L8_COUNT_SUFFIX, True, True,
+        epi_map_case_layers_to_minio.ACTIVE_METADATA_KEY
     )),
     ("Active Covid-19 Cases (district)", (
         city_map_widget_to_minio.LayerType.CHOROPLETH,
-        (DISTRICT_NAME_PROPERTY, city_map_layers_to_minio.ACTIVE_CASE_COUNT_COL),
-        ("Healthcare District Name", "Presumed Active Cases"),
-        ("Reds",), city_map_layers_to_minio.DISTRICT_COUNT_SUFFIX, False, True,
-        city_map_layers_to_minio.ACTIVE_METADATA_KEY
+        (DISTRICT_NAME_PROPERTY,
+         epi_map_case_layers_to_minio.ACTIVE_CASE_COUNT_COL,
+         epi_map_case_layers_to_minio.ACTIVE_CASE_COUNT_COL + epi_map_case_layers_to_minio.DELTA_SUFFIX),
+        ("Healthcare District Name", "Presumed Active Cases", "Change in Presumed Active Cases"),
+        ("Reds",), epi_map_case_layers_to_minio.DISTRICT_COUNT_SUFFIX, False, True,
+        epi_map_case_layers_to_minio.ACTIVE_METADATA_KEY
+    )),
+    ("Active Covid-19 Cases Change (district)", (
+        city_map_widget_to_minio.LayerType.CHOROPLETH,
+        (DISTRICT_NAME_PROPERTY,
+         epi_map_case_layers_to_minio.ACTIVE_CASE_COUNT_COL + epi_map_case_layers_to_minio.DELTA_SUFFIX,
+         epi_map_case_layers_to_minio.ACTIVE_CASE_COUNT_COL),
+        ("Healthcare District Name", "Change in Presumed Active Cases", "Presumed Active Cases"),
+        ("YlOrRd",), epi_map_case_layers_to_minio.DISTRICT_COUNT_SUFFIX, False, True,
+        epi_map_case_layers_to_minio.ACTIVE_METADATA_KEY
     )),
     ("All Covid-19 Cases (hexes)", (
         city_map_widget_to_minio.LayerType.CHOROPLETH,
-        (HEX_COUNT_INDEX_PROPERTY, city_map_layers_to_minio.CASE_COUNT_COL), ("Hex ID", "All Cases"),
-        ("Reds",), city_map_layers_to_minio.HEX_L8_COUNT_SUFFIX, False, True,
-        city_map_layers_to_minio.CUMULATIVE_METADATA_KEY
+        (HEX_COUNT_INDEX_PROPERTY,
+         epi_map_case_layers_to_minio.CASE_COUNT_COL,
+         epi_map_case_layers_to_minio.CASE_COUNT_COL + epi_map_case_layers_to_minio.DELTA_SUFFIX),
+        ("Hex ID", "All Cases", "Increase in Cases"),
+        ("Reds",), epi_map_case_layers_to_minio.HEX_L8_COUNT_SUFFIX, False, True,
+        epi_map_case_layers_to_minio.CUMULATIVE_METADATA_KEY
     )),
     ("All Covid-19 Cases (district)", (
         city_map_widget_to_minio.LayerType.CHOROPLETH,
-        (DISTRICT_NAME_PROPERTY, city_map_layers_to_minio.CASE_COUNT_COL),
-        ("Healthcare District Name", "All Cases"),
-        ("Reds",), city_map_layers_to_minio.DISTRICT_COUNT_SUFFIX, False, True,
-        city_map_layers_to_minio.CUMULATIVE_METADATA_KEY
+        (DISTRICT_NAME_PROPERTY,
+         epi_map_case_layers_to_minio.CASE_COUNT_COL,
+         epi_map_case_layers_to_minio.CASE_COUNT_COL + epi_map_case_layers_to_minio.DELTA_SUFFIX),
+        ("Healthcare District Name", "All Cases", "Increase in Cases"),
+        ("Reds",), epi_map_case_layers_to_minio.DISTRICT_COUNT_SUFFIX, False, True,
+        epi_map_case_layers_to_minio.CUMULATIVE_METADATA_KEY
+    )),
+    ("All Covid-19 Cases Change (district)", (
+        city_map_widget_to_minio.LayerType.CHOROPLETH,
+        (DISTRICT_NAME_PROPERTY,
+         epi_map_case_layers_to_minio.CASE_COUNT_COL + epi_map_case_layers_to_minio.DELTA_SUFFIX,
+         epi_map_case_layers_to_minio.CASE_COUNT_COL,),
+        ("Healthcare District Name", "Increase in Cases", "All Cases"),
+        ("YlOrRd",), epi_map_case_layers_to_minio.DISTRICT_COUNT_SUFFIX, False, True,
+        epi_map_case_layers_to_minio.CUMULATIVE_METADATA_KEY
     )),
     ("Covid-19 Mortality (hexes)", (
         city_map_widget_to_minio.LayerType.CHOROPLETH,
-        (HEX_COUNT_INDEX_PROPERTY, city_map_layers_to_minio.DEATHS_COUNT_COL), ("Hex ID", "Deaths"),
-        ("Greys",), city_map_layers_to_minio.HEX_L8_COUNT_SUFFIX, False, True,
-        city_map_layers_to_minio.DEATHS_METADATA_KEY
+        (HEX_COUNT_INDEX_PROPERTY, epi_map_case_layers_to_minio.DEATHS_COUNT_COL), ("Hex ID", "Deaths"),
+        ("Greys",), epi_map_case_layers_to_minio.HEX_L8_COUNT_SUFFIX, False, True,
+        epi_map_case_layers_to_minio.DEATHS_METADATA_KEY
     )),
     ("Covid-19 Mortality (district)", (
         city_map_widget_to_minio.LayerType.CHOROPLETH,
-        (DISTRICT_NAME_PROPERTY, city_map_layers_to_minio.DEATHS_COUNT_COL),
-        ("Healthcare District Name", "Deaths"),
-        ("Greys",), city_map_layers_to_minio.DISTRICT_COUNT_SUFFIX, False, True,
-        city_map_layers_to_minio.DEATHS_METADATA_KEY
+        (DISTRICT_NAME_PROPERTY,
+         epi_map_case_layers_to_minio.DEATHS_COUNT_COL,
+         epi_map_case_layers_to_minio.DEATHS_COUNT_COL + epi_map_case_layers_to_minio.DELTA_SUFFIX),
+        ("Healthcare District Name", "Deaths", "Increase in Deaths"),
+        ("Greys",), epi_map_case_layers_to_minio.DISTRICT_COUNT_SUFFIX, False, True,
+        epi_map_case_layers_to_minio.DEATHS_METADATA_KEY
+    )),
+    ("Covid-19 Mortality Change (district)", (
+        city_map_widget_to_minio.LayerType.CHOROPLETH,
+        (DISTRICT_NAME_PROPERTY,
+         epi_map_case_layers_to_minio.DEATHS_COUNT_COL + epi_map_case_layers_to_minio.DELTA_SUFFIX,
+         epi_map_case_layers_to_minio.DEATHS_COUNT_COL),
+        ("Healthcare District Name", "Increase in Deaths", "Deaths"),
+        ("YlOrRd",), epi_map_case_layers_to_minio.DISTRICT_COUNT_SUFFIX, False, True,
+        epi_map_case_layers_to_minio.DEATHS_METADATA_KEY
     )),
     ("Healthcare Facilities", (
         city_map_widget_to_minio.LayerType.POINT,
@@ -70,6 +109,7 @@ HOTSPOT_LAYER_PROPERTIES_LOOKUP = collections.OrderedDict((
         ("CITY_HLTH_RGN_NAME",), ("Healthcare District Name",),
         ("red",), "health_districts.geojson", False, False, None
     )),
+
     # Contextual Information
     ("Official Suburbs", (
         city_map_widget_to_minio.LayerType.POLYGON,
@@ -325,7 +365,7 @@ def generate_base_map_features(tempdir, minimap=False):
     features = []
 
     # Health SubDistrict Outlines
-    health_district_layer_path = os.path.join(tempdir, city_map_layers_to_minio.CT_HEALTH_DISTRICT_FILENAME)
+    health_district_layer_path = os.path.join(tempdir, epi_map_case_layers_to_minio.CT_HEALTH_DISTRICT_FILENAME)
     health_district_outline = folium.features.Choropleth(
         health_district_layer_path,
         name="Health Subdistricts",
@@ -334,7 +374,7 @@ def generate_base_map_features(tempdir, minimap=False):
         line_color="blue"
     )
     health_district_outline.geojson.embed = False
-    health_district_outline.geojson.embed_link = city_map_layers_to_minio.CT_HEALTH_DISTRICT_FILENAME
+    health_district_outline.geojson.embed_link = epi_map_case_layers_to_minio.CT_HEALTH_DISTRICT_FILENAME
     health_district_outline.geojson.control = False
 
     # Base Layers

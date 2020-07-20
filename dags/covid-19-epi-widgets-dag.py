@@ -102,11 +102,17 @@ DISTRICT_TUPLES = (
 
 # Defining tasks
 CITY_MAP_LAYERS_GENERATE = 'city-map-layers-generate'
-city_map_layers_generate_operators = [
-    covid_19_widget_task(
-        CITY_MAP_LAYERS_GENERATE,
+city_map_layers_operator = covid_19_widget_task(
+    CITY_MAP_LAYERS_GENERATE,
+    task_cmdline_args=["city", "city of cape town", "all", "*"]
+)
+
+EPI_MAP_CASE_LAYERS_GENERATE = 'epi-map-case-layers-generate'
+city_map_layers_operators = [
+    (covid_19_widget_task(
+        EPI_MAP_CASE_LAYERS_GENERATE,
         task_cmdline_args=[district_filename_prefix, district_name, subdistrict_filename_prefix, subdistrict_name]
-    )
+    ), city_map_layers_operator)
     for district_filename_prefix, district_name, subdistrict_tuples in DISTRICT_TUPLES
     for subdistrict_filename_prefix, subdistrict_name in subdistrict_tuples
 ]
@@ -143,8 +149,9 @@ subdistrict_table_operators = [
 ]
 
 # Dependencies
-for layer_generate_operator, map_plot_operator, hotspot_plot_operator in zip(city_map_layers_generate_operators,
-                                                                             city_map_plot_operators,
-                                                                             city_hotspot_map_plot_operators):
-    map_plot_operator.set_upstream(layer_generate_operator)
-    hotspot_plot_operator.set_upstream(layer_generate_operator)
+for layer_generate_operators, map_plot_operator, hotspot_plot_operator in zip(
+        city_map_layers_operators,
+        city_map_plot_operators,
+        city_hotspot_map_plot_operators):
+    map_plot_operator.set_upstream(layer_generate_operators)
+    hotspot_plot_operator.set_upstream(layer_generate_operators)

@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+set -e
+
+DISTRICT_PREFIX=$1
+DISTRICT_NAME=$2
+SUBDISTRICT_PREFIX=$3
+SUBDISTRICT_NAME=$4
+
+python3 ./epi_map_case_layers_to_minio.py "$DISTRICT_PREFIX" "$DISTRICT_NAME" "$SUBDISTRICT_PREFIX" "$SUBDISTRICT_NAME"
