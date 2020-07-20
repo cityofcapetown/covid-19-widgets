@@ -15,7 +15,7 @@ DATA_PUBLIC_PREFIX = "data/public/"
 DATA_RESTRICTED_PREFIX = "data/private/"
 DATA_COMMUNITY_RESPONSE_PREFIX = "data/staging/community_response/"
 CASE_MAP_PREFIX = "widgets/private/case_count_maps/"
-DATA_VULNERABILITY_PREFIX = "widgets/private/vulenerability_layers/"
+DATA_VULNERABILITY_PREFIX = "data/staging/vulenerability_layers/"
 
 CT_WARD_FILENAME = "ct_wards.geojson"
 CT_HEALTH_DISTRICT_FILENAME = "health_districts.geojson"
