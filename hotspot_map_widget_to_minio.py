@@ -70,6 +70,7 @@ HOTSPOT_LAYER_PROPERTIES_LOOKUP = collections.OrderedDict((
         ("CITY_HLTH_RGN_NAME",), ("Healthcare District Name",),
         ("red",), "health_districts.geojson", False, False, None
     )),
+    # Contextual Information
     ("Official Suburbs", (
         city_map_widget_to_minio.LayerType.POLYGON,
         ("OFC_SBRB_NAME",), ("Official Suburb Name",),
@@ -223,6 +224,7 @@ HOTSPOT_LAYER_PROPERTIES_LOOKUP = collections.OrderedDict((
 ))
 
 CATEGORY_BUCKETS = [
+    "CONTEXTUAL INFORMATION",
     "POPULATION DENSITY",
     "VULNERABILITY INDICES",
     "PLACES OF RISK",
@@ -230,6 +232,12 @@ CATEGORY_BUCKETS = [
     "COMMUNITY RESPONSE",
 ]
 CATEGORY_BUCKET_MAP = {
+    # Contextual Information
+    "Official Suburbs": "CONTEXTUAL INFORMATION",
+    "Official Suburb Labels": "CONTEXTUAL INFORMATION",
+    "Major Roads": "CONTEXTUAL INFORMATION",
+    "Railways": "CONTEXTUAL INFORMATION",
+
     # Population Density
     "2019 Population Estimate": "POPULATION DENSITY",
 
@@ -294,6 +302,7 @@ marker_icon_create_function_template = '''
 '''
 
 MARKER_ICON_PROPERTIES = {
+    "CONTEXTUAL INFORMATION": {"name": "marker-cluster-context", "background_colour": "rgba(158, 158, 158, 0.6)"},
     "POPULATION DENSITY": {"name": "marker-cluster-pop-density", "background_colour": "rgba(87, 144, 193, 0.6)"},
     "VULNERABILITY INDICES": {"name": "marker-cluster-vulnerability-indices",
                               "background_colour": "rgba(227, 125, 74, 0.6)"},
