@@ -9,7 +9,7 @@ import tempfile
 from db_utils import minio_utils
 import pandas
 
-import city_map_layers_to_minio
+import epi_map_case_layers_to_minio
 from city_map_widget_to_minio import CITY_PROXY_DOMAIN
 import table_widget
 
@@ -84,15 +84,15 @@ def get_subdistrict_populations(minio_access, minio_secret):
     with tempfile.NamedTemporaryFile() as temp_datafile:
         minio_utils.minio_to_file(
             filename=temp_datafile.name,
-            minio_filename_override=city_map_layers_to_minio.DATA_RESTRICTED_PREFIX + SUBDISTRICT_POP_FILE,
-            minio_bucket=city_map_layers_to_minio.MINIO_COVID_BUCKET,
+            minio_filename_override=epi_map_case_layers_to_minio.DATA_RESTRICTED_PREFIX + SUBDISTRICT_POP_FILE,
+            minio_bucket=epi_map_case_layers_to_minio.MINIO_COVID_BUCKET,
             minio_key=minio_access,
             minio_secret=minio_secret,
-            data_classification=city_map_layers_to_minio.MINIO_CLASSIFICATION,
+            data_classification=epi_map_case_layers_to_minio.MINIO_CLASSIFICATION,
         )
 
         population_df = pandas.read_csv(temp_datafile.name)
-        population_df.set_index(city_map_layers_to_minio.SUBDISTRICT_COL, inplace=True)
+        population_df.set_index(epi_map_case_layers_to_minio.SUBDISTRICT_COL, inplace=True)
 
     return population_df
 
@@ -109,7 +109,7 @@ def count_by_subdistrict(filter_cases_df, time_filter_col=None, filter_date_star
         filter_cases_df = filter_cases_df[time_filter]
         logging.debug(f"cases_df.shape={filter_cases_df.shape}")
 
-    return filter_cases_df.groupby(city_map_layers_to_minio.SUBDISTRICT_COL).apply(
+    return filter_cases_df.groupby(epi_map_case_layers_to_minio.SUBDISTRICT_COL).apply(
         lambda subdistrict_df: pandas.Series({
             CASES_TOTAL_COL: subdistrict_df.shape[0],
             HOSPITAL_CASES_COL: (subdistrict_df[HOSPITAL_CASES_COL] == "Yes").sum(),
@@ -123,11 +123,11 @@ def get_subdistrict_stats(all_cases_df, subdistrict_pop_df):
     stats_df = count_by_subdistrict(all_cases_df)
 
     # Active cases
-    active_start_date = cases_df[city_map_layers_to_minio.DATE_DIAGNOSIS_COL].max() - ACTIVE_DELAY
+    active_start_date = cases_df[epi_map_case_layers_to_minio.DATE_DIAGNOSIS_COL].max() - ACTIVE_DELAY
     active_start_date -= REPORTING_DELAY
     logging.debug(f"Using '{active_start_date}' as presumed active start date")
     active_df = count_by_subdistrict(all_cases_df,
-                                     time_filter_col=city_map_layers_to_minio.DATE_DIAGNOSIS_COL,
+                                     time_filter_col=epi_map_case_layers_to_minio.DATE_DIAGNOSIS_COL,
                                      filter_date_start=active_start_date)
     stats_df[ACTIVE_CASES_COL] = active_df[CASES_TOTAL_COL]
 
@@ -136,17 +136,17 @@ def get_subdistrict_stats(all_cases_df, subdistrict_pop_df):
         stats_df[col + PER_CAPITA_SUFFIX] = stats_df[col] / subdistrict_pop_df[SUBDISTRICT_POP_COL]
 
     # Previous week's stats
-    previous_week = cases_df[city_map_layers_to_minio.DATE_DIAGNOSIS_COL].max() - pandas.Timedelta(weeks=1)
+    previous_week = cases_df[epi_map_case_layers_to_minio.DATE_DIAGNOSIS_COL].max() - pandas.Timedelta(weeks=1)
     previous_week -= REPORTING_DELAY
     logging.debug(f"Using '{previous_week}' as start of previous week")
     previous_df = count_by_subdistrict(all_cases_df,
-                                       time_filter_col=city_map_layers_to_minio.DATE_DIAGNOSIS_COL,
+                                       time_filter_col=epi_map_case_layers_to_minio.DATE_DIAGNOSIS_COL,
                                        filter_date_end=previous_week)
 
     previous_week_active_start = previous_week - ACTIVE_DELAY
     logging.debug(f"Using '{previous_week_active_start}' as start of previous week's presumed active period")
     active_df = count_by_subdistrict(all_cases_df,
-                                     time_filter_col=city_map_layers_to_minio.DATE_DIAGNOSIS_COL,
+                                     time_filter_col=epi_map_case_layers_to_minio.DATE_DIAGNOSIS_COL,
                                      filter_date_start=previous_week_active_start,
                                      filter_date_end=previous_week)
     previous_df[ACTIVE_CASES_COL] = active_df[CASES_TOTAL_COL]
@@ -238,7 +238,7 @@ def generate_table_widget_data(table_data_df):
     for col_dict in output_data['columns']:
         logging.debug(f"Styling '{col_dict['name']}'")
         formatter_name = col_dict['name'].replace(" ", "").replace("(w/w)", "") + "Formatter"
-        if col_dict['name'] != city_map_layers_to_minio.SUBDISTRICT_COL:
+        if col_dict['name'] != epi_map_case_layers_to_minio.SUBDISTRICT_COL:
             col_delta_values = sorted(
                 table_data_df[col_dict['name']].str.extract("\(([+-]*\d+)\)").astype(float).values
             )
@@ -285,10 +285,10 @@ def write_table_widget_file_to_minio(localpath, minio_access, minio_secret):
     result = minio_utils.file_to_minio(
         filename=localpath,
         filename_prefix_override=STATS_WIDGET_PREFIX,
-        minio_bucket=city_map_layers_to_minio.MINIO_COVID_BUCKET,
+        minio_bucket=epi_map_case_layers_to_minio.MINIO_COVID_BUCKET,
         minio_key=minio_access,
         minio_secret=minio_secret,
-        data_classification=city_map_layers_to_minio.MINIO_CLASSIFICATION,
+        data_classification=epi_map_case_layers_to_minio.MINIO_CLASSIFICATION,
     )
 
     assert result
@@ -313,12 +313,12 @@ if __name__ == "__main__":
     logging.info(f"Generat[ing] stats table for '{district_name}' district")
 
     logging.info("Gett[ing] case data")
-    cases_df = city_map_layers_to_minio.get_case_data(secrets["minio"]["edge"]["access"],
+    cases_df = epi_map_case_layers_to_minio.get_case_data(secrets["minio"]["edge"]["access"],
                                                       secrets["minio"]["edge"]["secret"])
     logging.info("G[ot] case data")
 
     logging.info("Filter[ing] to District Level")
-    filtered_df = city_map_layers_to_minio.filter_district_case_data(cases_df, district_name, "*")
+    filtered_df = epi_map_case_layers_to_minio.filter_district_case_data(cases_df, district_name, "*")
     logging.info("Filter[ed] to District Level")
 
     logging.info("Gett[ing] population data")
