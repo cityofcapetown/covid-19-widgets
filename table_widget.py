@@ -14,15 +14,26 @@ GRIDJS_CSS_LINK = ("mermain.css", "https://unpkg.com/gridjs/dist/theme/mermaid.m
 class TableWidget:
     _template = jinja2.Template("""
     <!DOCTYPE html>
-    <html lang="en">
+    <html lang="en" style="height:100%">
 
     <head>
         <meta charset="utf-8">
         <title>{{ this.title }}</title>
         <link href="mermain.css" rel="stylesheet"/>
+        <style>
+            .gridjs-container {
+                height: 100% !important
+            }
+            .gridjs-wrapper {
+                height: 100% !important
+            }
+            .gridjs-table {
+                height: 100% !important
+            }
+        </style>
     </head>
 
-    <body style="margin:0px;overflow-x: hidden;">
+    <body style="margin:0px;overflow: hidden;">
         <div id="wrapper"></div>
         <script src="gridjs.js"></script>
         <script>
