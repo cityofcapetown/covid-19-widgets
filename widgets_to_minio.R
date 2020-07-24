@@ -32,6 +32,7 @@ library(leafpop)
 library(bpexploder)
 library(sparkline)
 library(zoo)
+library(dplyr) # extra dependency for lag day adjustments data manipulation
 
 
 # LOAD SECRETS ==========================================================================
@@ -810,6 +811,56 @@ ct_daily_counts <-  ct_subdistrict_cumulative_daily_counts %>%
   mutate(rolling_death_5_days = rollmean(deaths, 5, na.pad=TRUE, align="right"),
          rolling_cases_5_days = rollmean(cases, 5, na.pad=TRUE, align="right"))
 
+        
+#---------------------------------
+# Add lag - day adjustment curve to the ct daily counts bar chart
+#---------------------------------
+
+# Get the latest spv export date
+ct_latest_export_date <- ct_all_cases_parsed$Export.Date[nrow(ct_all_cases_parsed)-1]
+# add lag day to ct_daily_counts
+ct_daily_counts$lag_days <- as.Date(mdy_hm(ct_latest_export_date)) - as.Date(as.character(ct_daily_counts$date), format="%Y-%m-%d")
+ct_daily_counts$lag_days <-  as.numeric(ct_daily_counts$lag_days, units="days")
+
+# merge the diag median on lag_days
+ct_daily_counts <- ct_daily_counts %>% left_join(wc_spv_DiagnosisDate_freq_table, by="lag_days")
+# fillna with 1 for zero adjustment
+ct_daily_counts$median[is.na(ct_daily_counts$median)] <- 1
+# caclulate the adjusted values
+ct_daily_counts$cases_adjusted <- ct_daily_counts$cases / ct_daily_counts$median
+ct_daily_counts <- ct_daily_counts %>% select(-median, -sem, -X1)
+
+# merge the general admissions median on lag_days
+ct_daily_counts <- ct_daily_counts %>% left_join(wc_spv_AdmissionDate_freq_table, by="lag_days")
+# fillna with 1 for zero adjustment
+ct_daily_counts$median[is.na(ct_daily_counts$median)] <- 1
+# caclulate the adjusted values
+ct_daily_counts$GenAdmission_adjusted <- ct_daily_counts$gen_admissions / ct_daily_counts$median
+ct_daily_counts <- ct_daily_counts %>% select(-median, -sem, -X1)
+
+# merge the icu admissions median on lag_days
+ct_daily_counts <- ct_daily_counts %>% left_join(wc_spv_ICUAdmissionDate_freq_table, by="lag_days")
+# fillna with 1 for zero adjustment
+ct_daily_counts$median[is.na(ct_daily_counts$median)] <- 1
+# caclulate the adjusted values
+ct_daily_counts$ICUAdmission_adjusted <- ct_daily_counts$icu_admissions / ct_daily_counts$median
+ct_daily_counts <- ct_daily_counts %>% select(-median, -sem, -X1)
+
+# merge the deaths median on lag_days
+ct_daily_counts <- ct_daily_counts %>% left_join(wc_spv_DeathDate_freq_table, by="lag_days")
+# fillna with 1 for zero adjustment
+ct_daily_counts$median[is.na(ct_daily_counts$median)] <- 1
+# caclulate the adjusted values
+ct_daily_counts$Deaths_adjusted <- ct_daily_counts$deaths / ct_daily_counts$median
+ct_daily_counts <- ct_daily_counts %>% select(-median, -sem, -X1)
+
+# get the  5 day rolling cases and deaths
+ct_daily_counts <-  ct_daily_counts %>% 
+  mutate(rolling_death_5_days_adjust = rollmean(ct_daily_counts$Deaths_adjusted, 5, na.pad=TRUE, align="right"),
+         rolling_cases_5_days_adjust = rollmean(ct_daily_counts$cases_adjusted, 5, na.pad=TRUE, align="right"))
+        
+#---------------------------------
+#---------------------------------
 
 ct_rolling_5_day_deaths_latest <- ct_daily_counts$rolling_death_5_days[nrow(ct_daily_counts)]
 ct_rolling_5_day_cases_latest <- ct_daily_counts$rolling_cases_5_days[nrow(ct_daily_counts)]
@@ -843,12 +894,12 @@ ct_daily_counts_bar_chart <- ct_daily_counts %>%
             marker = list(color = 'rgba(255,165,0, 0.7)')) %>%
   add_trace(y = ~deaths, name = 'Deaths',
             marker = list(color = 'rgba(219, 64, 82, 0.7)')) %>%
-  add_trace(y = ~rolling_death_5_days, name = 'Deaths 5 Day Average',
+  add_trace(y = ~rolling_death_5_days_adjust, name = 'Deaths 5 Day Average <br> * adjusted for reporting lag',
             type = "scatter", 
             mode = "line", 
             line = list(color = 'rgba(219, 64, 82, 1)'), 
             marker = list(color = 'rgba(219, 64, 82, 1)')) %>%
-  add_trace(y = ~rolling_cases_5_days, name = 'New Cases 5 Day Average  <br> * recent dates are underreported',
+  add_trace(y = ~rolling_cases_5_days_adjust, name = 'New Cases 5 Day Average  <br> * adjusted for reporting lag',
             type = "scatter", 
             mode = "line", 
             line = list(color = 'rgba(55, 128, 191, 1)'), 
