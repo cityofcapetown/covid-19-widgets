@@ -323,9 +323,7 @@ if __name__ == "__main__":
             remapped_delta_gdf = remap_gdf(mobile_delta_gdf, target_gdf,
                                            [col for col in mobile_delta_df.columns if col != "geometry"]).reset_index()
             # Ugly hack to fix issue with indices
-            cols_to_drop = [col for col in remapped_delta_gdf.columns if "level_" in col]
-            if len(cols_to_drop):
-                remapped_delta_gdf.drop(columns=cols_to_drop, inplace=True)
+            remapped_delta_gdf.index.name = "dummy_index"
 
             logging.info(f"Remapp[ed] cases for '{layer_filename}'")
 
