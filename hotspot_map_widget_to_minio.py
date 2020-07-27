@@ -138,11 +138,6 @@ HOTSPOT_LAYER_PROPERTIES_LOOKUP = collections.OrderedDict((
         (HEX_COUNT_INDEX_PROPERTY, "PopDensity2019PerSqkm",), ("Hex ID", "People / km²",),
         ("Blues",), "sl_du_pop_est_2019_hex9.geojson", False, False, None
     )),
-    ("Mobile Device Uptime Activity", (
-        city_map_widget_to_minio.LayerType.CHOROPLETH,
-        (HEX_COUNT_INDEX_PROPERTY, "NormUptime_50%",), ("Hex ID", "Normalised Uptime Device Count",),
-        ("Blues",), "city_all_hex_l8_mobile_count.geojson", False, False, None
-    )),
 
     # Vulnerability Indicies
     ("WCPG SEVI", (
@@ -290,7 +285,6 @@ CATEGORY_BUCKET_MAP = {
 
     # Population Density
     "2019 Population Estimate": "POPULATION DENSITY",
-    "Mobile Device Uptime Activity": "POPULATION DENSITY",
 
     # "PLACES OF RISK",
     "WCED Schools": "PLACES OF RISK",
