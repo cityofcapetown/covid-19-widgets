@@ -138,6 +138,11 @@ HOTSPOT_LAYER_PROPERTIES_LOOKUP = collections.OrderedDict((
         (HEX_COUNT_INDEX_PROPERTY, "PopDensity2019PerSqkm",), ("Hex ID", "People / km²",),
         ("Blues",), "sl_du_pop_est_2019_hex9.geojson", False, False, None
     )),
+    ("Mobile Device Uptime Activity", (
+        city_map_widget_to_minio.LayerType.CHOROPLETH,
+        (HEX_COUNT_INDEX_PROPERTY, "NormUptime_50%",), ("Hex ID", "Normalised Uptime Device Count",),
+        ("Blues",), "city_all_hex_l8_mobile_count.geojson", False, False, None
+    )),
 
     # Vulnerability Indicies
     ("WCPG SEVI", (
@@ -166,6 +171,11 @@ HOTSPOT_LAYER_PROPERTIES_LOOKUP = collections.OrderedDict((
         city_map_widget_to_minio.LayerType.CHOROPLETH,
         (HEX_COUNT_INDEX_PROPERTY, "gridcode",), ("Hex ID", "Activity Score",),
         ("Greens",), "public_transport_activity_levels_hex9.geojson", False, False, None
+    )),
+    ("Mobile Device Activity Increase", (
+        city_map_widget_to_minio.LayerType.CHOROPLETH,
+        (HEX_COUNT_INDEX_PROPERTY, "RelativeDeltaPercent_50%",), ("Hex ID", "Increase in Unique Devices (%)",),
+        ("Greens",), "city_all_hex_l8_mobile_count.geojson", False, False, None
     )),
     ("Trading Locations", (
         city_map_widget_to_minio.LayerType.POLYGON,
@@ -280,12 +290,14 @@ CATEGORY_BUCKET_MAP = {
 
     # Population Density
     "2019 Population Estimate": "POPULATION DENSITY",
+    "Mobile Device Uptime Activity": "POPULATION DENSITY",
 
     # "PLACES OF RISK",
     "WCED Schools": "PLACES OF RISK",
     "Shopping Centres (>5k m²)": "PLACES OF RISK",
     "Public Transport Interchanges": "PLACES OF RISK",
     "Public Transport Activity": "PLACES OF RISK",
+    "Mobile Device Activity Increase": "PLACES OF RISK",
     "Trading Locations": "PLACES OF RISK",
     "SASSA Offices": "PLACES OF RISK",
     'SASSA Paypoint (Shops)': "PLACES OF RISK",

@@ -107,12 +107,18 @@ city_map_layers_operator = covid_19_widget_task(
     task_cmdline_args=["city", "city of cape town", "all", "*"]
 )
 
+MOBILE_DATA_MAP_LAYERS_GENERATE = 'mobile-data-map-layers-generate'
+mobile_data_map_layers_operator = covid_19_widget_task(
+    MOBILE_DATA_MAP_LAYERS_GENERATE,
+    task_cmdline_args=["city", "city of cape town", "all", "*"]
+)
+
 EPI_MAP_CASE_LAYERS_GENERATE = 'epi-map-case-layers-generate'
 city_map_layers_operators = [
     (covid_19_widget_task(
         EPI_MAP_CASE_LAYERS_GENERATE,
         task_cmdline_args=[district_filename_prefix, district_name, subdistrict_filename_prefix, subdistrict_name]
-    ), city_map_layers_operator)
+    ), city_map_layers_operator, mobile_data_map_layers_operator)
     for district_filename_prefix, district_name, subdistrict_tuples in DISTRICT_TUPLES
     for subdistrict_filename_prefix, subdistrict_name in subdistrict_tuples
 ]
