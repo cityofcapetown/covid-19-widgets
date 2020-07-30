@@ -155,7 +155,8 @@ subdistrict_table_operators = [
 ]
 
 SPV_PLOT_TASK = 'spv-data-plot'
-spv_data_push_operator = covid_19_widget_task(SPV_PLOT_TASK)
+spv_plot_operator = covid_19_widget_task(SPV_PLOT_TASK,
+                                         task_cmdline_args=["city", "city of cape town", "all", "*"])
 
 # Dependencies
 for layer_generate_operators, map_plot_operator, hotspot_plot_operator in zip(
