@@ -76,6 +76,9 @@ save_widget <- function(widg, destdir, name_override=NULL) {
                         paste(widget_name, "html", sep = "."))
   libdir <- file.path(getwd(), destdir, 
                       "libdir")
+  png_savepath <- file.path(getwd(), destdir, 
+                            paste(widget_name, "png", sep = "."))
+  
   if (!(file.exists(libdir))) {
     dir.create(libdir)
   }
@@ -86,6 +89,7 @@ save_widget <- function(widg, destdir, name_override=NULL) {
     widg$sizingPolicy$browser$padding = 0
     widg$sizingPolicy$viewer$padding = 0
     saveWidget(widg, savepath, selfcontained = F, libdir = libdir)
+    webshot2::webshot(savepath, file = png_savepath)
     print(paste("Saved to", savepath))
   }
 }
@@ -1356,67 +1360,6 @@ usa_county_deaths_per_million_trajectory_log <- usa_county_deaths_per_million_tr
 save_widget(usa_county_deaths_per_million_trajectory_log, public_destdir)
 
 
-# income data --------------------------------
-# Filter out zero days in the future
-# latest_income_total_date <- min(Sys.Date(), max(income_totals$DateTimestamp))
-# income_totals <- income_totals %>% filter(DateTimestamp <= latest_income_total_date)
-# 
-# income_totals_cash <- income_totals %>%
-#   gather(key = "channel", value = "amount", -DateTimestamp) %>%
-#   group_by(DateTimestamp) %>%
-#   summarise(daily_revenue = sum(amount)) %>%
-#   ungroup() %>% mutate(year = year(DateTimestamp),
-#                          month = month(DateTimestamp)) %>% group_by(year, month) %>% summarise(mean_daily_revenue = mean(daily_revenue)) %>% ungroup()
-# 
-# income_totals_cash$month <- factor(income_totals_cash$month)
-# levels(income_totals_cash$month) <- month.abb
-# 
-# # plotting reference lines across each facet:
-# 
-# referenceLines <- income_totals_cash  # \/ Rename
-# colnames(referenceLines)[2] <- "groupVar"
-# zp <- ggplot(income_totals_cash,
-#              aes(x = year, y = mean_daily_revenue))
-# zp <- zp + geom_line(data = referenceLines,  # Plotting the "underlayer"
-#                      aes(x = year, y = mean_daily_revenue, group = groupVar),
-#                      colour = "GRAY", alpha = 1/2, size = 1/2)
-# zp <- zp + geom_line(size = 1)  # Drawing the "overlayer"
-# zp <- zp + facet_wrap(~ month)
-# zp <- zp + theme_bw()
-# 
-# ggplotly()
-# 
-# # Stacked category chart
-# date_window <- substr(seq(from = latest_income_total_date - 30, to = latest_income_total_date, by = "days"), start = 6, stop = 10)
-# income_totals_all <- income_totals %>%
-#   mutate(filter_key = substr(DateTimestamp, start = 6, stop = 10)) %>%
-#   filter(filter_key %in% date_window) %>% select(-filter_key)
-# 
-# income_totals_all <- income_totals_all %>%
-#   gather(key = "channel", value = "amount", -DateTimestamp)  %>%
-#   mutate(year = year(DateTimestamp),
-#                        day = yday(DateTimestamp)) %>%
-#   group_by(year, channel) %>%
-#   summarise(average_amount = mean(amount)) %>%
-#   ungroup() %>%
-#   spread(key = channel, value = average_amount)
-# 
-# daily_ave_income_categories <- plot_ly(income_totals_all, x = ~year, y = ~Bank, name = 'Bank', type = 'bar')
-# daily_ave_income_categories <- daily_ave_income_categories %>% add_trace(y = ~Cash, name = 'Cash')
-# daily_ave_income_categories <- daily_ave_income_categories %>% add_trace(y = ~DebitOrders, name = 'Debit Orders')
-# daily_ave_income_categories <- daily_ave_income_categories %>% add_trace(y = ~EPortal, name = 'ePortal')
-# daily_ave_income_categories <- daily_ave_income_categories %>% add_trace(y = ~GroupAccounts, name = 'Group Accounts')
-# daily_ave_income_categories <- daily_ave_income_categories %>% add_trace(y = ~UnidentifiedCash, name = 'Unidentified Cash')
-# daily_ave_income_categories <- daily_ave_income_categories %>% layout(title = '',
-#                       xaxis = list(title = "",
-#                                    showgrid = FALSE),
-#                       yaxis = list(title = "Average Daily Income in the Last 30 Days (Rm)",
-#                                    showgrid = FALSE),
-#                       barmode = "stack")
-# 
-# daily_ave_income_categories
-
-
 # SEND TO MINIO =================================================================
 for (filename in list.files(public_destdir, recursive = T)) {
   filepath <- file.path(public_destdir, filename)
@@ -1465,6 +1408,3 @@ for (filename in list.files(private_destdir, recursive = T)) {
     print("This is a directory - not sending!")
   }
 }
-
-# Save a copy of the data to .Rdata for dashboard knit
-save.image(file = "widgets.RData")
