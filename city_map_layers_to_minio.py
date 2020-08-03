@@ -6,7 +6,6 @@ import tempfile
 
 from db_utils import minio_utils
 import geopandas
-import pandas
 
 MINIO_COVID_BUCKET = "covid"
 MINIO_CLASSIFICATION = minio_utils.DataClassification.EDGE
@@ -54,25 +53,6 @@ LAYER_FILES = (
     ("ct_roads.geojson", MINIO_COVID_BUCKET, DATA_PUBLIC_PREFIX),
     ("ct_railways.geojson", MINIO_COVID_BUCKET, DATA_PUBLIC_PREFIX),
 )
-
-ACTIVE_METADATA_KEY = "Active"
-CUMULATIVE_METADATA_KEY = "All"
-DEATHS_METADATA_KEY = "Deaths"
-HOSPITALISED_METADATA_KEY = "Hospitalised"
-ICU_METADATA_KEY = "ICU"
-
-ACTIVE_CASE_COUNT_COL = "ActiveCaseCount"
-CASE_COUNT_COL = "CaseCount"
-DEATHS_COUNT_COL = "DeathsCount"
-
-CASE_COUNT_KEY = "CountCol"
-NOT_SPATIAL_CASE_COUNT = "not_spatial_count"
-CASE_COUNT_TOTAL = "total_count"
-LATEST_INCREASE = "latest_increase"
-LATEST_RELATIVE_INCREASE = "latest_relative_increase"
-
-REPORTING_PERIOD = pandas.Timedelta(days=7)
-REPORTING_DELAY = pandas.Timedelta(days=3)
 
 
 def get_layers(tempdir, minio_access, minio_secret, layers=LAYER_FILES):
