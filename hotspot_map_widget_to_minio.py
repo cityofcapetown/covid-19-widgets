@@ -374,7 +374,7 @@ CATEGORY_BUCKET_MAP = {
     "Community-based Teams": "WHO WORKS WHERE",
     "Community Action Networks": "WHO WORKS WHERE",
     "Resilience NGO/NPOs": "WHO WORKS WHERE",
-    "Education Community Organisations": "WHO WORKS WHERE",
+    "Education Organisations": "WHO WORKS WHERE",
     "Designated Vulnerable Groups Organisations": "WHO WORKS WHERE",
     "Safety & Security Organisations": "WHO WORKS WHERE",
     "Environment Organisations": "WHO WORKS WHERE",
