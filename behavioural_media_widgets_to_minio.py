@@ -19,7 +19,11 @@ MINIO_CLASSIFICATION = minio_utils.DataClassification.EDGE
 
 DATA_RESTRICTED_PREFIX = "data/private/"
 MEDIA_DATA_FILENAME = "media_complete.csv"
-DATE_COL_NAME = "published"
+DATE_COL = "published"
+SOCIAL_NETWORK_COL = "socialNetworkId"
+CATEGORY_COL = "categoryId"
+
+NA_VALUE = "NA"
 
 START_DATE = "2020-03-01"
 TZ_STRING = "Africa/Johannesburg"
@@ -59,7 +63,10 @@ def get_data(minio_key, minio_access, minio_secret):
 
         data_df = pandas.read_csv(temp_datafile.name)
 
-    data_df[DATE_COL_NAME] = pandas.to_datetime(data_df[DATE_COL_NAME])
+    data_df[DATE_COL] = pandas.to_datetime(data_df[DATE_COL])
+    data_df[SOCIAL_NETWORK_COL].fillna(NA_VALUE, inplace=True)
+    data_df[CATEGORY_COL].fillna(NA_VALUE, inplace=True)
+
     logging.debug(f"data_df.columns=\n{data_df.columns}")
     logging.debug(
         f"data_df.columns=\n{pprint.pformat(data_df.dtypes.to_dict())}"
@@ -91,14 +98,14 @@ def to_json_data(values_dict):
 
 
 def get_published_count(mentions_df, category_id, social_media_network_id, start_date, end_date):
-    start_timestamp = pandas.to_datetime(start_date).tz_localize('Africa/Johannesburg')
+    start_timestamp = pandas.to_datetime(start_date).tz_localize(TZ_STRING)
     filtered_mentions = mentions_df.query(
-        "categoryId == @category_id & "
-        "socialNetworkId == @social_media_network_id &"
-        "published >= @start_timestamp"
+        f"{CATEGORY_COL} == @category_id & "
+        f"{SOCIAL_NETWORK_COL} == @social_media_network_id &"
+        f"{DATE_COL} >= @start_timestamp"
     ).set_index("published").resample(
         "1D",
-    ).count()["id"].rename("Count")
+    ).count()["id"].rename("Count").tz_convert(TZ_STRING)
 
     empty_series = pandas.Series(
         0, index=pandas.date_range(start_date, end_date, tz=TZ_STRING)
@@ -167,7 +174,7 @@ def get_nett_sentiment(mentions_df, start_date, end_date):
     empty_series = pandas.Series(
         0, index=pandas.date_range(start_date, end_date, tz=TZ_STRING)
     )
-    filled_series = sentiment_series.combine_first(empty_series)
+    filled_series = sentiment_series.tz_convert(TZ_STRING).combine_first(empty_series)
 
     return filled_series.sort_index(), sentiment_abs_count
 
@@ -243,9 +250,9 @@ def get_most_recent_media_datasource(mentions_df):
     media_data_source = ColumnDataSource(most_recent)
 
     most_recent_export = most_recent.copy().assign(
-        **{DATE_COL_NAME + "_str": most_recent[DATE_COL_NAME].dt.strftime(ISO_TIMESTAMP_FORMAT)}
+        **{DATE_COL + "_str": most_recent[DATE_COL].dt.strftime(ISO_TIMESTAMP_FORMAT)}
     ).drop(
-        [DATE_COL_NAME], axis='columns'
+        [DATE_COL], axis='columns'
     )
     media_data_source_json = most_recent_export.to_json(orient='records')
 
@@ -298,9 +305,9 @@ def get_social_media_comments_datasource(mentions_df, sentiment_value='-1'):
     data_source = ColumnDataSource(extracts)
 
     extracts_export = extracts.copy().assign(
-        **{DATE_COL_NAME + "_str": extracts[DATE_COL_NAME].dt.strftime(ISO_TIMESTAMP_FORMAT)}
+        **{DATE_COL + "_str": extracts[DATE_COL].dt.strftime(ISO_TIMESTAMP_FORMAT)}
     ).drop(
-        [DATE_COL_NAME], axis='columns'
+        [DATE_COL], axis='columns'
     )
     extracts_json = extracts_export.to_json(orient='records')
 
