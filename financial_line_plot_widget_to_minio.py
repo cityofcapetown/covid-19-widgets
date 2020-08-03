@@ -52,12 +52,12 @@ def income_data_munge(income_df):
     income_df.set_index('DateTimestamp', inplace=True)
 
     logging.debug("Dropping future dates...")
-    income_df.drop(
-        income_df.loc[
-            income_df.index.date >= pandas.Timestamp.now().date()
-            ].index,
-        inplace=True
-    )
+    today = pandas.Timestamp.now().date()
+    if (income_df.index.date >= today).any():
+        income_df.drop(
+            income_df.loc[income_df.index.date >= today].index,
+            inplace=True
+        )
 
     return income_df
 
@@ -133,14 +133,14 @@ def generate_plot(plot_df, start_date="2020-03-01", sast_tz='Africa/Johannesburg
 
     # Adding Income
     income_vbar = line_plot.vbar(x="Date", top="TotalIncome", color="black", source=plot_df,
-                   legend_label="Cash Income", width=5e7)
+                                 legend_label="Cash Income", width=5e7)
     # Adding Payments
     expenditure_vbar = line_plot.vbar(x="Date", top="TotalPayments", color="red", source=plot_df,
-                   legend_label="Payments", width=5e7)
+                                      legend_label="Payments", width=5e7)
 
     # Adding Nett Spend
     nett_spend_line = line_plot.line(x="Date", y="NettSpend", color="purple", source=plot_df,
-                   legend_label="c (7 Day Average)", line_width=3, line_dash="dashed")
+                                     legend_label="c (7 Day Average)", line_width=3, line_dash="dashed")
 
     # X-axis
     line_plot.xaxis.formatter = DatetimeTickFormatter(days="%Y-%m-%d")
