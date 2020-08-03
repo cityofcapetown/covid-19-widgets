@@ -66,6 +66,15 @@ listN <- function(...){
 }
 
 save_widget <- function(widg, destdir, name_override=NULL) {
+  
+  require(webshot2)
+  require(chromote)
+  
+  # Need to do this for running chromium in a docker container
+  set_default_chromote_object(
+    Chromote$new(browser = Chrome$new(args = "--no-sandbox"))
+  )
+  
   widget_name <- deparse(substitute(widg))
   if (!is.null(name_override)){
     widget_name <- name_override
