@@ -31,14 +31,14 @@ secret_file = Secret('volume', '/secrets', 'airflow-workers-secret')
 
 # arguments for the k8s operator
 k8s_run_args = {
-    "image": "riazarbi/datasci-r-heavy:latest",
+    "image": "riazarbi/datasci-r-heavy:bionic",
     "namespace": 'airflow-workers',
     "is_delete_operator_pod": True,
     "get_logs": True,
     "in_cluster": True,
     "secrets": [secret_file],
     "env_vars": k8s_run_env,
-    "image_pull_policy": "IfNotPresent",
+    "image_pull_policy": "Always",
     "startup_timeout_seconds": 60*30,
     "task_concurrency": 1,
 }
