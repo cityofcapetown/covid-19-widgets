@@ -16,6 +16,8 @@ DATA_COMMUNITY_RESPONSE_PREFIX = "data/staging/community_response/"
 CASE_MAP_PREFIX = "widgets/private/case_count_maps/"
 DATA_VULNERABILITY_PREFIX = "data/staging/vulenerability_layers/"
 
+MINIO_COD_BUCKET = "community-organisation-database.community-organisations"
+
 CT_WARD_FILENAME = "ct_wards.geojson"
 CT_HEALTH_DISTRICT_FILENAME = "health_districts.geojson"
 
@@ -52,6 +54,16 @@ LAYER_FILES = (
     ("npo_publish_data.geojson", MINIO_COVID_BUCKET, DATA_COMMUNITY_RESPONSE_PREFIX),
     ("ct_roads.geojson", MINIO_COVID_BUCKET, DATA_PUBLIC_PREFIX),
     ("ct_railways.geojson", MINIO_COVID_BUCKET, DATA_PUBLIC_PREFIX),
+    ("community-organisations-environment.geojson", MINIO_COD_BUCKET, ""),
+    ("community-organisations-safety-and-security-organisations.geojson", MINIO_COD_BUCKET, ""),
+    ("community-organisations-sports.geojson", MINIO_COD_BUCKET, ""),
+    ("community-organisations-civic-based-organisations.geojson", MINIO_COD_BUCKET, ""),
+    ("community-organisations-business.geojson", MINIO_COD_BUCKET, ""),
+    ("community-organisations-youth.geojson", MINIO_COD_BUCKET, ""),
+    ("community-organisations-arts-and-culture.geojson", MINIO_COD_BUCKET, ""),
+    ("community-organisations-education.geojson", MINIO_COD_BUCKET, ""),
+    ("community-organisations-faith-based-organisations.geojson", MINIO_COD_BUCKET, ""),
+    ("community-organisations-designated-vulnerable-groups.geojson", MINIO_COD_BUCKET, ""),
 )
 
 

@@ -243,7 +243,7 @@ HOTSPOT_LAYER_PROPERTIES_LOOKUP = collections.OrderedDict((
         ("purple", "bed"), "adult_homeless_shelters_coct.geojson", False, False, None
     )),
 
-    # COMMUNITY RESPONSE
+    # WHO WORKS WHERE
     ("Community-based Teams", (
         city_map_widget_to_minio.LayerType.POLYGON,
         ("CBTName",), ("CBT Name",),
@@ -254,7 +254,7 @@ HOTSPOT_LAYER_PROPERTIES_LOOKUP = collections.OrderedDict((
         ("CanName",), ("CAN Name",),
         ("cadetblue",), "ct_cans.geojson", False, False, None
     )),
-    ("NGO/NPOs", (
+    ("Resilience NGO/NPOs", (
         city_map_widget_to_minio.LayerType.POINT,
         ('Name of Organisation', 'NPONumberCleaned',
          'Contact Person', 'EmailCleaned', 'ContactNumberCleaned',
@@ -265,7 +265,67 @@ HOTSPOT_LAYER_PROPERTIES_LOOKUP = collections.OrderedDict((
          "Community Action Network", "ABSD Area", "Subcouncil", "Ward",
          "Permission to Publish"),
         ("cadetblue", "group"), "npo_publish_data.geojson", False, False, None
-    ))
+    )),
+    ("Designated Vulnerable Groups Organisations", (
+        city_map_widget_to_minio.LayerType.POINT,
+        ("ORG_NAME", "ORGWARDS", "SUBCOUNCIL_DESCRIPTION", "ORG_ADDRESS", "ORG_PHONE_NUMBER", "ORG_EMAIL_ADDRESS"),
+        ("Name", "Ward", "Subcouncil", "Address", "Phone Number", "Email"),
+        ("cadetblue", "heart"), "community-organisations-designated-vulnerable-groups.geojson", False, False, None
+    )),
+    ("Safety & Security Organisations", (
+        city_map_widget_to_minio.LayerType.POINT,
+        ("ORG_NAME", "ORGWARDS", "SUBCOUNCIL_DESCRIPTION", "ORG_ADDRESS", "ORG_PHONE_NUMBER", "ORG_EMAIL_ADDRESS"),
+        ("Name", "Ward", "Subcouncil", "Address", "Phone Number", "Email"),
+        ("cadetblue", "binoculars"), "community-organisations-safety-and-security-organisations.geojson", False, False, None
+    )),
+    ("Education Organisations", (
+        city_map_widget_to_minio.LayerType.POINT,
+        ("ORG_NAME", "ORGWARDS", "SUBCOUNCIL_DESCRIPTION", "ORG_ADDRESS", "ORG_PHONE_NUMBER", "ORG_EMAIL_ADDRESS"),
+        ("Name", "Ward", "Subcouncil", "Address", "Phone Number", "Email"),
+        ("cadetblue", "book"), "community-organisations-education.geojson", False, False, None
+    )),
+    ("Environment Organisations", (
+        city_map_widget_to_minio.LayerType.POINT,
+        ("ORG_NAME", "ORGWARDS", "SUBCOUNCIL_DESCRIPTION", "ORG_ADDRESS", "ORG_PHONE_NUMBER", "ORG_EMAIL_ADDRESS"),
+        ("Name", "Ward", "Subcouncil", "Address", "Phone Number", "Email"),
+        ("cadetblue", "tree"), "community-organisations-environment.geojson", False, False, None
+    )),
+    ("Sports Organisations", (
+        city_map_widget_to_minio.LayerType.POINT,
+        ("ORG_NAME", "ORGWARDS", "SUBCOUNCIL_DESCRIPTION", "ORG_ADDRESS", "ORG_PHONE_NUMBER", "ORG_EMAIL_ADDRESS"),
+        ("Name", "Ward", "Subcouncil", "Address", "Phone Number", "Email"),
+        ("cadetblue", "futbol-o"), "community-organisations-sports.geojson", False, False, None
+    )),
+    ("Civic-based Organisations", (
+        city_map_widget_to_minio.LayerType.POINT,
+        ("ORG_NAME", "ORGWARDS", "SUBCOUNCIL_DESCRIPTION", "ORG_ADDRESS", "ORG_PHONE_NUMBER", "ORG_EMAIL_ADDRESS"),
+        ("Name", "Ward", "Subcouncil", "Address", "Phone Number", "Email"),
+        ("cadetblue", "comments"), "community-organisations-civic-based-organisations.geojson", False, False, None
+    )),
+    ("Business Organisations", (
+        city_map_widget_to_minio.LayerType.POINT,
+        ("ORG_NAME", "ORGWARDS", "SUBCOUNCIL_DESCRIPTION", "ORG_ADDRESS", "ORG_PHONE_NUMBER", "ORG_EMAIL_ADDRESS"),
+        ("Name", "Ward", "Subcouncil", "Address", "Phone Number", "Email"),
+        ("cadetblue", "briefcase"), "community-organisations-business.geojson", False, False, None
+    )),
+    ("Youth Organisations", (
+        city_map_widget_to_minio.LayerType.POINT,
+        ("ORG_NAME", "ORGWARDS", "SUBCOUNCIL_DESCRIPTION", "ORG_ADDRESS", "ORG_PHONE_NUMBER", "ORG_EMAIL_ADDRESS"),
+        ("Name", "Ward", "Subcouncil", "Address", "Phone Number", "Email"),
+        ("cadetblue", "child"), "community-organisations-youth.geojson", False, False, None
+    )),
+    ("Arts & Culture Organisations", (
+        city_map_widget_to_minio.LayerType.POINT,
+        ("ORG_NAME", "ORGWARDS", "SUBCOUNCIL_DESCRIPTION", "ORG_ADDRESS", "ORG_PHONE_NUMBER", "ORG_EMAIL_ADDRESS"),
+        ("Name", "Ward", "Subcouncil", "Address", "Phone Number", "Email"),
+        ("cadetblue", "paint-brush"), "community-organisations-arts-and-culture.geojson", False, False, None
+    )),
+    ("Faith-based Organisations", (
+        city_map_widget_to_minio.LayerType.POINT,
+        ("ORG_NAME", "ORGWARDS", "SUBCOUNCIL_DESCRIPTION", "ORG_ADDRESS", "ORG_PHONE_NUMBER", "ORG_EMAIL_ADDRESS"),
+        ("Name", "Ward", "Subcouncil", "Address", "Phone Number", "Email"),
+        ("cadetblue", "cloud"), "community-organisations-faith-based-organisations.geojson", False, False, None
+    )),
 ))
 
 CATEGORY_BUCKETS = [
@@ -274,7 +334,7 @@ CATEGORY_BUCKETS = [
     "VULNERABILITY INDICES",
     "PLACES OF RISK",
     "PEOPLE AT RISK",
-    "COMMUNITY RESPONSE",
+    "WHO WORKS WHERE",
 ]
 CATEGORY_BUCKET_MAP = {
     # Contextual Information
@@ -310,10 +370,20 @@ CATEGORY_BUCKET_MAP = {
     # "VULNERABILITY INDICES"
     "WCPG SEVI": "VULNERABILITY INDICES",
 
-    # COMMUNITY RESPONSE
-    "Community-based Teams": "COMMUNITY RESPONSE",
-    "Community Action Networks": "COMMUNITY RESPONSE",
-    "NGO/NPOs": "COMMUNITY RESPONSE"
+    # WHO WORKS WHERE
+    "Community-based Teams": "WHO WORKS WHERE",
+    "Community Action Networks": "WHO WORKS WHERE",
+    "Resilience NGO/NPOs": "WHO WORKS WHERE",
+    "Education Community Organisations": "WHO WORKS WHERE",
+    "Designated Vulnerable Groups Organisations": "WHO WORKS WHERE",
+    "Safety & Security Organisations": "WHO WORKS WHERE",
+    "Environment Organisations": "WHO WORKS WHERE",
+    "Sports Organisations": "WHO WORKS WHERE",
+    "Civic-based Organisations": "WHO WORKS WHERE",
+    "Business Organisations": "WHO WORKS WHERE",
+    "Youth Organisations": "WHO WORKS WHERE",
+    "Arts & Culture Organisations": "WHO WORKS WHERE",
+    "Faith-based Organisations": "WHO WORKS WHERE",
 }
 
 marker_icon_create_function_template = '''
@@ -354,7 +424,7 @@ MARKER_ICON_PROPERTIES = {
                               "background_colour": "rgba(227, 125, 74, 0.6)"},
     "PLACES OF RISK": {"name": "marker-cluster-places-of-risk", "background_colour": "rgba(111, 173, 37, 0.6)"},
     "PEOPLE AT RISK": {"name": "marker-cluster-people-at-risk", "background_colour": "rgba(209, 82, 184, 0.6)"},
-    "COMMUNITY RESPONSE": {"name": "marker-cluster-community-response", "background_colour": "rgba(65, 103, 118, 0.7)"},
+    "WHO WORKS WHERE": {"name": "marker-cluster-community-response", "background_colour": "rgba(65, 103, 118, 0.7)"},
 }
 
 BIN_QUANTILES = [0, 0, 0.5, 0.75, 0.9, 0.99, 1]
