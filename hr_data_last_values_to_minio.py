@@ -33,7 +33,7 @@ STATUSES_TO_SUCCINCT_MAP = {
     'Off-Site': WORKING_STATUS,
     'COVID-19 Quarantine – Working': WORKING_STATUS,
     'COVID-19 Quarantine - Not Working': NOT_WORKING_STATUS,
-    'COVID-19 Lockdown': NOT_WORKING_STATUS,
+    'COVID-19 Lockdown': WORKING_STATUS,
     'Sick Leave (linked to COVID-19)': NOT_WORKING_STATUS,
     'Sick Leave (NOT linked to COVID-19)': NOT_WORKING_STATUS,
     'Leave': NOT_WORKING_STATUS,
