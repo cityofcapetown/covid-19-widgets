@@ -959,8 +959,8 @@ ct_subdistrict_cumulative_daily_counts <- ct_subdistrict_cumulative_daily_counts
 for (subdist in unique(ct_subdistrict_cumulative_daily_counts$Subdistrict)) {
   subdist_cumulative_daily_counts <- ct_subdistrict_cumulative_daily_counts %>% 
     filter(Subdistrict == subdist) %>%  
-    mutate(rolling_death_5_days = rollmean(deaths, 5, na.pad=TRUE, align="right"),
-           rolling_cases_5_days = rollmean(cases, 5, na.pad=TRUE, align="right"))
+    mutate(rolling_death_5_days = rollmean(deaths_adjusted, 5, na.pad=TRUE, align="right"),
+           rolling_cases_5_days = rollmean(cases_adjusted, 5, na.pad=TRUE, align="right"))
 
   p <- subdist_cumulative_daily_counts %>%
     plot_ly(.,  x = ~date, 
@@ -974,12 +974,12 @@ for (subdist in unique(ct_subdistrict_cumulative_daily_counts$Subdistrict)) {
               marker = list(color = 'rgba(255,165,0, 0.7)')) %>%
     add_trace(y = ~deaths, name = 'Deaths',
               marker = list(color = 'rgba(219, 64, 82, 0.7)')) %>%
-    add_trace(y = ~rolling_death_5_days, name = 'Deaths 5 Day Average <br> * recent dates are underreported',
+    add_trace(y = ~rolling_death_5_days, name = 'Deaths 5 Day Average <br> * adjusted for reporting lag',
               type = "scatter", 
               mode = "line", 
               line = list(color = 'rgba(219, 64, 82, 1)'), 
               marker = list(color = 'rgba(219, 64, 82, 1)')) %>%
-    add_trace(y = ~rolling_cases_5_days, name = 'New Cases 5 Day Average  <br> * recent dates are underreported',
+    add_trace(y = ~rolling_cases_5_days, name = 'New Cases 5 Day Average  <br> * adjusted for reporting lag',
               type = "scatter", 
               mode = "line", 
               line = list(color = 'rgba(55, 128, 191, 1)'), 
