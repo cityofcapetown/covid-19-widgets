@@ -34,7 +34,6 @@ library(sparkline)
 library(zoo)
 library(dplyr) # extra dependency for lag day adjustments data manipulation
 
-
 # LOAD SECRETS ==========================================================================
 # Credentials
 secrets <- fromJSON(Sys.getenv("SECRETS_FILE"))
@@ -835,37 +834,29 @@ ct_latest_export_date <- ct_all_cases_parsed$Export.Date[nrow(ct_all_cases_parse
 ct_daily_counts$lag_days <- as.Date(mdy_hm(ct_latest_export_date)) - as.Date(as.character(ct_daily_counts$date), format="%Y-%m-%d")
 ct_daily_counts$lag_days <-  as.numeric(ct_daily_counts$lag_days, units="days")
 
-# merge the diag median on lag_days
-ct_daily_counts <- ct_daily_counts %>% left_join(wc_spv_DiagnosisDate_freq_table, by="lag_days")
+# filter to diagnosis lag and merge the diag median on lag_days
+DiagnosisDate_freq_table <- spv_lag_freq_table_wc_districts %>% filter(lag_type == "Date.of.Diagnosis" & District == "City of Cape Town")
+DiagnosisDate_freq_table <- DiagnosisDate_freq_table %>% select(lag_days, median)
+ct_daily_counts <- ct_daily_counts %>% left_join(DiagnosisDate_freq_table, by="lag_days")
 # fillna with 1 for zero adjustment
 ct_daily_counts$median[is.na(ct_daily_counts$median)] <- 1
+# set cases lag day 1 adjustment to not adjust due to extreme instability
+ct_daily_counts$median[ct_daily_counts$lag_days == 1] <- NA
 # caclulate the adjusted values
 ct_daily_counts$cases_adjusted <- ct_daily_counts$cases / ct_daily_counts$median
-ct_daily_counts <- ct_daily_counts %>% select(-median, -sem, -X1)
+ct_daily_counts <- ct_daily_counts %>% select(-median)
 
-# merge the general admissions median on lag_days
-ct_daily_counts <- ct_daily_counts %>% left_join(wc_spv_AdmissionDate_freq_table, by="lag_days")
+# filter to death lag and merge the deaths median on lag_days
+DeathDate_freq_table <- spv_lag_freq_table_wc_districts %>% filter(lag_type == "Date.of.Death" & District == "City of Cape Town")
+DeathDate_freq_table <- DeathDate_freq_table %>% select(lag_days, median)
+ct_daily_counts <- ct_daily_counts %>% left_join(DeathDate_freq_table, by="lag_days")
 # fillna with 1 for zero adjustment
 ct_daily_counts$median[is.na(ct_daily_counts$median)] <- 1
-# caclulate the adjusted values
-ct_daily_counts$GenAdmission_adjusted <- ct_daily_counts$gen_admissions / ct_daily_counts$median
-ct_daily_counts <- ct_daily_counts %>% select(-median, -sem, -X1)
-
-# merge the icu admissions median on lag_days
-ct_daily_counts <- ct_daily_counts %>% left_join(wc_spv_ICUAdmissionDate_freq_table, by="lag_days")
-# fillna with 1 for zero adjustment
-ct_daily_counts$median[is.na(ct_daily_counts$median)] <- 1
-# caclulate the adjusted values
-ct_daily_counts$ICUAdmission_adjusted <- ct_daily_counts$icu_admissions / ct_daily_counts$median
-ct_daily_counts <- ct_daily_counts %>% select(-median, -sem, -X1)
-
-# merge the deaths median on lag_days
-ct_daily_counts <- ct_daily_counts %>% left_join(wc_spv_DeathDate_freq_table, by="lag_days")
-# fillna with 1 for zero adjustment
-ct_daily_counts$median[is.na(ct_daily_counts$median)] <- 1
+# set cases lag day 1 adjustment to not adjust due to extreme instability
+ct_daily_counts$median[ct_daily_counts$lag_days == 1] <- NA
 # caclulate the adjusted values
 ct_daily_counts$Deaths_adjusted <- ct_daily_counts$deaths / ct_daily_counts$median
-ct_daily_counts <- ct_daily_counts %>% select(-median, -sem, -X1)
+ct_daily_counts <- ct_daily_counts %>% select(-median)
 
 # get the  5 day rolling cases and deaths
 ct_daily_counts <-  ct_daily_counts %>% 
@@ -921,12 +912,54 @@ ct_daily_counts_bar_chart <- ct_daily_counts %>%
 
 save_widget(ct_daily_counts_bar_chart, private_destdir)
 
+#---------------------------------
+# Add the lag adjustments for the subdistricts plot
+#---------------------------------
+
+# add lag day
+ct_subdistrict_cumulative_daily_counts$lag_days <- as.Date(mdy_hm(ct_latest_export_date)) - as.Date(as.character(ct_subdistrict_cumulative_daily_counts$date), format="%Y-%m-%d")
+ct_subdistrict_cumulative_daily_counts$lag_days <- as.numeric(ct_subdistrict_cumulative_daily_counts$lag_days, units="days")
+
+# get the cases lag_days by subdistrict
+Dist_DiagnosisDate_freq_table <- spv_lag_freq_table_wc_subdistricts %>% filter(lag_type == "Date.of.Diagnosis" & District == "City of Cape Town")
+Dist_DiagnosisDate_freq_table <- Dist_DiagnosisDate_freq_table %>% select(lag_days, median, Subdistrict)
+# merge the diagnosed cases lag by subdistrict
+ct_subdistrict_cumulative_daily_counts <- merge(ct_subdistrict_cumulative_daily_counts, Dist_DiagnosisDate_freq_table, by=c("lag_days", "Subdistrict"))
+# fillna with 1 for zero adjustment
+ct_subdistrict_cumulative_daily_counts$median[is.na(ct_subdistrict_cumulative_daily_counts$median)] <- 1
+# set cases lag day 1 adjustment to not adjust due to extreme instability
+ct_subdistrict_cumulative_daily_counts$median[ct_subdistrict_cumulative_daily_counts$lag_days == 1] <- NA
+# caclulate the adjusted values
+ct_subdistrict_cumulative_daily_counts$cases_adjusted <- ct_subdistrict_cumulative_daily_counts$cases / ct_subdistrict_cumulative_daily_counts$median
+ct_subdistrict_cumulative_daily_counts <- ct_subdistrict_cumulative_daily_counts %>% select(-median)
+# round adjusted cases to int
+ct_subdistrict_cumulative_daily_counts$cases_adjusted <- round(ct_subdistrict_cumulative_daily_counts$cases_adjusted, 0)
+
+# get the deaths lag_days by subdistrict
+Dist_DeathDate_freq_table <- spv_lag_freq_table_wc_subdistricts %>% filter(lag_type == "Date.of.Death" & District == "City of Cape Town")
+Dist_DeathDate_freq_table <- Dist_DeathDate_freq_table %>% select(lag_days, median, Subdistrict)
+# merge the deaths lag by subdistrict
+ct_subdistrict_cumulative_daily_counts <- merge(ct_subdistrict_cumulative_daily_counts, Dist_DeathDate_freq_table, by=c("lag_days", "Subdistrict"))
+# fillna with 1 for zero adjustment
+ct_subdistrict_cumulative_daily_counts$median[is.na(ct_subdistrict_cumulative_daily_counts$median)] <- 1
+# set cases lag day 1 adjustment to not adjust due to extreme instability
+ct_subdistrict_cumulative_daily_counts$median[ct_subdistrict_cumulative_daily_counts$lag_days == 1] <- NA
+# caclulate the adjusted deaths values
+ct_subdistrict_cumulative_daily_counts$deaths_adjusted <- ct_subdistrict_cumulative_daily_counts$deaths / ct_subdistrict_cumulative_daily_counts$median
+# also remove the lag days column since it isn't needed anymore
+ct_subdistrict_cumulative_daily_counts <- ct_subdistrict_cumulative_daily_counts %>% select(-median, -lag_days)
+# round adjusted cases to int
+ct_subdistrict_cumulative_daily_counts$deaths_adjusted <- round(ct_subdistrict_cumulative_daily_counts$deaths_adjusted, 0)
+
+#---------------------------------
+#---------------------------------
+
 
 for (subdist in unique(ct_subdistrict_cumulative_daily_counts$Subdistrict)) {
   subdist_cumulative_daily_counts <- ct_subdistrict_cumulative_daily_counts %>% 
     filter(Subdistrict == subdist) %>%  
-    mutate(rolling_death_5_days = rollmean(deaths, 5, na.pad=TRUE, align="right"),
-           rolling_cases_5_days = rollmean(cases, 5, na.pad=TRUE, align="right"))
+    mutate(rolling_death_5_days = rollmean(deaths_adjusted, 5, na.pad=TRUE, align="right"),
+           rolling_cases_5_days = rollmean(cases_adjusted, 5, na.pad=TRUE, align="right"))
 
   p <- subdist_cumulative_daily_counts %>%
     plot_ly(.,  x = ~date, 
@@ -940,12 +973,12 @@ for (subdist in unique(ct_subdistrict_cumulative_daily_counts$Subdistrict)) {
               marker = list(color = 'rgba(255,165,0, 0.7)')) %>%
     add_trace(y = ~deaths, name = 'Deaths',
               marker = list(color = 'rgba(219, 64, 82, 0.7)')) %>%
-    add_trace(y = ~rolling_death_5_days, name = 'Deaths 5 Day Average',
+    add_trace(y = ~rolling_death_5_days, name = 'Deaths 5 Day Average <br> * adjusted for reporting lag',
               type = "scatter", 
               mode = "line", 
               line = list(color = 'rgba(219, 64, 82, 1)'), 
               marker = list(color = 'rgba(219, 64, 82, 1)')) %>%
-    add_trace(y = ~rolling_cases_5_days, name = 'New Cases 5 Day Average  <br> * recent dates are underreported',
+    add_trace(y = ~rolling_cases_5_days, name = 'New Cases 5 Day Average  <br> * adjusted for reporting lag',
               type = "scatter", 
               mode = "line", 
               line = list(color = 'rgba(55, 128, 191, 1)'), 
