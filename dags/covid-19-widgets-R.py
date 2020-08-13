@@ -31,7 +31,7 @@ secret_file = Secret('volume', '/secrets', 'airflow-workers-secret')
 
 # arguments for the k8s operator
 k8s_run_args = {
-    "image": "riazarbi/datasci-r-heavy:bionic",
+    "image": "riazarbi/datasci-r-heavy:20200803",
     "namespace": 'airflow-workers',
     "is_delete_operator_pod": True,
     "get_logs": True,
