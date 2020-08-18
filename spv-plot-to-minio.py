@@ -90,11 +90,11 @@ def make_fig(
     
     if announce_cases_y:
         if df[y_adj_col].max() >= df[announce_cases_y].max():
-            y_max = plot_master_df_wkdays[y_adj_col].max() * 1.1
+            y_max = df[y_adj_col].max() * 1.1
         else:
-            y_max = plot_master_df_wkdays[announce_cases_y].max() * 1.1
+            y_max = df[announce_cases_y].max() * 1.1
     else:
-         y_max = plot_master_df_wkdays[y_adj_col].max() * 1.1
+         y_max = df[y_adj_col].max() * 1.1
             
     ds = ColumnDataSource(df)
     fig = figure(
