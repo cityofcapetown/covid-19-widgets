@@ -1319,44 +1319,44 @@ wc_model_latest_hospital_figures <- wc_model_latest_default %>%
 save_widget(wc_model_latest_hospital_figures, private_destdir)
 
 
-wc_latest_modeled_deaths <- wc_model_latest_default %>% 
-  filter(TimeInterval == as.Date(Sys.time())) %>% 
-  pull(TotalDeaths) %>% .[[1]]
-
-wc_latest_modeled_cumulative_cases <- wc_model_latest_default %>% 
-  filter(TimeInterval == as.Date(Sys.time())) %>% 
-  pull(TotalInfections) %>% .[[1]]
-
-
-wc_latest_modeled_active_cases <- wc_model_latest_default %>% 
-  arrange(TimeInterval) %>%
-  filter(TimeInterval >= (as.Date(Sys.time()) - 14)) %>%
-  mutate(modeled_active_cases = cumsum(NewInfections)) %>% 
-  filter(TimeInterval == as.Date(Sys.time())) %>%
-  pull(modeled_active_cases) %>% .[[1]]
-
-wc_modeled_reach_100_deaths_per_day <- wc_model_latest_default %>% 
-  arrange(TimeInterval) %>%
-  filter(TimeInterval >= as.Date(Sys.time())) %>%
-  mutate(more_than_100_deaths_per_day = if_else(NewDeaths > 100, T, F))  %>%
-  filter(more_than_100_deaths_per_day == T) %>%
-  pull(TimeInterval) %>% min(.[[1]])
-
-
-wc_modeled_days_to_100_deaths_per_day <- wc_model_latest_default %>% filter(TimeInterval >= as.Date(Sys.time()),
-                                     TimeInterval <= wc_modeled_reach_100_deaths_per_day) %>% nrow() 
-
-
-latest_private_values <- append(latest_private_values,
-                                listN(wc_latest_modeled_deaths,
-                                      wc_latest_modeled_cumulative_cases,
-                                      wc_latest_modeled_active_cases,
-                                      wc_modeled_days_to_100_deaths_per_day))
-
-write(
-  toJSON(latest_private_values), 
-  file.path(getwd(), private_destdir,"latest_values.json")
-)
+# wc_latest_modeled_deaths <- wc_model_latest_default %>% 
+#   filter(TimeInterval == as.Date(Sys.time())) %>% 
+#   pull(TotalDeaths) %>% .[[1]]
+# 
+# wc_latest_modeled_cumulative_cases <- wc_model_latest_default %>% 
+#   filter(TimeInterval == as.Date(Sys.time())) %>% 
+#   pull(TotalInfections) %>% .[[1]]
+# 
+# 
+# wc_latest_modeled_active_cases <- wc_model_latest_default %>% 
+#   arrange(TimeInterval) %>%
+#   filter(TimeInterval >= (as.Date(Sys.time()) - 14)) %>%
+#   mutate(modeled_active_cases = cumsum(NewInfections)) %>% 
+#   filter(TimeInterval == as.Date(Sys.time())) %>%
+#   pull(modeled_active_cases) %>% .[[1]]
+# 
+# wc_modeled_reach_100_deaths_per_day <- wc_model_latest_default %>% 
+#   arrange(TimeInterval) %>%
+#   filter(TimeInterval >= as.Date(Sys.time())) %>%
+#   mutate(more_than_100_deaths_per_day = if_else(NewDeaths > 100, T, F))  %>%
+#   filter(more_than_100_deaths_per_day == T) %>%
+#   pull(TimeInterval) %>% min(.[[1]])
+# 
+# 
+# wc_modeled_days_to_100_deaths_per_day <- wc_model_latest_default %>% filter(TimeInterval >= as.Date(Sys.time()),
+#                                      TimeInterval <= wc_modeled_reach_100_deaths_per_day) %>% nrow() 
+# 
+# 
+# latest_private_values <- append(latest_private_values,
+#                                 listN(wc_latest_modeled_deaths,
+#                                       wc_latest_modeled_cumulative_cases,
+#                                       wc_latest_modeled_active_cases,
+#                                       wc_modeled_days_to_100_deaths_per_day))
+# 
+# write(
+#   toJSON(latest_private_values), 
+#   file.path(getwd(), private_destdir,"latest_values.json")
+# )
 
 # USA COUNTY DEATHS SINCE 25 ============================================
 
