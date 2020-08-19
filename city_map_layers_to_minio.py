@@ -67,7 +67,7 @@ LAYER_FILES = (
     ("absd_areas.geojson", MINIO_COVID_BUCKET, DATA_PUBLIC_PREFIX),
     ("subcouncils.geojson", MINIO_COVID_BUCKET, DATA_PUBLIC_PREFIX),
     ("ct_wards.geojson", MINIO_COVID_BUCKET, DATA_PUBLIC_PREFIX),
-    ("special_rated_areas.geojson", MINIO_COVID_BUCKET, DATA_PUBLIC_PREFIX),
+    ("special_rated_areas.geojson", MINIO_COVID_BUCKET, DATA_VULNERABILITY_PREFIX),
 )
 
 
