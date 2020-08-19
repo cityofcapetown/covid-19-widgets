@@ -159,4 +159,4 @@ for layer_generate_operators, map_plot_operator in zip(city_map_layers_operators
     map_plot_operator.set_upstream([operator for operator in layer_generate_operators
                                     if operator is not mobile_data_map_layers_operator])
 
-city_hotspot_map_plot_operator.set_upstream([CITY_MAP_LAYERS_GENERATE, city_map_layers_operators[-2]])
+city_hotspot_map_plot_operator.set_upstream(city_map_layers_operators[-2])
