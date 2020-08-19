@@ -142,8 +142,9 @@ HOTSPOT_LAYER_PROPERTIES_LOOKUP = collections.OrderedDict((
     # Vulnerability Indicies
     ("WCPG SEVI", (
         city_map_widget_to_minio.LayerType.CHOROPLETH,
-        (HEX_COUNT_INDEX_PROPERTY, "Cluster_SE_Rounded",), ("Hex ID", "Vulnerability Score",),
-        ("Oranges",), "province_sevi_hex9.geojson", False, False, None
+        (HEX_COUNT_INDEX_PROPERTY, "SEVI_5_GROUP_INDEX", "SEVI_CLASSIFICATION"),
+        ("Hex ID", "Vulnerability Score", "Vulnerability Classification"),
+        ("Oranges",), "province_sevi_v2_hex9.geojson", False, False, None
     )),
 
     # Places of Risk

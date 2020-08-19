@@ -28,7 +28,7 @@ LAYER_FILES = (
     (CT_HEALTH_DISTRICT_FILENAME, MINIO_COVID_BUCKET, DATA_PUBLIC_PREFIX),
     ("wcpg_testing_facilities.geojson", MINIO_COVID_BUCKET, DATA_VULNERABILITY_PREFIX),
     ("sl_du_pop_est_2019_hex9.geojson", MINIO_COVID_BUCKET, DATA_VULNERABILITY_PREFIX),
-    ("province_sevi_hex9.geojson", MINIO_COVID_BUCKET, DATA_VULNERABILITY_PREFIX),
+    ("province_sevi_v2_hex9.geojson", MINIO_COVID_BUCKET, DATA_VULNERABILITY_PREFIX),
     ("wced_metro_schools_2019.geojson", MINIO_COVID_BUCKET, DATA_VULNERABILITY_PREFIX),
     ("retail_stores.geojson", MINIO_COVID_BUCKET, DATA_VULNERABILITY_PREFIX),
     ("shopping_centres_above_5000sqm_rode_2020.geojson", MINIO_COVID_BUCKET, DATA_VULNERABILITY_PREFIX),
