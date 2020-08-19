@@ -134,14 +134,10 @@ city_map_plot_operators = [
 ]
 
 CITY_HOTSPOT_MAP_PLOT = 'city-hotspot-map-plot'
-city_hotspot_map_plot_operators = [
-    covid_19_widget_task(
-        CITY_HOTSPOT_MAP_PLOT,
-        task_cmdline_args=[district_filename_prefix, district_name, subdistrict_filename_prefix, subdistrict_name]
-    )
-    for district_filename_prefix, district_name, subdistrict_tuples in DISTRICT_TUPLES
-    for subdistrict_filename_prefix, subdistrict_name in subdistrict_tuples
-]
+city_hotspot_map_plot_operator = covid_19_widget_task(
+    CITY_HOTSPOT_MAP_PLOT,
+    task_cmdline_args=["city", "city of cape town", "all", "*"]
+)
 
 SUBDISTRICT_STATS_TABLE = 'subdistrict-stats-table'
 subdistrict_table_operators = [
@@ -159,10 +155,8 @@ spv_plot_operator = covid_19_widget_task(SPV_PLOT_TASK,
                                          task_cmdline_args=["city", "city of cape town", "all", "*"])
 
 # Dependencies
-for layer_generate_operators, map_plot_operator, hotspot_plot_operator in zip(
-        city_map_layers_operators,
-        city_map_plot_operators,
-        city_hotspot_map_plot_operators):
+for layer_generate_operators, map_plot_operator in zip(city_map_layers_operators, city_map_plot_operators):
     map_plot_operator.set_upstream([operator for operator in layer_generate_operators
                                     if operator is not mobile_data_map_layers_operator])
-    hotspot_plot_operator.set_upstream(layer_generate_operators)
+
+city_hotspot_map_plot_operator.set_upstream([CITY_MAP_LAYERS_GENERATE, city_map_layers_operators[-2]])
