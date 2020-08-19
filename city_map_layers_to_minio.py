@@ -64,6 +64,10 @@ LAYER_FILES = (
     ("community-organisations-education.geojson", MINIO_COD_BUCKET, ""),
     ("community-organisations-faith-based-organisations.geojson", MINIO_COD_BUCKET, ""),
     ("community-organisations-designated-vulnerable-groups.geojson", MINIO_COD_BUCKET, ""),
+    ("absd_areas.geojson", MINIO_COVID_BUCKET, DATA_PUBLIC_PREFIX),
+    ("subcouncils.geojson", MINIO_COVID_BUCKET, DATA_PUBLIC_PREFIX),
+    ("ct_wards.geojson", MINIO_COVID_BUCKET, DATA_PUBLIC_PREFIX),
+    ("special_rated_areas.geojson", MINIO_COVID_BUCKET, DATA_PUBLIC_PREFIX),
 )
 
 

@@ -111,6 +111,21 @@ HOTSPOT_LAYER_PROPERTIES_LOOKUP = collections.OrderedDict((
     )),
 
     # Contextual Information
+    ("ABSD Areas", (
+        city_map_widget_to_minio.LayerType.POLYGON,
+        ("ABSD_NAME",), ("ABSD Name",),
+        ("black",), "absd_areas.geojson", False, False, None
+    )),
+    ("Subcouncils", (
+        city_map_widget_to_minio.LayerType.POLYGON,
+        ("SUB_CNCL_NAME",), ("Name",),
+        ("black",), "subcouncils.geojson", False, False, None
+    )),
+    ("Wards", (
+        city_map_widget_to_minio.LayerType.POLYGON,
+        ("WardNo", "WardID"), ("Ward Number", "Ward ID"),
+        ("black",), "ct_wards.geojson", False, False, None
+    )),
     ("Official Suburbs", (
         city_map_widget_to_minio.LayerType.POLYGON,
         ("OFC_SBRB_NAME",), ("Official Suburb Name",),
@@ -120,6 +135,11 @@ HOTSPOT_LAYER_PROPERTIES_LOOKUP = collections.OrderedDict((
         city_map_widget_to_minio.LayerType.LABEL,
         ("OFC_SBRB_NAME",), ("Official Suburb Name",),
         ("black",), "official_suburb_labels.geojson", False, False, None
+    )),
+    ("Special Rated Areas", (
+        city_map_widget_to_minio.LayerType.POLYGON,
+        ("SRA_NAME",), ("Name",),
+        ("black",), "special_rated_areas.geojson", False, False, None
     )),
     ("Major Roads", (
         city_map_widget_to_minio.LayerType.POLYGON,
@@ -277,7 +297,8 @@ HOTSPOT_LAYER_PROPERTIES_LOOKUP = collections.OrderedDict((
         city_map_widget_to_minio.LayerType.POINT,
         ("ORG_NAME", "ORGWARDS", "SUBCOUNCIL_DESCRIPTION", "ORG_ADDRESS", "ORG_PHONE_NUMBER", "ORG_EMAIL_ADDRESS"),
         ("Name", "Ward", "Subcouncil", "Address", "Phone Number", "Email"),
-        ("cadetblue", "binoculars"), "community-organisations-safety-and-security-organisations.geojson", False, False, None
+        ("cadetblue", "binoculars"), "community-organisations-safety-and-security-organisations.geojson", False, False,
+        None
     )),
     ("Education Organisations", (
         city_map_widget_to_minio.LayerType.POINT,
