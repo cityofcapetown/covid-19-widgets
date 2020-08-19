@@ -247,8 +247,8 @@ HOTSPOT_LAYER_PROPERTIES_LOOKUP = collections.OrderedDict((
     # WHO WORKS WHERE
     ("Community-based Teams", (
         city_map_widget_to_minio.LayerType.POLYGON,
-        ("CBTName",), ("CBT Name",),
-        ("cadetblue",), "coct_cbt.geojson", False, False, None
+        ("SUB_CNCL_NAME", "CBT_Status"), ("Subcouncil", "CBT Status"),
+        ("cadetblue",), "coct_cbt_v2.geojson", False, False, None
     )),
     ("Community Action Networks", (
         city_map_widget_to_minio.LayerType.POLYGON,
