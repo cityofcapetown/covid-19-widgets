@@ -360,6 +360,10 @@ CATEGORY_BUCKETS = [
 ]
 CATEGORY_BUCKET_MAP = {
     # Contextual Information
+    "ABSD Areas": "CONTEXTUAL INFORMATION",
+    "Subcouncils": "CONTEXTUAL INFORMATION",
+    "Wards": "CONTEXTUAL INFORMATION",
+    "Special Rated Areas": "CONTEXTUAL INFORMATION",
     "Official Suburbs": "CONTEXTUAL INFORMATION",
     "Official Suburb Labels": "CONTEXTUAL INFORMATION",
     "Major Roads": "CONTEXTUAL INFORMATION",
