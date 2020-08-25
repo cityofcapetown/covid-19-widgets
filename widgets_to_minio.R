@@ -33,6 +33,10 @@ library(bpexploder)
 library(sparkline)
 library(zoo)
 library(dplyr) # extra dependency for lag day adjustments data manipulation
+library(R.utils)
+library(webshot2)
+library(chromote)
+
 
 # LOAD SECRETS ==========================================================================
 # Credentials
@@ -64,15 +68,8 @@ listN <- function(...){
   anonList
 }
 
-save_widget <- function(widg, destdir, name_override=NULL) {
+save_widget <- function(widg, destdir, name_override=NULL, screenshot = TRUE) {
   
-  require(webshot2)
-  require(chromote)
-  
-  # Need to do this for running chromium in a docker container
-  set_default_chromote_object(
-    Chromote$new(browser = Chrome$new(args = "--no-sandbox"))
-  )
   
   widget_name <- deparse(substitute(widg))
   if (!is.null(name_override)){
@@ -84,8 +81,6 @@ save_widget <- function(widg, destdir, name_override=NULL) {
                         paste(widget_name, "html", sep = "."))
   libdir <- file.path(getwd(), destdir, 
                       "libdir")
-  png_savepath <- file.path(getwd(), destdir, 
-                            paste(widget_name, "png", sep = "."))
   
   if (!(file.exists(libdir))) {
     dir.create(libdir)
@@ -97,11 +92,24 @@ save_widget <- function(widg, destdir, name_override=NULL) {
     widg$sizingPolicy$browser$padding = 0
     widg$sizingPolicy$viewer$padding = 0
     saveWidget(widg, savepath, selfcontained = F, libdir = libdir)
-    webshot2::webshot(savepath, file = png_savepath)
+    if(isTRUE(screenshot)) {
+      png_savepath <- file.path(getwd(), destdir, 
+                                paste(widget_name, "png", sep = "."))
+      
+      withTimeout({
+        webshot2::webshot(savepath, file = png_savepath)
+      }, timeout = 10, onTimeout = "warning")
+
+    }
     print(paste("Saved to", savepath))
   }
 }
 
+# INITIALISE CHROME BROWSER ==================================================
+# Need to do this for running chromium in a docker container
+set_default_chromote_object(
+  Chromote$new(browser = Chrome$new(args = "--no-sandbox"))
+)
 
 # CREATE DIRS =================================================================
 public_sourcedir <- "data/public"
@@ -1054,10 +1062,10 @@ wc_confirmed_timeseries <- wc_confirmed_timeseries %>%
               hideOnMouseOut = FALSE) %>%
   dyRangeSelector(height = 20) %>%
   dyOptions(stackedGraph = TRUE, connectSeparatedPoints = TRUE) 
-save_widget(wc_confirmed_timeseries, private_destdir)
+save_widget(wc_confirmed_timeseries, private_destdir,  screenshot = FALSE)
 
 wc_confirmed_timeseries_log <- wc_confirmed_timeseries %>% dyOptions(logscale = TRUE)
-save_widget(wc_confirmed_timeseries_log, private_destdir)
+save_widget(wc_confirmed_timeseries_log, private_destdir,  screenshot = FALSE)
 
 # rsa_timeline_testing ----------------------------------
 rsa_timeline_testing <- covid19za_timeline_testing %>% 
@@ -1318,45 +1326,33 @@ wc_model_latest_hospital_figures <- wc_model_latest_default %>%
   layout(legend = list(orientation = 'h'), xaxis = list(title = ""), yaxis = list(title = ""))
 save_widget(wc_model_latest_hospital_figures, private_destdir)
 
+wc_latest_modeled_deaths <- wc_model_latest_default %>%
+  filter(TimeInterval == as.Date(Sys.time())) %>%
+  pull(TotalDeaths) %>% .[[1]]
 
-# wc_latest_modeled_deaths <- wc_model_latest_default %>% 
-#   filter(TimeInterval == as.Date(Sys.time())) %>% 
-#   pull(TotalDeaths) %>% .[[1]]
-# 
-# wc_latest_modeled_cumulative_cases <- wc_model_latest_default %>% 
-#   filter(TimeInterval == as.Date(Sys.time())) %>% 
-#   pull(TotalInfections) %>% .[[1]]
-# 
-# 
-# wc_latest_modeled_active_cases <- wc_model_latest_default %>% 
-#   arrange(TimeInterval) %>%
-#   filter(TimeInterval >= (as.Date(Sys.time()) - 14)) %>%
-#   mutate(modeled_active_cases = cumsum(NewInfections)) %>% 
-#   filter(TimeInterval == as.Date(Sys.time())) %>%
-#   pull(modeled_active_cases) %>% .[[1]]
-# 
-# wc_modeled_reach_100_deaths_per_day <- wc_model_latest_default %>% 
-#   arrange(TimeInterval) %>%
-#   filter(TimeInterval >= as.Date(Sys.time())) %>%
-#   mutate(more_than_100_deaths_per_day = if_else(NewDeaths > 100, T, F))  %>%
-#   filter(more_than_100_deaths_per_day == T) %>%
-#   pull(TimeInterval) %>% min(.[[1]])
-# 
-# 
-# wc_modeled_days_to_100_deaths_per_day <- wc_model_latest_default %>% filter(TimeInterval >= as.Date(Sys.time()),
-#                                      TimeInterval <= wc_modeled_reach_100_deaths_per_day) %>% nrow() 
-# 
-# 
-# latest_private_values <- append(latest_private_values,
-#                                 listN(wc_latest_modeled_deaths,
-#                                       wc_latest_modeled_cumulative_cases,
-#                                       wc_latest_modeled_active_cases,
-#                                       wc_modeled_days_to_100_deaths_per_day))
-# 
-# write(
-#   toJSON(latest_private_values), 
-#   file.path(getwd(), private_destdir,"latest_values.json")
-# )
+wc_latest_modeled_cumulative_cases <- wc_model_latest_default %>%
+  filter(TimeInterval == as.Date(Sys.time())) %>%
+  pull(TotalInfections) %>% .[[1]]
+
+
+wc_latest_modeled_active_cases <- wc_model_latest_default %>%
+  arrange(TimeInterval) %>%
+  filter(TimeInterval >= (as.Date(Sys.time()) - 14)) %>%
+  mutate(modeled_active_cases = cumsum(NewInfections)) %>%
+  filter(TimeInterval == as.Date(Sys.time())) %>%
+  pull(modeled_active_cases) %>% .[[1]]
+
+
+latest_private_values <- append(latest_private_values,
+                                listN(wc_latest_modeled_deaths,
+                                      wc_latest_modeled_cumulative_cases,
+                                      wc_latest_modeled_active_cases)
+                                )
+
+write(
+  toJSON(latest_private_values),
+  file.path(getwd(), private_destdir,"latest_values.json")
+)
 
 # USA COUNTY DEATHS SINCE 25 ============================================
 
