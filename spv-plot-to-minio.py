@@ -249,11 +249,11 @@ if __name__ == "__main__":
     plot_master_df = pd.merge(plot_master_df, announcements_df[["Date", "daily_confirmed", "daily_deaths"]], how='outer', on="Date")
     plot_master_df.sort_values("Date", ascending=True, inplace=True)
     
-    # filter to only the weekdays
-    logging.debug(f"Filtering plot dataframe to only the business days/weekdays")
-    isBusinessDay = BDay().is_on_offset
-    match_series = pd.to_datetime(plot_master_df['Date']).map(isBusinessDay)
-    plot_master_df_wkdays = plot_master_df[match_series].copy()
+#     # filter to only the weekdays
+#     logging.debug(f"Filtering plot dataframe to only the business days/weekdays")
+#     isBusinessDay = BDay().is_on_offset
+#     match_series = pd.to_datetime(plot_master_df['Date']).map(isBusinessDay)
+#     plot_master_df_wkdays = plot_master_df[match_series].copy()
 
     # _________________________________________________________________
     # add the model data
@@ -289,7 +289,7 @@ if __name__ == "__main__":
     logging.debug(f"Plotting the data")
     
     # set the date for bokeh
-    plot_master_df_wkdays["Date"] = pd.to_datetime(plot_master_df_wkdays["Date"])
+    plot_master_df["Date"] = pd.to_datetime(plot_master_df["Date"])
     
     # set common labels
     x_range=(pd.to_datetime(START), pd.to_datetime(PLOT_END))
@@ -297,7 +297,7 @@ if __name__ == "__main__":
     wc_label = "Winde - Daily Cases"
         
     case_fig = make_fig(
-        plot_master_df_wkdays, "Date", "Diagnoses_Count", "Diagnoses_AdjustedCount", 
+        plot_master_df, "Date", "Diagnoses_Count", "Diagnoses_AdjustedCount", 
         "Cases / Day", 'Cases', 'Lag Adjusted Cases', 'Cases', x_range,
         model_plot_dic["case"]["time"], model_plot_dic["case"]["P5"], model_plot_dic["case"]["P25"], model_plot_dic["case"]["Median"], 
         model_plot_dic["case"]["P75"], model_plot_dic["case"]["P95"],
@@ -305,7 +305,7 @@ if __name__ == "__main__":
     )
 
     admit_fig = make_fig(
-        plot_master_df_wkdays, "Date", "Admissions_Count", "Admissions_AdjustedCount", 
+        plot_master_df, "Date", "Admissions_Count", "Admissions_AdjustedCount", 
         "Gen Admissions / Day", 'Gen Admissions', 'Lag Adjusted Admissions', 'Gen Admissions', x_range,
         model_plot_dic["admit"]["time"], model_plot_dic["admit"]["P5"], model_plot_dic["admit"]["P25"], model_plot_dic["admit"]["Median"], 
         model_plot_dic["admit"]["P75"], model_plot_dic["admit"]["P95"],
@@ -313,7 +313,7 @@ if __name__ == "__main__":
     )
     
     icu_fig = make_fig(
-        plot_master_df_wkdays, "Date", "ICUAdmissions_Count", "ICUAdmissions_AdjustedCount", 
+        plot_master_df, "Date", "ICUAdmissions_Count", "ICUAdmissions_AdjustedCount", 
         "ICU Admissions / Day", 'ICU Admissions', 'Lag Adjusted ICU Admissions', 'ICU Admissions', x_range,
         model_plot_dic["icu"]["time"], model_plot_dic["icu"]["P5"], model_plot_dic["icu"]["P25"], model_plot_dic["icu"]["Median"], 
         model_plot_dic["icu"]["P75"], model_plot_dic["icu"]["P95"],
@@ -322,7 +322,7 @@ if __name__ == "__main__":
     
     wc_label = "Winde - Daily Deaths"
     mort_fig = make_fig(
-        plot_master_df_wkdays, "Date", "Deaths_Count", "Deaths_AdjustedCount", 
+        plot_master_df, "Date", "Deaths_Count", "Deaths_AdjustedCount", 
         "Deaths / Day", 'Deaths', 'Lag Adjusted Deaths', 'Deaths', x_range,
         model_plot_dic["mort"]["time"], model_plot_dic["mort"]["P5"], model_plot_dic["mort"]["P25"], model_plot_dic["mort"]["Median"], 
         model_plot_dic["mort"]["P75"], model_plot_dic["mort"]["P95"],
