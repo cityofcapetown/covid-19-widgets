@@ -120,15 +120,15 @@ def filter_district_case_data(case_data_df, district_name, subdistrict_name):
         DATE_DIAGNOSIS_COL].notna()
     logging.debug(f"district / all cases {district_filter.sum()} / {district_filter.shape[0]}")
 
-    district_filter &= (
-        case_data_df[SUBDISTRICT_COL].str.lower() == subdistrict_name if subdistrict_name != "*" else True
-    )
-    logging.debug(f"subdistrict / all cases {district_filter.sum()} / {district_filter.shape[0]}")
-
     # Horrible hack due to subdistrict column renaming
     case_data_df[SUBDISTRICT_COL] = case_data_df[SUBDISTRICT_COL].apply(
         lambda subdistrict: subdistrict.split(" - ")[-1]
     )
+
+    district_filter &= (
+        case_data_df[SUBDISTRICT_COL].str.lower() == subdistrict_name if subdistrict_name != "*" else True
+    )
+    logging.debug(f"subdistrict / all cases {district_filter.sum()} / {district_filter.shape[0]}")
 
     district_filter &= ~case_data_df[DATE_DIAGNOSIS_COL].isna()
     logging.debug(f"valid diagnosis dates / all cases {district_filter.sum()} / {district_filter.shape[0]}")
