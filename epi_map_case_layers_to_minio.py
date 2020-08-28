@@ -124,6 +124,9 @@ def filter_district_case_data(case_data_df, district_name, subdistrict_name):
                            SUBDISTRICT_COL].str.lower() == subdistrict_name if subdistrict_name != "*" else True
     logging.debug(f"subdistrict / all cases {district_filter.sum()} / {district_filter.shape[0]}")
 
+    district_filter &= ~case_data_df[DATE_DIAGNOSIS_COL].isna()
+    logging.debug(f"valid diagnosis dates / all cases {district_filter.sum()} / {district_filter.shape[0]}")
+
     return case_data_df[district_filter]
 
 
