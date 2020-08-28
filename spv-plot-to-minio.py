@@ -93,6 +93,8 @@ def make_fig(
             y_max = df[y_adj_col].max() * 1.1
         else:
             y_max = df[announce_cases_y].max() * 1.1
+    elif not y_adj_col:
+        y_max = df[y_col].max() * 1.1
     else:
          y_max = df[y_adj_col].max() * 1.1
             
@@ -119,12 +121,13 @@ def make_fig(
         color='#9e0142', line_width=1, legend_label=lab)
     
     # add the adjusted count
-    fig.circle(
-        x=x_col, y=y_adj_col, source=ds,
-        color='#f46d43', legend_label=lab_adj)
-    fig.line(
-        x=x_col, y=y_adj_col, source=ds,
-        line_dash="dashed", color='#f46d43', line_width=1, legend_label=lab_adj)
+    if y_adj_col:
+        fig.circle(
+            x=x_col, y=y_adj_col, source=ds,
+            color='#f46d43', legend_label=lab_adj)
+        fig.line(
+            x=x_col, y=y_adj_col, source=ds,
+            line_dash="dashed", color='#f46d43', line_width=1, legend_label=lab_adj)
     
     # add the median and fill between model bounds
     fig.varea(
@@ -162,8 +165,14 @@ def make_fig(
             (wc_label, f"@{announce_cases_y}{{0}}"),
             ("Date", '@Date{%F}')
            ]
+        
+    elif y_adj_col:
+        tooltips = [
+            (lab, f'@{y_col}{{0}}'),
+            ("Date", '@Date{%F}')
+           ]
+        
     else:
-
         tooltips = [
             (lab, f'@{y_col}{{0}}'),
             (lab_adj, f'@{y_adj_col}{{0}}'),
@@ -305,7 +314,7 @@ if __name__ == "__main__":
     )
 
     admit_fig = make_fig(
-        plot_master_df, "Date", "Admissions_Count", "Admissions_AdjustedCount", 
+        plot_master_df, "Date", "Admissions_Count", None, 
         "Gen Admissions / Day", 'Gen Admissions', 'Lag Adjusted Admissions', 'Gen Admissions', x_range,
         model_plot_dic["admit"]["time"], model_plot_dic["admit"]["P5"], model_plot_dic["admit"]["P25"], model_plot_dic["admit"]["Median"], 
         model_plot_dic["admit"]["P75"], model_plot_dic["admit"]["P95"],
@@ -313,7 +322,7 @@ if __name__ == "__main__":
     )
     
     icu_fig = make_fig(
-        plot_master_df, "Date", "ICUAdmissions_Count", "ICUAdmissions_AdjustedCount", 
+        plot_master_df, "Date", "ICUAdmissions_Count", None, 
         "ICU Admissions / Day", 'ICU Admissions', 'Lag Adjusted ICU Admissions', 'ICU Admissions', x_range,
         model_plot_dic["icu"]["time"], model_plot_dic["icu"]["P5"], model_plot_dic["icu"]["P25"], model_plot_dic["icu"]["Median"], 
         model_plot_dic["icu"]["P75"], model_plot_dic["icu"]["P95"],
