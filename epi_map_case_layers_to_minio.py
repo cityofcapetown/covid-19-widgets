@@ -265,7 +265,7 @@ def calculate_latest_increase(case_data_df, relative=False):
     previous_period_median = previous_period_median if pandas.notna(previous_period_median) else 0
 
     delta = most_recent_period_median - previous_period_median
-    delta /= previous_period_median if relative else 1
+    delta /= previous_period_median if (relative and previous_period_median != 0) else 1
 
     logging.debug(f"most_recent={most_recent}, previous_period_end={previous_period_end}, delta={delta}")
 
