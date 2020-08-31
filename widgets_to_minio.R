@@ -933,7 +933,7 @@ ct_subdistrict_cumulative_daily_counts$lag_days <- as.numeric(ct_subdistrict_cum
 Dist_DiagnosisDate_freq_table <- spv_lag_freq_table_wc_subdistricts %>% filter(lag_type == "Date.of.Diagnosis" & District == "City of Cape Town")
 Dist_DiagnosisDate_freq_table <- Dist_DiagnosisDate_freq_table %>% select(lag_days, median, Subdistrict)
 # merge the diagnosed cases lag by subdistrict
-ct_subdistrict_cumulative_daily_counts <- merge(ct_subdistrict_cumulative_daily_counts, Dist_DiagnosisDate_freq_table, by=c("lag_days", "Subdistrict"))
+ct_subdistrict_cumulative_daily_counts <- left_join(ct_subdistrict_cumulative_daily_counts, Dist_DiagnosisDate_freq_table, by=c("lag_days", "Subdistrict"))
 # fillna with 1 for zero adjustment
 ct_subdistrict_cumulative_daily_counts$median[is.na(ct_subdistrict_cumulative_daily_counts$median)] <- 1
 # set cases lag day 1 adjustment to not adjust due to extreme instability
@@ -948,7 +948,7 @@ ct_subdistrict_cumulative_daily_counts$cases_adjusted <- round(ct_subdistrict_cu
 Dist_DeathDate_freq_table <- spv_lag_freq_table_wc_subdistricts %>% filter(lag_type == "Date.of.Death" & District == "City of Cape Town")
 Dist_DeathDate_freq_table <- Dist_DeathDate_freq_table %>% select(lag_days, median, Subdistrict)
 # merge the deaths lag by subdistrict
-ct_subdistrict_cumulative_daily_counts <- merge(ct_subdistrict_cumulative_daily_counts, Dist_DeathDate_freq_table, by=c("lag_days", "Subdistrict"))
+ct_subdistrict_cumulative_daily_counts <- left_join(ct_subdistrict_cumulative_daily_counts, Dist_DeathDate_freq_table, by=c("lag_days", "Subdistrict"))
 # fillna with 1 for zero adjustment
 ct_subdistrict_cumulative_daily_counts$median[is.na(ct_subdistrict_cumulative_daily_counts$median)] <- 1
 # set cases lag day 1 adjustment to not adjust due to extreme instability
