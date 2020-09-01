@@ -25,7 +25,7 @@ startup_cmd = (
 
 dag_interval = "0 12 * * *"
 dag_name = "covid-19-dashboard-publishing-dag"
-dag = DAG('',
+dag = DAG(dag_name,
           start_date=DAG_STARTDATE,
           catchup=False,
           default_args=default_args,
