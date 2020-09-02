@@ -34,7 +34,7 @@ dag = DAG(dag_name,
 
 # env variables for inside the k8s pod
 k8s_run_env = {
-    'SECRETS_PATH': '/secrets/secrets.json',
+    'SECRETS_PATH': '/secrets/wcgh-secrets.json',
     'COVID_19_DEPLOY_FILE': 'covid-19-widgets.zip',
     'COVID_19_DEPLOY_URL': 'https://ds2.capetown.gov.za/covid-19-widgets-deploy',
     'COVID_19_WIDGETS_DIR': '/covid-19-widgets',
