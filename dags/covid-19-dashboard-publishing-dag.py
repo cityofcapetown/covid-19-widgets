@@ -4,7 +4,7 @@ from airflow.contrib.kubernetes.secret import Secret
 
 from datetime import datetime, timedelta
 
-DAG_STARTDATE = datetime(2020, 31, 8)
+DAG_STARTDATE = datetime(2020, 8, 31)
 default_args = {
     'owner': 'airflow',
     'depends_on_past': False,
