@@ -43,6 +43,7 @@ VV_SHARE_PATTERNS = (
 )
 VV_EXCLUDE_LIST = (
     "cpop_gt55.geojson",
+    "*plot.png"
 )
 
 CASE_MAPS_SHARE_PATTERN = (
