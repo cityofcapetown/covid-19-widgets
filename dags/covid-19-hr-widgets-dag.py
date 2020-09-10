@@ -102,18 +102,12 @@ DIRECTORATE_LIST = {
     ("spatial_planning_and_environment", "SPATIAL PLANNING AND ENVIRONMENT")
 }
 
-# These directorates aren't covered by the HR form
-HR_FORM_BLACKLIST = {
-    "energy_and_climate_change", "safety_and_security", "community_services_and_health"
-}
-
 LATEST_VALUES = 'hr-latest-values'
 latest_values_operators = [
     covid_19_widget_task(
         LATEST_VALUES,
         task_cmdline_args=(directorate_file_prefix, directorate_name)
     ) for directorate_file_prefix, directorate_name in DIRECTORATE_LIST
-    if directorate_file_prefix not in HR_FORM_BLACKLIST
 ]
 
 ABSENTEEISM_LINE_PLOT = 'hr-absenteeism-plot'
@@ -122,7 +116,6 @@ absenteeism_operators = [
         ABSENTEEISM_LINE_PLOT,
         task_cmdline_args=(directorate_file_prefix, directorate_name)
     ) for directorate_file_prefix, directorate_name in DIRECTORATE_LIST
-    if directorate_file_prefix not in HR_FORM_BLACKLIST
 ]
 
 BUSUNIT_STATUS_PLOT = 'hr-busunit-status-plot'
@@ -131,7 +124,6 @@ busunit_operators = [
         BUSUNIT_STATUS_PLOT,
         task_cmdline_args=(directorate_file_prefix, directorate_name)
     ) for directorate_file_prefix, directorate_name in DIRECTORATE_LIST
-    if directorate_file_prefix not in HR_FORM_BLACKLIST
 ]
 
 OHS_FORM_PLOT = "ohs-cases-plot"
