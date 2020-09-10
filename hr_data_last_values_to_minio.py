@@ -132,7 +132,7 @@ def get_latest_values_dict(hr_df, hr_master_df, prefix="city"):
     most_recent_ts, current_hr_df = get_current_hr_df(hr_df)
 
     last_updated = most_recent_ts.strftime(ISO_TIMESTAMP_FORMAT)
-    staff_reported = (
+    staff_reported_hr_form = (
         hr_master_df[STAFF_NUMBER_COL_NAME].isin(current_hr_df[STAFF_NUMBER_COL_NAME]) &
         hr_master_df[ASSESSED_COL]
     ).sum()
@@ -140,24 +140,31 @@ def get_latest_values_dict(hr_df, hr_master_df, prefix="city"):
         hr_master_df[STAFF_NUMBER_COL_NAME].isin(current_hr_df[STAFF_NUMBER_COL_NAME]) &
         (~hr_master_df[ASSESSED_COL])
     ).sum()
+    staff_reported = staff_reported_sap + staff_reported_hr_form
 
     staff_at_work = (current_hr_df[SUCCINCT_STATUS_COL] == WORKING_STATUS).sum() if staff_reported > 0 else 0
     staff_working_remotely = current_hr_df[STATUS_COL].isin(REMOTE_WORK_STATUSES).sum() if staff_reported > 0 else 0
     staff_sick = current_hr_df[STATUS_COL].isin(SICK_STATUSES).sum() if staff_reported > 0 else 0
     staff_covid = current_hr_df[STATUS_COL].isin(COVID_STATUSES).sum() if staff_reported > 0 else 0
 
-    staff_assessed = hr_master_df[ASSESSED_COL].sum()
+    staff_assessed_hr_form = hr_master_df[ASSESSED_COL].sum()
+    staff_assessed_sap = staff_reported_sap
+    staff_assessed = staff_reported_hr_form + staff_assessed_sap
+
     staff_total = hr_master_df.shape[0]
 
     business_continuity_dict = {
         f"{prefix}_last_updated": last_updated,
         f"{prefix}_staff_at_work": str(staff_at_work),
         f"{prefix}_staff_reported": str(staff_reported),
+        f"{prefix}_staff_reported_hr_form": str(staff_reported_hr_form),
         f"{prefix}_staff_reported_sap": str(staff_reported_sap),
         f"{prefix}_staff_working_remotely": str(staff_working_remotely),
         f"{prefix}_staff_sick": str(staff_sick),
         f"{prefix}_staff_covid": str(staff_covid),
         f"{prefix}_staff_assessed": str(staff_assessed),
+        f"{prefix}_staff_assessed_hr_form": str(staff_assessed_hr_form),
+        f"{prefix}_staff_assessed_sap": str(staff_assessed_sap),
         f"{prefix}_staff_total": str(staff_total)
     }
     logging.debug(f"business_continuity_dict=\n{pprint.pformat(business_continuity_dict)}")
