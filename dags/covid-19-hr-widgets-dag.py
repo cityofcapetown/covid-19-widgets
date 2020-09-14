@@ -133,3 +133,11 @@ ohs_plot_operator = [
         task_cmdline_args=(directorate_file_prefix, directorate_name)
     ) for directorate_file_prefix, directorate_name in DIRECTORATE_LIST
 ]
+
+HR_ABSENCE_GEOJSON = "hr-absence-layer-generate"
+hr_absence_geojson_operator = [
+    covid_19_widget_task(
+        HR_ABSENCE_GEOJSON,
+        task_cmdline_args=(directorate_file_prefix, directorate_name)
+    ) for directorate_file_prefix, directorate_name in DIRECTORATE_LIST
+]
