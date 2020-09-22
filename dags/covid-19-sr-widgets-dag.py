@@ -141,5 +141,5 @@ sd_map_widget_operator = covid_19_widget_task(SD_MAP_WIDGET_TASK, task_cmdline_a
 for layer_gen, widget_gen in zip(map_layer_operators, map_widget_operators):
     layer_gen >> widget_gen
 
-layer_gen[0] >> sd_map_widget_operator
+map_layer_operators[0] >> sd_map_widget_operator
 map_layer_push_operator >> sd_map_widget_operator
