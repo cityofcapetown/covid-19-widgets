@@ -183,7 +183,7 @@ SERVICE_DELIVERY_LAYER_PROPERTIES_LOOKUP = collections.OrderedDict((
     )),
 
     # Organisational Capacity
-    ("Staff Capacity Count", (
+    ("Staff Capacity Counts", (
         city_map_widget_to_minio.LayerType.CHOROPLETH,
         (HEX_COUNT_INDEX_PROPERTY, "absent_count", "total_assessed", "percent_absent"),
         ("Hex ID", "Staff not working", "Staff assessed", "% not working",),
