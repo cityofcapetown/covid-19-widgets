@@ -24,7 +24,8 @@ startup_cmd = (
 )
 
 dag_interval = timedelta(hours=1)
-dag = DAG('covid-19-sr-widgets',
+DAG_NAME = 'covid-19-sr-widgets'
+dag = DAG(DAG_NAME,
           start_date=DAG_STARTDATE,
           catchup=False,
           default_args=default_args,
@@ -54,13 +55,16 @@ k8s_run_args = {
     "secrets": [secret_file],
     "env_vars": k8s_run_env,
     "image_pull_policy": "Always",
-     "startup_timeout_seconds": 60*30,
+    "startup_timeout_seconds": 60 * 30,
 }
 
 
 def covid_19_widget_task(task_name, task_kwargs={}, task_cmdline_args=[]):
     """Factory for k8sPodOperator"""
-    name = "covid-19-sr-widgets-{}-{}".format(task_name, task_cmdline_args[0].replace("_", "-"))
+    name = "{}-{}".format(DAG_NAME, task_name)
+    if len(task_cmdline_args) > 0:
+        name = "{}-{}".format(name, task_cmdline_args[0].replace("_", "-"))
+
     run_args = {**k8s_run_args.copy(), **task_kwargs}
     run_cmd = "bash -c '{} && \"$COVID_19_WIDGETS_DIR\"/bin/{}.sh \"{}\"'".format(
         startup_cmd, task_name, '" "'.join(task_cmdline_args)
@@ -79,7 +83,7 @@ def covid_19_widget_task(task_name, task_kwargs={}, task_cmdline_args=[]):
     return operator
 
 
-DIRECTORATE_LIST = {
+DIRECTORATE_LIST = [
     ("city", "*"),
     ("water_and_waste", 'Water and Waste Services'),
     ("energy_and_climate_change", 'Energy and Climate Change'),
@@ -90,7 +94,7 @@ DIRECTORATE_LIST = {
     ("community_services_and_health", 'Community Services and Health'),
     ("economic_opportunities_and_asset_management", 'Economic Opportunities and Asset Management'),
     ("spatial_planning_and_environment", 'Spatial Planning and Environment')
-}
+]
 
 # Defining tasks
 TS_PLOT_TASK = 'sr-timeseries-plot'
@@ -109,6 +113,11 @@ map_layer_operators = [
     ) for directorate_filename_prefix, directorate_title in DIRECTORATE_LIST
 ]
 
+MAP_LAYER_PUSH_TASK = 'sd-map-layers-push'
+map_layer_push_operator = covid_19_widget_task(
+    MAP_LAYER_TASK,
+)
+
 MAP_WIDGET_TASK = 'sr-maps-generate'
 map_widget_operators = [
     covid_19_widget_task(
@@ -125,6 +134,12 @@ focus_map_widget_operators = [
     ) for directorate_filename_prefix, directorate_title in DIRECTORATE_LIST
 ]
 
+SD_MAP_WIDGET_TASK = "sd-maps-generate"
+sd_map_widget_operator = covid_19_widget_task(SD_MAP_WIDGET_TASK, task_cmdline_args=list(DIRECTORATE_LIST[0]))
+
 # Dependencies
 for layer_gen, widget_gen in zip(map_layer_operators, map_widget_operators):
     layer_gen >> widget_gen
+
+layer_gen[0] >> sd_map_widget_operator
+map_layer_push_operator >> sd_map_widget_operator

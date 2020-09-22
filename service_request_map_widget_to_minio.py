@@ -26,13 +26,14 @@ HEX_COUNT_INDEX_PROPERTY = "index"
 
 CITY_CENTRE = (-33.9715, 18.6021)
 
+# TODO fix passthrough of date to map layers
 LAYER_PROPERTIES_TUPLES = ((
-    (service_request_map_layers_to_minio.HEX_COUNT_FILENAME, (
+    (service_request_map_layers_to_minio.HEX_COUNT_L7_FILENAME, (
         (HEX_COUNT_INDEX_PROPERTY, service_request_map_layers_to_minio.OPENED_COL),
         ("Hex ID", "Opened Service Requests"),
-        "Reds", "Opened Service Requests", True, True
+        "Reds", "Opened Service Requests", True, True,
     )),
-    (service_request_map_layers_to_minio.HEX_COUNT_FILENAME, (
+    (service_request_map_layers_to_minio.HEX_COUNT_L7_FILENAME, (
         (HEX_COUNT_INDEX_PROPERTY, service_request_map_layers_to_minio.CLOSED_COL),
         ("Hex ID", "Closed Service Requests"),
         "Blues", "Closed Service Requests", False, True
@@ -51,23 +52,22 @@ LAYER_PROPERTIES_TUPLES = ((
 MAP_SUFFIX = "map.html"
 
 
-def get_layers(directorate_file_prefix, time_period_prefix, tempdir, minio_access, minio_secret):
+def get_layers(directorate_file_prefix, tempdir, minio_access, minio_secret):
     for layer_filename, layer_props in LAYER_PROPERTIES_TUPLES:
         is_choropleth = layer_filename in service_request_map_layers_to_minio.CHOROPLETH_LAYERS
 
         # Deciding between the directorate and time period specific layer or not
-        time_period_layer_filename = (
-            f'{time_period_prefix}_{directorate_file_prefix}_{layer_filename}'
+        directorate_layer_filename = (
+            f'{directorate_file_prefix}_{layer_filename}'
             if is_choropleth else
             layer_filename
         )
 
-        local_path = os.path.join(tempdir, time_period_layer_filename)
+        local_path = os.path.join(tempdir, directorate_layer_filename)
 
         layer_minio_path = (
-            f"{service_request_map_layers_to_minio.WIDGETS_RESTRICTED_PREFIX}"
             f"{service_request_map_layers_to_minio.SERVICE_REQUEST_MAP_PREFIX}"
-            f"{time_period_layer_filename}"
+            f"{directorate_layer_filename}"
         )
         minio_utils.minio_to_file(
             filename=local_path,
@@ -82,10 +82,9 @@ def get_layers(directorate_file_prefix, time_period_prefix, tempdir, minio_acces
 
         *_, has_metadata = layer_props
         if has_metadata:
-            metadata_filename = os.path.splitext(time_period_layer_filename)[0] + ".json"
+            metadata_filename = os.path.splitext(directorate_layer_filename)[0] + ".json"
             metadata_local_path = os.path.join(tempdir, metadata_filename)
             metadata_minio_path = (
-                f"{service_request_map_layers_to_minio.WIDGETS_RESTRICTED_PREFIX}"
                 f"{service_request_map_layers_to_minio.SERVICE_REQUEST_MAP_PREFIX}"
                 f"{metadata_filename}"
             )
@@ -103,10 +102,10 @@ def get_layers(directorate_file_prefix, time_period_prefix, tempdir, minio_acces
         else:
             layer_metadata = {}
 
-        yield time_period_layer_filename, (local_path, layer_gdf, is_choropleth, layer_metadata, layer_props)
+        yield directorate_layer_filename, (local_path, layer_gdf, is_choropleth, layer_metadata, layer_props)
 
 
-def generate_map(layer_tuples):
+def generate_map(layer_tuples, time_prefix):
     m = folium.Map(
         location=CITY_CENTRE, zoom_start=9,
         tiles="",
@@ -129,13 +128,18 @@ def generate_map(layer_tuples):
         logging.debug(f"Adding layer from path: '{layer_filename}'")
         logging.debug(f"layer_props=\n{pprint.pformat(layer_props)}")
 
-        layer_lookup_key, *_ = layer_lookup_fields
+        layer_lookup_key, *layer_lookup_vals = layer_lookup_fields
+        layer_lookup_values = ([layer_lookup_key] + [
+            f"{val}_{time_period_prefix}"
+            for val in layer_lookup_vals
+        ]) if is_choropleth else layer_lookup_fields
+
         choropleth = folium.features.Choropleth(
             layer_path,
             data=count_gdf.reset_index(),
             name=title,
             key_on=f"feature.properties.{layer_lookup_key}",
-            columns=layer_lookup_fields,
+            columns=layer_lookup_values,
             fill_color=colour_scheme,
             highlight=True,
             show=visible_by_default,
@@ -154,7 +158,7 @@ def generate_map(layer_tuples):
 
         # Adding the hover-over tooltip
         layer_tooltip = folium.features.GeoJsonTooltip(
-            fields=layer_lookup_fields,
+            fields=layer_lookup_values,
             aliases=layer_lookup_aliases
         )
         choropleth.geojson.add_child(layer_tooltip)
@@ -201,7 +205,6 @@ def get_leaflet_dep_file(url, tempdir, http_session, minio_access, minio_secret)
     minio_utils.file_to_minio(
         filename=local_path,
         filename_prefix_override=(
-            f"{service_request_map_layers_to_minio.WIDGETS_RESTRICTED_PREFIX}"
             f"{service_request_map_layers_to_minio.SERVICE_REQUEST_MAP_PREFIX}"
             f"{DEP_DIR}/"
         ),
@@ -252,10 +255,7 @@ def write_map_to_minio(map, directorate_file_prefix, time_period_prefix, map_suf
 
     result = minio_utils.file_to_minio(
         filename=local_path,
-        filename_prefix_override=(
-            f"{service_request_map_layers_to_minio.WIDGETS_RESTRICTED_PREFIX}"
-            f"{service_request_map_layers_to_minio.SERVICE_REQUEST_MAP_PREFIX}"
-        ),
+        filename_prefix_override=service_request_map_layers_to_minio.SERVICE_REQUEST_MAP_PREFIX,
         minio_bucket=MINIO_BUCKET,
         minio_key=minio_access,
         minio_secret=minio_secret,
@@ -297,19 +297,18 @@ if __name__ == "__main__":
                                                   secrets["minio"]["edge"]["access"], secrets["minio"]["edge"]["secret"])
         logging.info("Fetch[ed] Folium dependencies")
 
+        logging.info("G[etting] layers")
+        map_layers_tuples = list(get_layers(directorate_file_prefix, tempdir,
+                                            secrets["minio"]["edge"]["access"],
+                                            secrets["minio"]["edge"]["secret"]))
+
+        logging.info("G[ot] layers")
+
         for directorate_file_prefix, time_period_prefix in map_prefixes:
             logging.info(f"Generat[ing] map for '{directorate_title}' - '{time_period_prefix}'")
 
-            logging.info("G[etting] layers")
-            map_layers_tuples = get_layers(directorate_file_prefix, time_period_prefix,
-                                           tempdir,
-                                           secrets["minio"]["edge"]["access"],
-                                           secrets["minio"]["edge"]["secret"])
-
-            logging.info("G[ot] layers")
-
             logging.info("Generat[ing] map")
-            data_map = generate_map(map_layers_tuples)
+            data_map = generate_map(map_layers_tuples, time_period_prefix)
             logging.info("Generat[ed] map")
 
             logging.info("Writ[ing] to Minio")

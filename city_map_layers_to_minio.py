@@ -89,11 +89,11 @@ def get_layers(tempdir, minio_access, minio_secret, layers=LAYER_FILES):
         yield layer, local_path, layer_gdf
 
 
-def write_layers_to_minio(layers_dict, minio_access, minio_secret):
+def write_layers_to_minio(layers_dict, minio_access, minio_secret, prefix=CASE_MAP_PREFIX):
     for layer_name, (layer_local_path, _) in layers_dict.items():
         result = minio_utils.file_to_minio(
             filename=layer_local_path,
-            filename_prefix_override=CASE_MAP_PREFIX,
+            filename_prefix_override=prefix,
             minio_bucket=MINIO_COVID_BUCKET,
             minio_key=minio_access,
             minio_secret=minio_secret,
