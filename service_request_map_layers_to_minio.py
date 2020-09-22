@@ -82,6 +82,10 @@ P10_DURATION_COL = "P10"
 P50_DURATION_COL = "P50"
 P80_DURATION_COL = "P80"
 
+METADATA_DELTA_SUFFIX = "delta"
+METADATA_RELATIVE_DELTA_SUFFIX = "relative_delta"
+METADATA_DELTA_LENGTH = pandas.Timedelta(days=7)
+
 METADATA_OPENED_TOTAL = "opened_total"
 METADATA_CLOSED_TOTAL = "closed_total"
 METADATA_OPENED_NON_SPATIAL = "opened_non_spatial"
@@ -152,18 +156,34 @@ def spatialise_df(sr_df, spatial_layer):
     return sr_gdf
 
 
+def _get_calc_sr_dfs(sr_df, start_date, end_date=None):
+    if end_date is None:
+        end_date = sr_df[[CREATION_TIMESTAMP_COL, COMPLETION_TIMESTAMP_COL]].max().max().date()
+
+    opened_end_date_string = f"({CREATION_TIMESTAMP_COL}.dt.date <= @end_date)"
+    opened_df = sr_df.query(
+        f"({CREATION_TIMESTAMP_COL}.dt.date >= @start_date) & {opened_end_date_string}"
+    )
+
+    closed_end_date_string = f"({COMPLETION_TIMESTAMP_COL}.dt.date <= @end_date)"
+    closed_df = sr_df.query(
+        f"({COMPLETION_TIMESTAMP_COL}.dt.date >= @start_date) & {closed_end_date_string}"
+    )
+    all_df = sr_df.query(
+        f"("
+        f"({CREATION_TIMESTAMP_COL}.dt.date >= @start_date) & {opened_end_date_string}"
+        f") | ("
+        f"({COMPLETION_TIMESTAMP_COL}.dt.date >= @start_date) & {closed_end_date_string}"
+        f") | ("
+        f"{COMPLETION_TIMESTAMP_COL}.isna() & ({CREATION_TIMESTAMP_COL} >= @LOWER_LIMIT) & {opened_end_date_string}"
+        f")"
+    )
+
+    return opened_df, closed_df, all_df
+
+
 def count_srs(start_date, sr_gdf, spatial_index_col, time_period_prefix):
-    opened_gdf = sr_gdf.query(
-        f"{CREATION_TIMESTAMP_COL}.dt.date >= @start_date"
-    )
-    closed_gdf = sr_gdf.query(
-        f"{COMPLETION_TIMESTAMP_COL}.dt.date >= @start_date"
-    )
-    all_gdf = sr_gdf.query(
-        f"({CREATION_TIMESTAMP_COL}.dt.date >= @start_date) or "
-        f"({COMPLETION_TIMESTAMP_COL}.dt.date >= @start_date) or "
-        f"{COMPLETION_TIMESTAMP_COL}.isna()"
-    )
+    opened_gdf, closed_gdf, all_gdf = _get_calc_sr_dfs(sr_gdf, start_date)
 
     count_df = pandas.DataFrame({
         f"{OPENED_COL}_{time_period_prefix}":
@@ -218,25 +238,54 @@ def count_sr_data(sr_df, spatial_layer, spatial_index_col, start_dates):
     return count_gdf
 
 
-def generate_sr_time_period_metadata(sr_df, start_date, time_period_prefix):
-    opened_df = sr_df.query(f"{CREATION_TIMESTAMP_COL}.dt.date >= @start_date")
-    closed_df = sr_df.query(f"{COMPLETION_TIMESTAMP_COL}.dt.date >= @start_date")
-    all_df = sr_df.query(f"({CREATION_TIMESTAMP_COL}.dt.date >= @start_date) or "
-                         f"({COMPLETION_TIMESTAMP_COL}.dt.date >= @start_date) or "
-                         f"{COMPLETION_TIMESTAMP_COL}.isna()")
+def _calc_metadata(sr_df, start_date, end_date=None):
+    opened_df, closed_df, all_df = _get_calc_sr_dfs(sr_df, start_date, end_date)
+
+    metadata_calc_dict = {
+        f"{METADATA_OPENED_TOTAL}": opened_df.shape[0],
+        f"{METADATA_CLOSED_TOTAL}": closed_df.shape[0],
+        f"{METADATA_OPENED_NON_SPATIAL}": (opened_df[LATITUDE_COL].isna() | opened_df[LONGITUDE_COL].isna()).sum(),
+        f"{METADATA_CLOSED_NON_SPATIAL}": (closed_df[LATITUDE_COL].isna() | closed_df[LONGITUDE_COL].isna()).sum(),
+        f"{METADATA_P10}": (all_df[DURATION_COL].quantile(0.1) / 3600 / 24).round(1),
+        f"{METADATA_P50}": (all_df[DURATION_COL].quantile(0.5) / 3600 / 24).round(1),
+        f"{METADATA_P80}": (all_df[DURATION_COL].quantile(0.8) / 3600 / 24).round(1),
+    }
+
+    return metadata_calc_dict
+
+
+def generate_sr_time_period_metadata(sr_df, start_date, time_period_suffix):
+    current_metadata_dict = {
+        f"{k}_{time_period_suffix}": v
+        for k, v in _calc_metadata(sr_df, start_date).items()
+    }
+    logging.debug(f"current_metadata_dict=\n{pprint.pformat(current_metadata_dict)}")
+
+    delta_start_date = start_date - METADATA_DELTA_LENGTH
+    delta_end_date = sr_df[[CREATION_TIMESTAMP_COL, COMPLETION_TIMESTAMP_COL]].max().max().date() - METADATA_DELTA_LENGTH
+
+    delta_metadata_dict = {
+        f"{k}_{time_period_suffix}_{METADATA_DELTA_SUFFIX}": current_metadata_dict[f"{k}_{time_period_suffix}"] - v
+        for k, v in _calc_metadata(sr_df, delta_start_date, delta_end_date).items()
+    }
+    logging.debug(f"delta_metadata_dict=\n{pprint.pformat(delta_metadata_dict)}")
+
+    relative_delta_metadata_dict = {
+        f"{k}_{time_period_suffix}_{METADATA_RELATIVE_DELTA_SUFFIX}": (
+                (delta_metadata_dict[f"{k}_{METADATA_DELTA_SUFFIX}"] / v).round(4)
+        )
+        for k, v in current_metadata_dict.items()
+    }
+    logging.debug(f"delta_metadata_dict=\n{pprint.pformat(delta_metadata_dict)}")
 
     metadata_dict = {
-        f"{METADATA_OPENED_TOTAL}_{time_period_prefix}": str(opened_df.shape[0]),
-        f"{METADATA_CLOSED_TOTAL}_{time_period_prefix}": str(closed_df.shape[0]),
-        f"{METADATA_OPENED_NON_SPATIAL}_{time_period_prefix}": str(
-            (opened_df[LATITUDE_COL].isna() | opened_df[LONGITUDE_COL].isna()).sum()
-        ),
-        f"{METADATA_CLOSED_NON_SPATIAL}_{time_period_prefix}": str(
-            (closed_df[LATITUDE_COL].isna() | closed_df[LONGITUDE_COL].isna()).sum()
-        ),
-        f"{METADATA_P10}_{time_period_prefix}": str((all_df[DURATION_COL].quantile(0.1) / 3600 / 24).round(1)),
-        f"{METADATA_P50}_{time_period_prefix}": str((all_df[DURATION_COL].quantile(0.5) / 3600 / 24).round(1)),
-        f"{METADATA_P80}_{time_period_prefix}": str((all_df[DURATION_COL].quantile(0.8) / 3600 / 24).round(1)),
+        **current_metadata_dict,
+        **delta_metadata_dict,
+        **relative_delta_metadata_dict
+    }
+    metadata_dict = {
+        k: str(v)
+        for k, v in metadata_dict.items()
     }
 
     return metadata_dict
