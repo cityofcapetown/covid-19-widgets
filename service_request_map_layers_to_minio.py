@@ -271,7 +271,7 @@ def generate_sr_time_period_metadata(sr_df, start_date, time_period_suffix):
     logging.debug(f"delta_metadata_dict=\n{pprint.pformat(delta_metadata_dict)}")
 
     relative_delta_metadata_dict = {
-        f"{k}_{time_period_suffix}_{METADATA_RELATIVE_DELTA_SUFFIX}": (
+        f"{k}_{METADATA_RELATIVE_DELTA_SUFFIX}": (
                 (delta_metadata_dict[f"{k}_{METADATA_DELTA_SUFFIX}"] / v).round(4)
         )
         for k, v in current_metadata_dict.items()
