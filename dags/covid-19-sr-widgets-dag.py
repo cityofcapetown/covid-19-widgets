@@ -115,7 +115,7 @@ map_layer_operators = [
 
 MAP_LAYER_PUSH_TASK = 'sd-map-layers-push'
 map_layer_push_operator = covid_19_widget_task(
-    MAP_LAYER_TASK,
+    MAP_LAYER_PUSH_TASK,
 )
 
 MAP_WIDGET_TASK = 'sr-maps-generate'
