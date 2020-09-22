@@ -1,6 +1,7 @@
 import json
 import logging
 import os
+import pandas
 import sys
 import tempfile
 
@@ -84,7 +85,8 @@ def get_layers(tempdir, minio_access, minio_secret, layers=LAYER_FILES):
             data_classification=MINIO_CLASSIFICATION,
         )
 
-        layer_gdf = geopandas.read_file(local_path)
+        read_df_func = geopandas.read_file if local_path.endswith(".geojson") else pandas.read_json
+        layer_gdf = read_df_func(local_path)
 
         yield layer, local_path, layer_gdf
 

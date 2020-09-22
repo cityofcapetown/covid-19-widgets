@@ -37,6 +37,8 @@ LAYER_FILES = (
     ("special_rated_areas.geojson", MINIO_COVID_BUCKET, DATA_VULNERABILITY_PREFIX),
     (f"city_all_{epi_map_case_layers_to_minio.HEX_L8_COUNT_SUFFIX}", MINIO_COVID_BUCKET, city_map_layers_to_minio.CASE_MAP_PREFIX),
     (f"city_all_{epi_map_case_layers_to_minio.DISTRICT_COUNT_SUFFIX}", MINIO_COVID_BUCKET, city_map_layers_to_minio.CASE_MAP_PREFIX),
+    (f"city_all_{epi_map_case_layers_to_minio.HEX_L8_COUNT_SUFFIX}".replace(".geojson", ".json"), MINIO_COVID_BUCKET, city_map_layers_to_minio.CASE_MAP_PREFIX),
+    (f"city_all_{epi_map_case_layers_to_minio.DISTRICT_COUNT_SUFFIX}".replace(".geojson", ".json"), MINIO_COVID_BUCKET, city_map_layers_to_minio.CASE_MAP_PREFIX),
     ("city-absence-counts-hex.geojson", MINIO_COVID_BUCKET, DATA_RESTRICTED_PREFIX)
 )
 
