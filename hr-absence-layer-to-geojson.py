@@ -34,7 +34,7 @@ CITY_BUILDINGS = "city-buildings-locations.csv"
 HR_ANNOT = "city_people.csv"
 CITY_PEOPLE_LOCS = "city-people-locations-updated-2020-06-19.csv" 
 
-HEX_LEVEL = 7
+HEX_LEVEL = 6
 HEX_ABSENCE_INDEX_PROPERTY = "index"
 ADDRESS_COL = "FebMostCommonClockingLocation"
 DIR_COL = "Directorate"
