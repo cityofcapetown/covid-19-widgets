@@ -272,7 +272,7 @@ def generate_sr_time_period_metadata(sr_df, start_date, time_period_suffix):
 
     relative_delta_metadata_dict = {
         f"{k}_{METADATA_RELATIVE_DELTA_SUFFIX}": (
-                (delta_metadata_dict[f"{k}_{METADATA_DELTA_SUFFIX}"] / v).round(4)
+                round(delta_metadata_dict[f"{k}_{METADATA_DELTA_SUFFIX}"] / v, 4)
         )
         for k, v in current_metadata_dict.items()
     }
