@@ -67,7 +67,7 @@ TIME_PERIODS = (
     ("last_day", lambda sr_df: sr_df[TIMESTAMP_COLS].dropna(axis=1).max().max().date() - pandas.Timedelta(days=1)),
     ("last_week", lambda sr_df: sr_df[TIMESTAMP_COLS].dropna(axis=1).max().max().date() - pandas.Timedelta(days=7)),
     ("last_month", lambda sr_df: sr_df[TIMESTAMP_COLS].dropna(axis=1).max().max().date() - pandas.Timedelta(days=28)),
-    ("since_sod", lambda _: SOD_DATE)
+    ("since_sod", lambda _: SOD_DATE.date())
 )
 
 LATITUDE_COL = "Latitude"
