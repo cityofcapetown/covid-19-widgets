@@ -195,7 +195,7 @@ def fix_hr_data_names(hr_data_df, position_header="Position", dept_header="Depar
 
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.DEBUG,
+    logging.basicConfig(level=logging.INFO,
                         format='%(asctime)s-%(module)s.%(funcName)s [%(levelname)s]: %(message)s')
     
     # Loading secrets
