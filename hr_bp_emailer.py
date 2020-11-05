@@ -112,8 +112,8 @@ DIRECTORATE_DETAILS_DICT = {
          "receiver_email": ["Leonie.Kroese@capetown.gov.za"],
          "cc_email": HR_CREW + ["Lele.Sithole@capetown.gov.za"]},
     "HUMAN SETTLEMENTS":
-        {"receiver_name": ["Andre"],
-         "receiver_email": ["Andre.Kermis@capetown.gov.za"],
+        {"receiver_name": ["Gerard"],
+         "receiver_email": ["Gerard.Joyce@capetown.gov.za"],
          "cc_email": HR_CREW + ["Lele.Sithole@capetown.gov.za"]},
     # "HUMAN SETTLEMENTS":
     #     {"receiver_name": ["Gordon"],
