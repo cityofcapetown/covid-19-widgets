@@ -137,6 +137,9 @@ focus_map_widget_operators = [
 SD_MAP_WIDGET_TASK = "sd-maps-generate"
 sd_map_widget_operator = covid_19_widget_task(SD_MAP_WIDGET_TASK, task_cmdline_args=list(DIRECTORATE_LIST[0]))
 
+SD_VALUES_TASK = "sd-latest-values"
+sd_latest_values_operator = covid_19_widget_task(SD_VALUES_TASK,)
+
 # Dependencies
 for layer_gen, widget_gen in zip(map_layer_operators, map_widget_operators):
     layer_gen >> widget_gen
