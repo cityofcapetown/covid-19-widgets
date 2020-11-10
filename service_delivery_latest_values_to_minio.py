@@ -89,7 +89,7 @@ if __name__ == "__main__":
     secrets_path = os.environ["SECRETS_PATH"]
     secrets = json.load(open(secrets_path))
 
-    # Getting service delivery time siries
+    # Getting service delivery time series
     logging.info("Fetch[ing] data...")
     sd_timeseries_df = get_data(SD_DATA_FILENAME,
                                 secrets["minio"]["edge"]["access"],
