@@ -1,4 +1,5 @@
 import json
+import pprint
 import logging
 import os
 import sys
@@ -32,15 +33,13 @@ def create_latest_sd_values_dict(ts_df):
         subset=[FEATURE_COL, MEASURE_COL], keep="last"
     ).reset_index().to_dict(orient="records")
 
+    logging.debug(f"latest_values_dict=\n{pprint.pformat(latest_values_dict)}")
+
     ref_values_dict = ts_df[
         ts_df[DATE_COL] <= REFERENCE_DATE
-        ].sort_values(by=[
-        FEATURE_COL, MEASURE_COL, DATE_COL
-    ]).drop_duplicates(subset=[
-        FEATURE_COL, MEASURE_COL
-    ], keep="last").reset_index().to_dict(
-        orient="records"
-    )
+        ].sort_values(by=[FEATURE_COL, MEASURE_COL, DATE_COL]).drop_duplicates(
+        subset=[FEATURE_COL, MEASURE_COL], keep="last"
+    ).reset_index().to_dict(orient="records")
 
     # transforming from flat records into heirachy of values
     output_dict = {}
@@ -72,6 +71,8 @@ def create_latest_sd_values_dict(ts_df):
                 ref_value_dict[VALUE_COL] if ref_value_dict[VALUE_COL] else 1e-7
             ), 2
         )
+
+    logging.debug(f"output_dict=\n{pprint.pformat(output_dict)}")
 
     return output_dict
 
