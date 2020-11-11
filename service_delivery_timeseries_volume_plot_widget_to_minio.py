@@ -22,6 +22,7 @@ COLS_SET = {OPENED_COUNT_COL, CLOSED_COUNT_COL}
 
 PREVIOUS_YEARS = 3
 PREVIOUS_YEAR_TEMPLATE = "previous_{}_year"
+PLOT_START = "2019-07-01"
 
 HOVER_COLS = [OPENED_COUNT_COL, CLOSED_COUNT_COL, DATE_COL]
 DEFAULT_WINDOW_SIZE = 28
@@ -46,7 +47,7 @@ def generate_plot_timeseries(data_df):
         for col in COLS_SET:
             resampled_df[f"{prefix}_{col}"] = shifted_df[col].copy().rolling(7).median()
 
-    return resampled_df
+    return resampled_df.loc[PLOT_START:]
 
 
 def generate_plot(plot_df):
