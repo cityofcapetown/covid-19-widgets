@@ -13,7 +13,7 @@ from bokeh.resources import CDN
 import pandas
 
 import service_request_timeseries_plot_widget_to_minio
-from service_delivery_latest_values_to_minio import DATE_COL, FEATURE_COL, MEASURE_COL, VALUE_COL
+from service_delivery_latest_values_to_minio import DATE_COL, FEATURE_COL, MEASURE_COL, VALUE_COL, SKIP_LIST
 import service_delivery_latest_values_to_minio
 
 OPENED_COUNT_COL = "opened_count"
@@ -168,6 +168,11 @@ if __name__ == "__main__":
         city_file_prefix = feature_clauses[0]
         directorate_file_prefix = feature_clauses[1] if len(feature_clauses) > 1 else None
         department_file_prefix = feature_clauses[2] if len(feature_clauses) > 2 else None
+
+        if ((directorate_file_prefix and directorate_file_prefix in SKIP_LIST) or
+                (department_file_prefix and department_file_prefix in SKIP_LIST)):
+            logging.warning(f"skipping {feature}!")
+            continue
 
         logging.info(f"Generat[ing] plot for '{feature}'")
 

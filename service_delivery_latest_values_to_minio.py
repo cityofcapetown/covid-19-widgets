@@ -10,6 +10,8 @@ from hr_data_last_values_to_minio import get_data, to_json_data, write_to_minio
 
 SD_DATA_FILENAME = "business_continuity_service_delivery.csv"
 
+SKIP_LIST = ("safety_and_security", "treasury")
+
 DATE_COL = "date"
 MEASURE_COL = "measure"
 FEATURE_COL = "feature"
@@ -45,6 +47,10 @@ def create_latest_sd_values_dict(ts_df):
     output_dict = {}
     for value_dict, ref_value_dict in zip(latest_values_dict, ref_values_dict):
         feature_values = value_dict[FEATURE_COL].split("-")
+
+        if any([feature_val in SKIP_LIST for feature_val in feature_values]):
+            logging.warning(f"Skipping {value_dict[FEATURE_COL]}!")
+            continue
 
         # Creating the relevant location in the output hierachy using the feature
         value_output_dict = output_dict
