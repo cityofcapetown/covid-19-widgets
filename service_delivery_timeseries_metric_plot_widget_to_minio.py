@@ -13,7 +13,7 @@ from bokeh.resources import CDN
 import pandas
 
 import service_request_timeseries_plot_widget_to_minio
-from service_delivery_latest_values_to_minio import DATE_COL, FEATURE_COL, MEASURE_COL, VALUE_COL, REFERENCE_DATE, SKIP_LIST
+from service_delivery_latest_values_to_minio import DATE_COL, FEATURE_COL, MEASURE_COL, VALUE_COL, REFERENCE_DATE, SKIP_LIST, REMAP_DICT
 import service_delivery_latest_values_to_minio
 
 BACKLOG = "backlog"
@@ -197,6 +197,8 @@ if __name__ == "__main__":
     features = sd_timeseries_df[FEATURE_COL].unique()
     for feature in features:
         feature_clauses = feature.split("-")
+        feature_clauses = [REMAP_DICT.get(feature_val, feature_val) for feature_val in feature_clauses]
+
         city_file_prefix = feature_clauses[0]
         directorate_file_prefix = feature_clauses[1] if len(feature_clauses) > 1 else None
         department_file_prefix = feature_clauses[2] if len(feature_clauses) > 2 else None

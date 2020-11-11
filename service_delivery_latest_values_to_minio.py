@@ -11,6 +11,7 @@ from hr_data_last_values_to_minio import get_data, to_json_data, write_to_minio
 SD_DATA_FILENAME = "business_continuity_service_delivery.csv"
 
 SKIP_LIST = ("safety_and_security", "treasury")
+REMAP_DICT = {"water_and_waste_services": "water_and_waste"}
 
 DATE_COL = "date"
 MEASURE_COL = "measure"
@@ -55,6 +56,7 @@ def create_latest_sd_values_dict(ts_df):
         # Creating the relevant location in the output hierachy using the feature
         value_output_dict = output_dict
         for feature in feature_values:
+            feature = REMAP_DICT.get(feature, feature)
             if feature not in value_output_dict:
                 value_output_dict[feature] = {METRICS_FIELD: {DATE_COL: value_dict[DATE_COL].strftime("%Y-%m-%d")},
                                               METRICS_DELTA_FIELD: {DATE_COL: REFERENCE_DATE},
