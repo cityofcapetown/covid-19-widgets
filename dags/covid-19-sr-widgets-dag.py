@@ -143,6 +143,9 @@ sd_latest_values_operator = covid_19_widget_task(SD_VALUES_TASK,)
 SD_VOLUME_WIDGET_TASK = "sd-volume-plots"
 sd_volume_widget_operator = covid_19_widget_task(SD_VOLUME_WIDGET_TASK,)
 
+SD_METRIC_WIDGET_TASK = "sd-metric-plots"
+sd_metric_widget_operator = covid_19_widget_task(SD_METRIC_WIDGET_TASK,)
+
 # Dependencies
 for layer_gen, widget_gen in zip(map_layer_operators, map_widget_operators):
     layer_gen >> widget_gen
