@@ -67,11 +67,10 @@ def generate_plot_timeseries(data_df):
 
     # Comparison with reference period
     time_filter = resampled_df.index > REFERENCE_DATE
-    ref_filter = resampled_df[resampled_df.index == REFERENCE_DATE].index
     for col in COLS_SET:
-        resampled_df.loc[time_filter, f"{col}_delta"] = resampled_df[col] - resampled_df.loc[ref_filter, col]
+        resampled_df.loc[time_filter, f"{col}_delta"] = resampled_df[col] - resampled_df.loc[REFERENCE_DATE, col]
         resampled_df.loc[time_filter, f"{col}_delta_relative"] = (
-                resampled_df[f"{col}_delta"] / resampled_df.loc[ref_filter, col]
+                resampled_df[f"{col}_delta"] / resampled_df.loc[REFERENCE_DATE, col]
         )
 
     return resampled_df.loc[PLOT_START:]
