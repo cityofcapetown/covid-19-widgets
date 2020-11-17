@@ -155,3 +155,5 @@ for layer_gen, widget_gen in zip(map_layer_operators, map_widget_operators):
 
 map_layer_operators[0] >> sd_map_widget_operator
 map_layer_push_operator >> sd_map_widget_operator
+
+sd_latest_values_operator >> [sd_volume_widget_operator, sd_metric_widget_operator, sd_duration_widget_operator]
