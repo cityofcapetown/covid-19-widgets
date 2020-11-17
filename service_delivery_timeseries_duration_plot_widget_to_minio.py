@@ -45,7 +45,7 @@ PLOT_START = "2019-07-01"
 TOOL_TIPS = [
     (DATE_COL, f"@{DATE_COL}{{%F}}"),
     (f"Duration (vs {REFERENCE_DATE})",
-     f"@{DURATION_DAYS_COL}{{0.0 a}} (+@{DURATION_DAYS_COL}_delta_relative{{0.0%}})"),
+     f"@{DURATION_DAYS_COL}{{0.0 a}} (@{DURATION_DAYS_COL}_delta_relative{{+0.0%}})"),
 ]
 
 HOVER_COLS = [DATE_COL, DURATION_DAYS_COL]
@@ -107,7 +107,7 @@ def generate_plot(plot_df):
         x_range=(window_start, window_end),
         y_range=(0, y_range_end),
         x_axis_type='datetime', toolbar_location=None,
-        y_axis_label="Service Request Duration (Days)",
+        y_axis_label="SR Duration (Days)",
         background_fill_color="#eaeaf2",
     )
 
@@ -161,6 +161,13 @@ def generate_plot(plot_df):
         y=DURATION_DAYS_COL, x=DATE_COL, line_width=1, source=plot_df,
         line_color="#c44e52", alpha=0.6, line_alpha=0.6
     )
+
+    select_span = Span(
+        location=pandas.to_datetime(REFERENCE_DATE),
+        dimension='height', line_color="#4c72b0",
+        line_dash='dashed', line_width=4
+    )
+    select.add_layout(marker_span)
 
     select.xgrid.grid_line_color = "White"
     select.ygrid.grid_line_color = None

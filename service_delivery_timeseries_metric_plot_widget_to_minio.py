@@ -31,8 +31,8 @@ COL_PLOT_SETTINGS = {
 
 TOOL_TIPS = [
     (DATE_COL, f"@{DATE_COL}{{%F}}"),
-    (f"Backlog (vs {REFERENCE_DATE})", f"@{BACKLOG}{{0.0 a}} (+@{BACKLOG}_delta_relative{{0.0%}})"),
-    (f"% Within Target (vs {REFERENCE_DATE})", f"@{SERVICE_STANDARD}{{0.0%}} (+@{SERVICE_STANDARD}_delta{{0.0%}})"),
+    (f"Backlog (vs {REFERENCE_DATE})", f"@{BACKLOG}{{0.0 a}} (@{BACKLOG}_delta_relative{{+0.0%}})"),
+    (f"% Within Target (vs {REFERENCE_DATE})", f"@{SERVICE_STANDARD}{{0.0%}} (@{SERVICE_STANDARD}_delta{{+0.0%}})"),
 ]
 AXIS_FORMATTERS = {
     BACKLOG: '0 a',
@@ -42,6 +42,7 @@ AXIS_FORMATTERS = {
 DEFAULT_WINDOW_SIZE = 28
 PLOT_START = "2019-09-01"
 
+WINDOW_START = "2020-10-01"
 REFERENCE_DATE = "2020-10-12"
 
 SD_PREFIX = "service_delivery"
@@ -80,7 +81,7 @@ def generate_plot(plot_df, metric_col,
                   metric_label="Backlog", unit_label="# of requests",
                   line_colour="#4c72b0", marker_line="#c44e52"):
     # Creating Main Plot
-    window_start = plot_df.index.max() - pandas.Timedelta(days=DEFAULT_WINDOW_SIZE)
+    window_start = WINDOW_START
     window_end = plot_df.index.max() + pandas.Timedelta(days=1)
 
     window_total_max = plot_df.loc[plot_df.index > window_start,
@@ -111,6 +112,8 @@ def generate_plot(plot_df, metric_col,
         y=metric_col, x=DATE_COL, width=4, source=plot_df,
         line_color=line_colour, alpha=0.8, line_alpha=0.8
     )
+    metric_circle = plot.circle(x=DATE_COL, y=metric_col,
+                                source=plot_df, color=line_colour, size=6, alpha=0.8, line_alpha=0.8)
 
     # Marker line
     marker_span = Span(
@@ -127,7 +130,7 @@ def generate_plot(plot_df, metric_col,
     plot.yaxis.formatter = NumeralTickFormatter(format=AXIS_FORMATTERS[metric_col])
 
     # Plot legend
-    legend_items = [(metric_label, [metric_line]),
+    legend_items = [(metric_label, [metric_line, metric_circle]),
                     ("Previous Years", [previous_year_line])]
     legend = Legend(items=legend_items, location="center", orientation="horizontal", margin=2, padding=2)
     plot.add_layout(legend, 'below')
@@ -152,6 +155,7 @@ def generate_plot(plot_df, metric_col,
         y=metric_col, x=DATE_COL, line_width=1, source=plot_df,
         line_color=line_colour, alpha=0.6, line_alpha=0.6
     )
+
     select_span = Span(
         location=pandas.to_datetime(REFERENCE_DATE),
         dimension='height', line_color=marker_line,

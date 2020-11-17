@@ -25,7 +25,7 @@ PREVIOUS_YEAR_TEMPLATE = "previous_{}_year"
 PLOT_START = "2019-07-01"
 
 HOVER_COLS = [OPENED_COUNT_COL, CLOSED_COUNT_COL, DATE_COL]
-DEFAULT_WINDOW_SIZE = 28
+WINDOW_START = "2020-10-01"
 
 PLOT_FILENAME_SUFFIX = "service_delivery_volume_plot.html"
 
@@ -52,7 +52,7 @@ def generate_plot_timeseries(data_df):
 
 def generate_plot(plot_df):
     # Creating Main Plot
-    window_start = plot_df.index.max() - pandas.Timedelta(days=DEFAULT_WINDOW_SIZE)
+    window_start = plot_df.loc[WINDOW_START:].index.min()
     window_end = plot_df.index.max() + pandas.Timedelta(days=1)
 
     window_total_max = plot_df.loc[plot_df.index > window_start,
