@@ -15,7 +15,7 @@ from bokeh.resources import CDN
 import pandas
 from tqdm.auto import tqdm
 
-from service_delivery_latest_values_to_minio import SKIP_LIST, REFERENCE_DATE
+from service_delivery_latest_values_to_minio import SKIP_LIST, REFERENCE_DATE, REMAP_DICT
 import service_request_timeseries_plot_widget_to_minio
 
 tqdm.pandas()
@@ -199,6 +199,7 @@ if __name__ == "__main__":
     org_set = service_request_df[[DIRECTORATE_COL, DEPARTMENT_COL]].reset_index(drop=True).drop_duplicates()
     for directorate_title, department_title in ([(None, None)] + list(org_set.values)):
         directorate = directorate_title.strip().lower().replace(" ", "_") if directorate_title else None
+        directorate = REMAP_DICT.get(directorate, directorate)
         department = department_title.strip().lower().replace(" ", "_") if department_title else None
 
         if directorate in SKIP_LIST or department in SKIP_LIST:
