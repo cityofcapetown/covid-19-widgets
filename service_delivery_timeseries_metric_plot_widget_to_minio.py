@@ -81,7 +81,7 @@ def generate_plot(plot_df, metric_col,
                   metric_label="Backlog", unit_label="# of requests",
                   line_colour="#4c72b0", marker_line="#c44e52"):
     # Creating Main Plot
-    window_start = WINDOW_START
+    window_start = plot_df.loc[WINDOW_START:].index.min()
     window_end = plot_df.index.max() + pandas.Timedelta(days=1)
 
     window_total_max = plot_df.loc[plot_df.index > window_start,
