@@ -15,9 +15,6 @@ from bokeh.transform import dodge
 
 import pandas
 import pytz
-from tqdm.auto import tqdm
-
-tqdm.pandas()
 
 MINIO_BUCKET = "covid"
 MINIO_CLASSIFICATION = minio_utils.DataClassification.EDGE
