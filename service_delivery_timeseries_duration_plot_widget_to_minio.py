@@ -95,7 +95,7 @@ def generate_plot_ts_df(filtered_sr_df):
 
 def generate_plot(plot_df):
     window_start = pandas.to_datetime(WINDOW_START, format=ISO601_DATE_FORMAT)
-    window_end = plot_df[DATE_COL].max() + pandas.Timedelta(days=1)
+    window_end = plot_df.index.max() + pandas.Timedelta(days=1)
 
     y_range_end = plot_df.loc[WINDOW_START:, DURATION_DAYS_COL].max() * 1.1
 
