@@ -50,16 +50,16 @@ WIDGETS_RESTRICTED_PREFIX = "widgets/private/business_continuity_"
 PLOT_FILENAME_SUFFIX = "service_request_count_plot.html"
 
 
-def get_service_request_data(minio_access, minio_secret):
-    service_request_df = minio_utils.minio_to_dataframe(
-        minio_bucket=DATA_BUCKET_NAME,
+def get_service_request_data(data_bucket, minio_access, minio_secret):
+    sr_df = minio_utils.minio_to_dataframe(
+        minio_bucket=data_bucket,
         minio_key=minio_access,
         minio_secret=minio_secret,
-        data_classification=minio_utils.DataClassification.CONFIDENTIAL,
+        data_classification=minio_utils.DataClassification.LAKE,
         use_cache=True
     )
 
-    return service_request_df
+    return sr_df
 
 
 def filter_sr_data(sr_df, start_date, end_date=None, offset_length=0):
@@ -267,8 +267,9 @@ if __name__ == "__main__":
     logging.info(f"Generat[ing] plot for '{directorate_title}'")
 
     logging.info("Fetch[ing] SR data...")
-    service_request_df = get_service_request_data(secrets["minio"]["confidential"]["access"],
-                                                  secrets["minio"]["confidential"]["secret"])
+    service_request_df = get_service_request_data(DATA_BUCKET_NAME,
+                                                  secrets["minio"]["lake"]["access"],
+                                                  secrets["minio"]["lake"]["secret"])
     logging.info("...Fetch[ed] SR data.")
 
     logging.debug(f"service_request_df.shape={service_request_df.shape}")
