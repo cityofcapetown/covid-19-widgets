@@ -138,7 +138,7 @@ def generate_plot_timeseries(sr_df):
     logging.debug(f"timeseries_df.describe()=\n{timeseries_df.describe()}")
 
     logging.debug("Getting P80 values")
-    timeseries_df[DURATION_COL] = timeseries_df[DATE_COL].progress_apply(
+    timeseries_df[DURATION_COL] = timeseries_df[DATE_COL].apply(
         get_p80_window, sr_df=sr_df
     )
 
@@ -153,7 +153,7 @@ def generate_plot_timeseries(sr_df):
         timeseries_df[col] = values[:timeseries_df.shape[0]]
 
     logging.debug("Getting previous year's duration")
-    timeseries_df[PREVIOUS_DURATION_COL] = timeseries_df[DATE_COL].progress_apply(
+    timeseries_df[PREVIOUS_DURATION_COL] = timeseries_df[DATE_COL].apply(
         get_p80_window, sr_df=sr_df, offset=PREVIOUS_OFFSET
     )
     logging.debug(f"timeseries_df.head(10)=\n{timeseries_df.head(10)}")
