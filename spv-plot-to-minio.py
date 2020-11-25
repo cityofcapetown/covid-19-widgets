@@ -322,7 +322,7 @@ if __name__ == "__main__":
     )
     
     icu_fig = make_fig(
-        plot_master_df, "Date", "ICUAdmissions_Count", None, 
+        plot_master_df, "Date", "ICUAdmissions_Count", "ICUAdmissions_AdjustedCount", 
         "ICU Admissions / Day", 'ICU Admissions', 'Lag Adjusted ICU Admissions', 'ICU Admissions', x_range,
         model_plot_dic["icu"]["time"], model_plot_dic["icu"]["P5"], model_plot_dic["icu"]["P25"], model_plot_dic["icu"]["Median"], 
         model_plot_dic["icu"]["P75"], model_plot_dic["icu"]["P95"],
