@@ -49,7 +49,9 @@ DEFAULT_GREY ="#bababa"
 BACKLOG = "backlog"
 SERVICE_STD = "service_standard"
 TOTAL_OPEN = "total_opened"
-
+BIPLOT_X_LABEL = "Total Requests Opened since 2020-10-12"
+SERVICE_STD_LABEL = "Closed within target (%)"
+BACKLOG_LAB = "Backlog (# of requests)"
 SHOW_MIN = 2
 SERVICE_STD_MIN = 80
 BACKLOG_MIN = -1100
@@ -155,7 +157,7 @@ def make_fig(df, x_col, y_col, x_lab, y_lab, code, best_fit=None):
         y_range=y_range,
         title=None,
         tools = [BoxZoomTool(), ResetTool(), PanTool(), WheelZoomTool()],
-        toolbar_location='below',
+        toolbar_location='right',
     )
 
     # add the observed count
@@ -174,7 +176,7 @@ def make_fig(df, x_col, y_col, x_lab, y_lab, code, best_fit=None):
     
     # figure aesthetics
     fig.add_tools(hover_tool)
-    fig.axis.axis_label_text_font_size = "16pt"
+    fig.axis.axis_label_text_font_size = "12pt"
     fig.axis.minor_tick_line_color = None
     fig.grid.grid_line_color = "white"
     if y_col == SERVICE_STD:
@@ -326,13 +328,13 @@ if __name__ == "__main__":
     
     # call the plot function for backlog
     backlog_fig = make_fig(department_metrics, x_col=TOTAL_OPEN, y_col=BACKLOG,
-                           x_lab="Total Requests Opened (since 12 Oct)", y_lab="Backlog",
+                           x_lab=BIPLOT_X_LABEL, y_lab=BACKLOG_LAB,
                            code=CODE, best_fit=best_fit)
     
     # call the plot function for service standard
     department_metrics["color"] = department_metrics[CODE].apply(lambda val: DEFAULT_GREY if val not in top_10 else STANDARD_RED)
     p_closed_fig = make_fig(department_metrics, x_col=TOTAL_OPEN, y_col=SERVICE_STD,
-                            x_lab="Total Requests Opened (since 12 Oct)", y_lab="Percent Closed in Target",
+                            x_lab=BIPLOT_X_LABEL, y_lab=SERVICE_STD_LABEL,
                             code=CODE, best_fit=None)
     logging.info(f"Plott[ed] City-wide backlog and Service Standard")
     
@@ -368,12 +370,12 @@ if __name__ == "__main__":
 
         dept_df["color"] = dept_df[CODE].apply(lambda val: DEFAULT_GREY if val not in dpt_top_10 else BACKLOG_BLUE)
         backlog_fig = make_fig(dept_df, x_col=TOTAL_OPEN, y_col=BACKLOG,
-                               x_lab="Total Requests Opened (since 12 Oct)", y_lab="Backlog",
+                               x_lab=BIPLOT_X_LABEL, y_lab=BACKLOG_LAB,
                                code=CODE, best_fit=best_fit)
 
         dept_df["color"] = dept_df[CODE].apply(lambda val: DEFAULT_GREY if val not in dpt_top_10 else STANDARD_RED)
         p_closed_fig = make_fig(dept_df, x_col=TOTAL_OPEN, y_col=SERVICE_STD,
-                                x_lab="Total Requests Opened (since 12 Oct)", y_lab="Percent Closed in Target",
+                                x_lab=BIPLOT_X_LABEL, y_lab=SERVICE_STD_LABEL,
                                 code=CODE, best_fit=None)
 
         dept_name = department.strip().replace(" ", "_").lower()
@@ -407,8 +409,8 @@ if __name__ == "__main__":
 
     # plot data
     quadrants_plot = quadrant_fig(
-        department_metrics, x_col=SERVICE_STD, y_col=BACKLOG, x_lab="Service Standard",
-        y_lab="Backlog", code=CODE, label_df=label_df, fx=5, fy=5
+        department_metrics, x_col=SERVICE_STD, y_col=BACKLOG, x_lab=SERVICE_STD_LABEL,
+        y_lab=BACKLOG_LAB, code=CODE, label_df=label_df, fx=5, fy=5
     )
     logging.info(f"Creat[ed] Quadrant plots - all departments")
     
@@ -439,8 +441,8 @@ if __name__ == "__main__":
         dept_df["color"] = dept_df[CODE].apply(lambda val: DEFAULT_GREY if val not in dept_top_10 else BACKLOG_BLUE)
 
         # plot data
-        quadrants_plot = quadrant_fig(dept_df, x_col=SERVICE_STD, y_col=BACKLOG, x_lab="Service Standard",
-                                      y_lab="Backlog", code=CODE, label_df=dept_label_df)
+        quadrants_plot = quadrant_fig(dept_df, x_col=SERVICE_STD, y_col=BACKLOG, x_lab=SERVICE_STD_LABEL,
+                                      y_lab=BACKLOG_LAB, code=CODE, label_df=dept_label_df)
         
         # write to minio
         logging.info(f"push[ing] {outfile} to minio")
