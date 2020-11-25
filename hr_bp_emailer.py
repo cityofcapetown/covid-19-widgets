@@ -120,8 +120,8 @@ DIRECTORATE_DETAILS_DICT = {
     #      "receiver_email": ["gordon.inggs@capetown.gov.za"],
     #      "cc_email": []},
     "URBAN MANAGEMENT":
-        {"receiver_name": ["Sibusiso"],
-         "receiver_email": ["Sibusiso.Mayekiso@capetown.gov.za"],
+        {"receiver_name": ["Sibusiso", "Neliswa"],
+         "receiver_email": ["Sibusiso.Mayekiso@capetown.gov.za", "Neliswa.Gaji@capetown.gov.za"],
          "cc_email": HR_CREW + ["Lele.Sithole@capetown.gov.za"]},
     "CITY MANAGER":
         {"receiver_name": ["Phindile", "Ashwin"],
