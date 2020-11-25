@@ -314,7 +314,7 @@ if __name__ == "__main__":
     )
 
     admit_fig = make_fig(
-        plot_master_df, "Date", "Admissions_Count", None, 
+        plot_master_df, "Date", "Admissions_Count", "Admissions_AdjustedCount", 
         "Gen Admissions / Day", 'Gen Admissions', 'Lag Adjusted Admissions', 'Gen Admissions', x_range,
         model_plot_dic["admit"]["time"], model_plot_dic["admit"]["P5"], model_plot_dic["admit"]["P25"], model_plot_dic["admit"]["Median"], 
         model_plot_dic["admit"]["P75"], model_plot_dic["admit"]["P95"],
