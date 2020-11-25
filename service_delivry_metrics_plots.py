@@ -174,7 +174,7 @@ def make_fig(df, x_col, y_col, x_lab, y_lab, code, best_fit=None):
     
     # figure aesthetics
     fig.add_tools(hover_tool)
-    fig.axis.axis_label_text_font_size = "20pt"
+    fig.axis.axis_label_text_font_size = "16pt"
     fig.axis.minor_tick_line_color = None
     fig.grid.grid_line_color = "white"
     if y_col == SERVICE_STD:
