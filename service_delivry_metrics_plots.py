@@ -260,7 +260,7 @@ def quadrant_fig(df, x_col, y_col, x_lab, y_lab, code, label_df, fx=5, fy=5):
     
     # figure aesthetics
     
-    fig.axis.axis_label_text_font_size = "20pt"
+    fig.axis.axis_label_text_font_size = "16"
     fig.legend.location = "bottom_left"
     fig.axis.minor_tick_line_color = None
     fig.grid.grid_line_color = "white"
