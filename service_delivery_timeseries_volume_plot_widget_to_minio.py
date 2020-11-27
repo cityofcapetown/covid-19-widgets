@@ -93,6 +93,9 @@ def generate_plot(plot_df):
     plot.xaxis.major_label_orientation = math.pi / 4
     plot.xaxis.formatter = DatetimeTickFormatter(days="%Y-%m-%d")
 
+    plot.axis.axis_label_text_font_size = "16pt"
+    plot.axis.major_label_text_font_size = "16pt"
+
     # Plot legend
     legend_items = [("Opened", [vbar_opened]),
                     ("Closed", [vbar_closed]),
@@ -132,6 +135,9 @@ def generate_plot(plot_df):
     select.ygrid.grid_line_color = None
     select.add_tools(range_tool)
     select.toolbar.active_multi = range_tool
+
+    select.axis.axis_label_text_font_size = "16pt"
+    select.axis.major_label_text_font_size = "16pt"
 
     combined_plot = column(plot, select, height_policy="max", width_policy="max")
 

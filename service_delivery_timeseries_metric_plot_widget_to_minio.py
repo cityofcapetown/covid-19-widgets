@@ -129,6 +129,9 @@ def generate_plot(plot_df, metric_col,
     plot.xaxis.formatter = DatetimeTickFormatter(days="%Y-%m-%d")
     plot.yaxis.formatter = NumeralTickFormatter(format=AXIS_FORMATTERS[metric_col])
 
+    plot.axis.axis_label_text_font_size = "16pt"
+    plot.axis.major_label_text_font_size = "16pt"
+
     # Plot legend
     legend_items = [(metric_label, [metric_line, metric_circle]),
                     ("Previous Years", [previous_year_line])]
@@ -167,6 +170,9 @@ def generate_plot(plot_df, metric_col,
     select.ygrid.grid_line_color = None
     select.add_tools(range_tool)
     select.toolbar.active_multi = range_tool
+
+    select.axis.axis_label_text_font_size = "16pt"
+    select.axis.major_label_text_font_size = "16pt"
 
     combined_plot = column(plot, select, height_policy="max", width_policy="max")
 
