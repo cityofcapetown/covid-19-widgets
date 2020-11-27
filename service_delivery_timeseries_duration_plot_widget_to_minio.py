@@ -136,8 +136,8 @@ def generate_plot(plot_df):
     plot.xaxis.formatter = DatetimeTickFormatter(days=ISO601_DATE_FORMAT)
     plot.y_range.start = 0
 
-    plot.axis.axis_label_text_font_size = "16pt"
-    plot.axis.major_label_text_font_size = "16pt"
+    plot.axis.axis_label_text_font_size = "12pt"
+    plot.axis.major_label_text_font_size = "12pt"
 
     legend_items = [("Duration (days)", [line, circle]),
                     ("Previous Years", [previous_year_line])]
@@ -176,8 +176,8 @@ def generate_plot(plot_df):
     select.add_tools(range_tool)
     select.toolbar.active_multi = range_tool
 
-    select.axis.axis_label_text_font_size = "16pt"
-    select.axis.major_label_text_font_size = "16pt"
+    select.axis.axis_label_text_font_size = "12pt"
+    select.axis.major_label_text_font_size = "12pt"
 
     combined_plot = column(plot, select, height_policy="max", width_policy="max")
 

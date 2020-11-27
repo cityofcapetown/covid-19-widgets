@@ -93,8 +93,8 @@ def generate_plot(plot_df):
     plot.xaxis.major_label_orientation = math.pi / 4
     plot.xaxis.formatter = DatetimeTickFormatter(days="%Y-%m-%d")
 
-    plot.axis.axis_label_text_font_size = "16pt"
-    plot.axis.major_label_text_font_size = "16pt"
+    plot.axis.axis_label_text_font_size = "12pt"
+    plot.axis.major_label_text_font_size = "12pt"
 
     # Plot legend
     legend_items = [("Opened", [vbar_opened]),
@@ -136,8 +136,8 @@ def generate_plot(plot_df):
     select.add_tools(range_tool)
     select.toolbar.active_multi = range_tool
 
-    select.axis.axis_label_text_font_size = "16pt"
-    select.axis.major_label_text_font_size = "16pt"
+    select.axis.axis_label_text_font_size = "12pt"
+    select.axis.major_label_text_font_size = "12pt"
 
     combined_plot = column(plot, select, height_policy="max", width_policy="max")
 
