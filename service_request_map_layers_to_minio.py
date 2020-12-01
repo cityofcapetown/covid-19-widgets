@@ -100,7 +100,7 @@ def get_service_request_data(minio_access, minio_secret):
         minio_bucket=SERVICE_REQUEST_BUCKET_NAME,
         minio_key=minio_access,
         minio_secret=minio_secret,
-        data_classification=minio_utils.DataClassification.CONFIDENTIAL,
+        data_classification=minio_utils.DataClassification.LAKE,
         use_cache=True
     )
 
@@ -361,8 +361,8 @@ if __name__ == "__main__":
         logging.info("G[ot] layers")
 
         logging.info("G[etting] SR Data")
-        sr_data_df = get_service_request_data(secrets["minio"]["confidential"]["access"],
-                                              secrets["minio"]["confidential"]["secret"])
+        sr_data_df = get_service_request_data(secrets["minio"]["lake"]["access"],
+                                              secrets["minio"]["lake"]["secret"])
         logging.info("G[ot] SR Data")
 
         logging.info("Upfront filter[ing] of SR Data")
