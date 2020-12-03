@@ -23,7 +23,7 @@ HOTSPOT_LAYER_PROPERTIES_LOOKUP = collections.OrderedDict((
          epi_map_case_layers_to_minio.ACTIVE_CASE_COUNT_COL + epi_map_case_layers_to_minio.DELTA_SUFFIX),
         ("Hex ID", "Presumed Active Cases", "Change in Presumed Active Cases"),
         ("Reds",), epi_map_case_layers_to_minio.HEX_L8_COUNT_SUFFIX, True, True,
-        epi_map_case_layers_to_minio.ACTIVE_METADATA_KEY
+        epi_map_case_layers_to_minio.ACTIVE_METADATA_KEY, True
     )),
     ("Active Covid-19 Cases (district)", (
         city_map_widget_to_minio.LayerType.CHOROPLETH,
@@ -32,7 +32,7 @@ HOTSPOT_LAYER_PROPERTIES_LOOKUP = collections.OrderedDict((
          epi_map_case_layers_to_minio.ACTIVE_CASE_COUNT_COL + epi_map_case_layers_to_minio.DELTA_SUFFIX),
         ("Healthcare District Name", "Presumed Active Cases", "Change in Presumed Active Cases"),
         ("Reds",), epi_map_case_layers_to_minio.DISTRICT_COUNT_SUFFIX, False, True,
-        epi_map_case_layers_to_minio.ACTIVE_METADATA_KEY
+        epi_map_case_layers_to_minio.ACTIVE_METADATA_KEY, True
     )),
     ("Active Covid-19 Cases Change (district)", (
         city_map_widget_to_minio.LayerType.CHOROPLETH,
@@ -41,7 +41,7 @@ HOTSPOT_LAYER_PROPERTIES_LOOKUP = collections.OrderedDict((
          epi_map_case_layers_to_minio.ACTIVE_CASE_COUNT_COL),
         ("Healthcare District Name", "Change in Presumed Active Cases", "Presumed Active Cases"),
         ("YlOrRd",), epi_map_case_layers_to_minio.DISTRICT_COUNT_SUFFIX, False, True,
-        epi_map_case_layers_to_minio.ACTIVE_METADATA_KEY
+        epi_map_case_layers_to_minio.ACTIVE_METADATA_KEY, True
     )),
     ("All Covid-19 Cases (hexes)", (
         city_map_widget_to_minio.LayerType.CHOROPLETH,
@@ -50,7 +50,7 @@ HOTSPOT_LAYER_PROPERTIES_LOOKUP = collections.OrderedDict((
          epi_map_case_layers_to_minio.CASE_COUNT_COL + epi_map_case_layers_to_minio.DELTA_SUFFIX),
         ("Hex ID", "All Cases", "Increase in Cases"),
         ("Reds",), epi_map_case_layers_to_minio.HEX_L8_COUNT_SUFFIX, False, True,
-        epi_map_case_layers_to_minio.CUMULATIVE_METADATA_KEY
+        epi_map_case_layers_to_minio.CUMULATIVE_METADATA_KEY, True
     )),
     ("All Covid-19 Cases (district)", (
         city_map_widget_to_minio.LayerType.CHOROPLETH,
@@ -59,7 +59,7 @@ HOTSPOT_LAYER_PROPERTIES_LOOKUP = collections.OrderedDict((
          epi_map_case_layers_to_minio.CASE_COUNT_COL + epi_map_case_layers_to_minio.DELTA_SUFFIX),
         ("Healthcare District Name", "All Cases", "Increase in Cases"),
         ("Reds",), epi_map_case_layers_to_minio.DISTRICT_COUNT_SUFFIX, False, True,
-        epi_map_case_layers_to_minio.CUMULATIVE_METADATA_KEY
+        epi_map_case_layers_to_minio.CUMULATIVE_METADATA_KEY, True
     )),
     ("All Covid-19 Cases Change (district)", (
         city_map_widget_to_minio.LayerType.CHOROPLETH,
@@ -68,13 +68,13 @@ HOTSPOT_LAYER_PROPERTIES_LOOKUP = collections.OrderedDict((
          epi_map_case_layers_to_minio.CASE_COUNT_COL,),
         ("Healthcare District Name", "Increase in Cases", "All Cases"),
         ("YlOrRd",), epi_map_case_layers_to_minio.DISTRICT_COUNT_SUFFIX, False, True,
-        epi_map_case_layers_to_minio.CUMULATIVE_METADATA_KEY
+        epi_map_case_layers_to_minio.CUMULATIVE_METADATA_KEY, True
     )),
     ("Covid-19 Mortality (hexes)", (
         city_map_widget_to_minio.LayerType.CHOROPLETH,
         (HEX_COUNT_INDEX_PROPERTY, epi_map_case_layers_to_minio.DEATHS_COUNT_COL), ("Hex ID", "Deaths"),
         ("Greys",), epi_map_case_layers_to_minio.HEX_L8_COUNT_SUFFIX, False, True,
-        epi_map_case_layers_to_minio.DEATHS_METADATA_KEY
+        epi_map_case_layers_to_minio.DEATHS_METADATA_KEY, True
     )),
     ("Covid-19 Mortality (district)", (
         city_map_widget_to_minio.LayerType.CHOROPLETH,
@@ -83,7 +83,7 @@ HOTSPOT_LAYER_PROPERTIES_LOOKUP = collections.OrderedDict((
          epi_map_case_layers_to_minio.DEATHS_COUNT_COL + epi_map_case_layers_to_minio.DELTA_SUFFIX),
         ("Healthcare District Name", "Deaths", "Increase in Deaths"),
         ("Greys",), epi_map_case_layers_to_minio.DISTRICT_COUNT_SUFFIX, False, True,
-        epi_map_case_layers_to_minio.DEATHS_METADATA_KEY
+        epi_map_case_layers_to_minio.DEATHS_METADATA_KEY, True
     )),
     ("Covid-19 Mortality Change (district)", (
         city_map_widget_to_minio.LayerType.CHOROPLETH,
@@ -92,12 +92,12 @@ HOTSPOT_LAYER_PROPERTIES_LOOKUP = collections.OrderedDict((
          epi_map_case_layers_to_minio.DEATHS_COUNT_COL),
         ("Healthcare District Name", "Increase in Deaths", "Deaths"),
         ("YlOrRd",), epi_map_case_layers_to_minio.DISTRICT_COUNT_SUFFIX, False, True,
-        epi_map_case_layers_to_minio.DEATHS_METADATA_KEY
+        epi_map_case_layers_to_minio.DEATHS_METADATA_KEY, True
     )),
     ("Healthcare Facilities", (
         city_map_widget_to_minio.LayerType.POINT,
         ("NAME", "ADR",), ("Healthcare Facility Name", "Address",),
-        ("red", "plus-square"), "health_care_facilities.geojson", False, False, None
+        ("red", "plus-square"), "health_care_facilities.geojson", False, False, None, False
     )),
     # ("WCPG Testing Facilities", (
     #     city_map_widget_to_minio.LayerType.POINT,
@@ -107,56 +107,56 @@ HOTSPOT_LAYER_PROPERTIES_LOOKUP = collections.OrderedDict((
     ("Healthcare Districts", (
         city_map_widget_to_minio.LayerType.POLYGON,
         ("CITY_HLTH_RGN_NAME",), ("Healthcare District Name",),
-        ("red",), "health_districts.geojson", False, False, None
+        ("red",), "health_districts.geojson", False, False, None, False
     )),
 
     # Contextual Information
     ("ABSD Areas", (
         city_map_widget_to_minio.LayerType.POLYGON,
         ("ABSD_NAME",), ("ABSD Name",),
-        ("black",), "absd_areas.geojson", False, False, None
+        ("black",), "absd_areas.geojson", False, False, None, False
     )),
     ("Subcouncils", (
         city_map_widget_to_minio.LayerType.POLYGON,
         ("SUB_CNCL_NAME",), ("Name",),
-        ("black",), "subcouncils.geojson", False, False, None
+        ("black",), "subcouncils.geojson", False, False, None, False
     )),
     ("Wards", (
         city_map_widget_to_minio.LayerType.POLYGON,
         ("WardNo", "WardID"), ("Ward Number", "Ward ID"),
-        ("black",), "ct_wards.geojson", False, False, None
+        ("black",), "ct_wards.geojson", False, False, None, False
     )),
     ("Official Suburbs", (
         city_map_widget_to_minio.LayerType.POLYGON,
         ("OFC_SBRB_NAME",), ("Official Suburb Name",),
-        ("black",), "official_suburbs.geojson", False, False, None
+        ("black",), "official_suburbs.geojson", False, False, None, False
     )),
     ("Official Suburb Labels", (
         city_map_widget_to_minio.LayerType.LABEL,
         ("OFC_SBRB_NAME",), ("Official Suburb Name",),
-        ("black",), "official_suburb_labels.geojson", False, False, None
+        ("black",), "official_suburb_labels.geojson", False, False, None, False
     )),
     ("Special Rated Areas", (
         city_map_widget_to_minio.LayerType.POLYGON,
         ("SRA_NAME",), ("Name",),
-        ("black",), "special_rated_areas.geojson", False, False, None
+        ("black",), "special_rated_areas.geojson", False, False, None, False
     )),
     ("Major Roads", (
         city_map_widget_to_minio.LayerType.POLYGON,
         ("NAME",), ("Road Type",),
-        ("black",), "ct_roads.geojson", False, False, None
+        ("black",), "ct_roads.geojson", False, False, None, False
     )),
     ("Railways", (
         city_map_widget_to_minio.LayerType.POLYGON,
         ("NAME",), ("Railway Type",),
-        ("black",), "ct_railways.geojson", False, False, None
+        ("black",), "ct_railways.geojson", False, False, None, False
     )),
 
     # Population Density
     ("2019 Population Estimate", (
         city_map_widget_to_minio.LayerType.CHOROPLETH,
         (HEX_COUNT_INDEX_PROPERTY, "PopDensity2019PerSqkm",), ("Hex ID", "People / km²",),
-        ("Blues",), "sl_du_pop_est_2019_hex9.geojson", False, False, None
+        ("Blues",), "sl_du_pop_est_2019_hex9.geojson", False, False, None, False
     )),
 
     # Vulnerability Indicies
@@ -164,60 +164,60 @@ HOTSPOT_LAYER_PROPERTIES_LOOKUP = collections.OrderedDict((
         city_map_widget_to_minio.LayerType.CHOROPLETH,
         (HEX_COUNT_INDEX_PROPERTY, "SEVI_5_GROUP_INDEX", "SEVI_CLASSIFICATION"),
         ("Hex ID", "Vulnerability Score", "Vulnerability Classification"),
-        ("Oranges",), "province_sevi_v2_hex9.geojson", False, False, None
+        ("Oranges",), "province_sevi_v2_hex9.geojson", False, False, None, False
     )),
 
     # Places of Risk
     ("WCED Schools", (
         city_map_widget_to_minio.LayerType.POINT,
         ("SCHL", "SUB", "QUINT"), ("School Name", "Suburb", "Quintile",),
-        ("green", "book"), "wced_metro_schools_2019.geojson", False, False, None
+        ("green", "book"), "wced_metro_schools_2019.geojson", False, False, None, False
     )),
     ("Shopping Centres (>5k m²)", (
         city_map_widget_to_minio.LayerType.POINT,
         ("Centre_nam", "Physical_a",), ("Centre Name", "Address",),
-        ("green", "shopping-cart"), "shopping_centres_above_5000sqm_rode_2020.geojson", False, False, None
+        ("green", "shopping-cart"), "shopping_centres_above_5000sqm_rode_2020.geojson", False, False, None, False
     )),
     ("Public Transport Interchanges", (
         city_map_widget_to_minio.LayerType.POLYGON,
         ("Name", "Bus", "ParkRide", "Taxi", "Train",), ("Name", "Bus", "Park and Ride", "Taxi", "Train"),
-        ("green",), "public_transport_interchanges.geojson", False, False, None
+        ("green",), "public_transport_interchanges.geojson", False, False, None, False
     )),
     ("Public Transport Activity", (
         city_map_widget_to_minio.LayerType.CHOROPLETH,
         (HEX_COUNT_INDEX_PROPERTY, "gridcode",), ("Hex ID", "Activity Score",),
-        ("Greens",), "public_transport_activity_levels_hex9.geojson", False, False, None
+        ("Greens",), "public_transport_activity_levels_hex9.geojson", False, False, None, False
     )),
     ("Mobile Device Activity Increase", (
         city_map_widget_to_minio.LayerType.CHOROPLETH,
         (HEX_COUNT_INDEX_PROPERTY, "RelativeDeltaPercent_50%",), ("Hex ID", "Increase in Unique Devices (%)",),
-        ("Greens",), "city_all_hex_l8_mobile_count.geojson", False, False, None
+        ("Greens",), "city_all_hex_l8_mobile_count.geojson", False, False, None, False
     )),
     ("Trading Locations", (
         city_map_widget_to_minio.LayerType.POLYGON,
         ("LOC_NAME",), ("Location Name",),
-        ("green",), "trading_location.geojson", False, False, None
+        ("green",), "trading_location.geojson", False, False, None, False
     )),
     ("SASSA Offices", (
         city_map_widget_to_minio.LayerType.POINT,
         ("Name", "Status"), ("Name", "Status"),
-        ("green", "building"), "sassa_local_office_coc.geojson", False, False, None
+        ("green", "building"), "sassa_local_office_coc.geojson", False, False, None, False
     )),
     ("SASSA Paypoint (Shops)", (
         city_map_widget_to_minio.LayerType.POINT,
         ("Store_Name", "Store_Group", "Address"), ("Store Name", "Store Group", "Address",),
-        ("green", "shopping-basket"), "retail_stores.geojson", False, False, None
+        ("green", "shopping-basket"), "retail_stores.geojson", False, False, None, False
     )),
     ("Employer Sample", (
         city_map_widget_to_minio.LayerType.POINT,
         ('NAME_CMP', 'BUSINESS', 'TOTAL_EMPL'), ("Name of Company", "Type of Business", "Total Employees"),
-        ("green", "briefcase"), "employment_density_survey_20200515.geojson", False, False, None
+        ("green", "briefcase"), "employment_density_survey_20200515.geojson", False, False, None, False
     )),
     ("Employment Density", (
         city_map_widget_to_minio.LayerType.CHOROPLETH,
         (HEX_COUNT_INDEX_PROPERTY, "EmploymentDensityPerSqkm",),
         ("Hex ID", "Employees / km²",),
-        ("Greens",), "hh_emp_incomegrp_sp_tz2018_hex8.geojson", False, False, None
+        ("Greens",), "hh_emp_incomegrp_sp_tz2018_hex8.geojson", False, False, None, False
     )),
 
     # People at Risk
@@ -229,51 +229,51 @@ HOTSPOT_LAYER_PROPERTIES_LOOKUP = collections.OrderedDict((
         ("Hex ID", "Number of Houses",
          'Free Standing Houses', 'Row Houses', 'Semi-Detached Houses',
          'Row Maisonettes', 'Semi-Detached Maisonettes',),
-        ("Purples",), "city_house_counts.geojson", False, False, None
+        ("Purples",), "city_house_counts.geojson", False, False, None, False
     )),
     ("Rental Stock (flats)", (
         city_map_widget_to_minio.LayerType.CHOROPLETH,
         (HEX_COUNT_INDEX_PROPERTY, "Count", 'Flat', 'Hostel', 'Old Age Home'),
         ("Hex ID", "Total Blocks of Flats", 'Flats', 'Hostels', 'Old Age Homes'),
-        ("Purples",), "city_flats_counts.geojson", False, False, None
+        ("Purples",), "city_flats_counts.geojson", False, False, None, False
     )),
     ("Rental Stock (hostels)", (
         city_map_widget_to_minio.LayerType.CHOROPLETH,
         (HEX_COUNT_INDEX_PROPERTY, "Count",), ("Hex ID", "Number of Hostel Blocks",),
-        ("Purples",), "city_hostel_counts.geojson", False, False, None
+        ("Purples",), "city_hostel_counts.geojson", False, False, None, False
     )),
     ("Areas of Informality", (
         city_map_widget_to_minio.LayerType.POLYGON,
         ("AOI_NAME", "OTH_NAME", "AOI_TYPE"), ("Area Name", "Other Name", "Area Type",),
-        ("purple",), "areas_of_informality_2019.geojson", False, False, None
+        ("purple",), "areas_of_informality_2019.geojson", False, False, None, False
     )),
     ("Elderly Population Density Estimate", (
         city_map_widget_to_minio.LayerType.CHOROPLETH,
         ('index', "DensityPerSqkm"), ("Hex ID", "People older than 55  / km²",),
-        ("Purples",), "cpop_gt55.geojson", False, False, None
+        ("Purples",), "cpop_gt55.geojson", False, False, None, False
     )),
     ("Old Age Facilities", (
         city_map_widget_to_minio.LayerType.POINT,
         ('FacilityName', 'Address', 'PeopleCount', 'RoomCount', 'BedCount', 'Operator',),
         ("Name", "Physical Address", "Number of residents", "Number of Rooms", "Number of Beds", "Operator"),
-        ("purple", "leaf"), "combined_senior_citizens_layer.geojson", False, False, None
+        ("purple", "leaf"), "combined_senior_citizens_layer.geojson", False, False, None, False
     )),
     ("Adult Homeless Shelters", (
         city_map_widget_to_minio.LayerType.POINT,
         ("Name_of_Or", "Service_Ty", "Physical_a"), ("Name of Organisation", "Service Type", "Address"),
-        ("purple", "bed"), "adult_homeless_shelters_coct.geojson", False, False, None
+        ("purple", "bed"), "adult_homeless_shelters_coct.geojson", False, False, None, False
     )),
 
     # WHO WORKS WHERE
     ("Community-based Teams", (
         city_map_widget_to_minio.LayerType.POLYGON,
         ("SUB_CNCL_NAME", "CBT_Status"), ("Subcouncil", "CBT Status"),
-        ("cadetblue",), "coct_cbt_v2.geojson", False, False, None
+        ("cadetblue",), "coct_cbt_v2.geojson", False, False, None, False
     )),
     ("Community Action Networks", (
         city_map_widget_to_minio.LayerType.POLYGON,
         ("CanName",), ("CAN Name",),
-        ("cadetblue",), "ct_cans.geojson", False, False, None
+        ("cadetblue",), "ct_cans.geojson", False, False, None, False
     )),
     ("Resilience NGO/NPOs", (
         city_map_widget_to_minio.LayerType.POINT,
@@ -285,68 +285,68 @@ HOTSPOT_LAYER_PROPERTIES_LOOKUP = collections.OrderedDict((
          "Contact Person", "Email", "Phone",
          "Community Action Network", "ABSD Area", "Subcouncil", "Ward",
          "Permission to Publish"),
-        ("cadetblue", "group"), "npo_publish_data.geojson", False, False, None
+        ("cadetblue", "group"), "npo_publish_data.geojson", False, False, None, False
     )),
     ("Designated Vulnerable Groups Organisations", (
         city_map_widget_to_minio.LayerType.POINT,
         ("ORG_NAME", "ORGWARDS", "SUBCOUNCIL_DESCRIPTION", "ORG_ADDRESS", "ORG_PHONE_NUMBER", "ORG_EMAIL_ADDRESS"),
         ("Name", "Ward", "Subcouncil", "Address", "Phone Number", "Email"),
-        ("cadetblue", "heart"), "community-organisations-designated-vulnerable-groups.geojson", False, False, None
+        ("cadetblue", "heart"), "community-organisations-designated-vulnerable-groups.geojson", False, False, None, False
     )),
     ("Safety & Security Organisations", (
         city_map_widget_to_minio.LayerType.POINT,
         ("ORG_NAME", "ORGWARDS", "SUBCOUNCIL_DESCRIPTION", "ORG_ADDRESS", "ORG_PHONE_NUMBER", "ORG_EMAIL_ADDRESS"),
         ("Name", "Ward", "Subcouncil", "Address", "Phone Number", "Email"),
         ("cadetblue", "binoculars"), "community-organisations-safety-and-security-organisations.geojson", False, False,
-        None
+        None, False
     )),
     ("Education Organisations", (
         city_map_widget_to_minio.LayerType.POINT,
         ("ORG_NAME", "ORGWARDS", "SUBCOUNCIL_DESCRIPTION", "ORG_ADDRESS", "ORG_PHONE_NUMBER", "ORG_EMAIL_ADDRESS"),
         ("Name", "Ward", "Subcouncil", "Address", "Phone Number", "Email"),
-        ("cadetblue", "book"), "community-organisations-education.geojson", False, False, None
+        ("cadetblue", "book"), "community-organisations-education.geojson", False, False, None, False
     )),
     ("Environment Organisations", (
         city_map_widget_to_minio.LayerType.POINT,
         ("ORG_NAME", "ORGWARDS", "SUBCOUNCIL_DESCRIPTION", "ORG_ADDRESS", "ORG_PHONE_NUMBER", "ORG_EMAIL_ADDRESS"),
         ("Name", "Ward", "Subcouncil", "Address", "Phone Number", "Email"),
-        ("cadetblue", "tree"), "community-organisations-environment.geojson", False, False, None
+        ("cadetblue", "tree"), "community-organisations-environment.geojson", False, False, None, False
     )),
     ("Sports Organisations", (
         city_map_widget_to_minio.LayerType.POINT,
         ("ORG_NAME", "ORGWARDS", "SUBCOUNCIL_DESCRIPTION", "ORG_ADDRESS", "ORG_PHONE_NUMBER", "ORG_EMAIL_ADDRESS"),
         ("Name", "Ward", "Subcouncil", "Address", "Phone Number", "Email"),
-        ("cadetblue", "futbol-o"), "community-organisations-sports.geojson", False, False, None
+        ("cadetblue", "futbol-o"), "community-organisations-sports.geojson", False, False, None, False
     )),
     ("Civic-based Organisations", (
         city_map_widget_to_minio.LayerType.POINT,
         ("ORG_NAME", "ORGWARDS", "SUBCOUNCIL_DESCRIPTION", "ORG_ADDRESS", "ORG_PHONE_NUMBER", "ORG_EMAIL_ADDRESS"),
         ("Name", "Ward", "Subcouncil", "Address", "Phone Number", "Email"),
-        ("cadetblue", "comments"), "community-organisations-civic-based-organisations.geojson", False, False, None
+        ("cadetblue", "comments"), "community-organisations-civic-based-organisations.geojson", False, False, None, False
     )),
     ("Business Organisations", (
         city_map_widget_to_minio.LayerType.POINT,
         ("ORG_NAME", "ORGWARDS", "SUBCOUNCIL_DESCRIPTION", "ORG_ADDRESS", "ORG_PHONE_NUMBER", "ORG_EMAIL_ADDRESS"),
         ("Name", "Ward", "Subcouncil", "Address", "Phone Number", "Email"),
-        ("cadetblue", "briefcase"), "community-organisations-business.geojson", False, False, None
+        ("cadetblue", "briefcase"), "community-organisations-business.geojson", False, False, None, False
     )),
     ("Youth Organisations", (
         city_map_widget_to_minio.LayerType.POINT,
         ("ORG_NAME", "ORGWARDS", "SUBCOUNCIL_DESCRIPTION", "ORG_ADDRESS", "ORG_PHONE_NUMBER", "ORG_EMAIL_ADDRESS"),
         ("Name", "Ward", "Subcouncil", "Address", "Phone Number", "Email"),
-        ("cadetblue", "child"), "community-organisations-youth.geojson", False, False, None
+        ("cadetblue", "child"), "community-organisations-youth.geojson", False, False, None, False
     )),
     ("Arts & Culture Organisations", (
         city_map_widget_to_minio.LayerType.POINT,
         ("ORG_NAME", "ORGWARDS", "SUBCOUNCIL_DESCRIPTION", "ORG_ADDRESS", "ORG_PHONE_NUMBER", "ORG_EMAIL_ADDRESS"),
         ("Name", "Ward", "Subcouncil", "Address", "Phone Number", "Email"),
-        ("cadetblue", "paint-brush"), "community-organisations-arts-and-culture.geojson", False, False, None
+        ("cadetblue", "paint-brush"), "community-organisations-arts-and-culture.geojson", False, False, None, False
     )),
     ("Faith-based Organisations", (
         city_map_widget_to_minio.LayerType.POINT,
         ("ORG_NAME", "ORGWARDS", "SUBCOUNCIL_DESCRIPTION", "ORG_ADDRESS", "ORG_PHONE_NUMBER", "ORG_EMAIL_ADDRESS"),
         ("Name", "Ward", "Subcouncil", "Address", "Phone Number", "Email"),
-        ("cadetblue", "cloud"), "community-organisations-faith-based-organisations.geojson", False, False, None
+        ("cadetblue", "cloud"), "community-organisations-faith-based-organisations.geojson", False, False, None, False
     )),
 ))
 
@@ -463,21 +463,21 @@ MINIMAP_PADDING = 20
 MAP_FILENAME = "hotspot_map_widget.html"
 
 
-def generate_base_map_features(tempdir, minimap=False):
+def generate_base_map_features(tempdir, base_map_filename=epi_map_case_layers_to_minio.CT_HEALTH_DISTRICT_FILENAME, minimap=False):
     features = []
 
     # Health SubDistrict Outlines
-    health_district_layer_path = os.path.join(tempdir, epi_map_case_layers_to_minio.CT_HEALTH_DISTRICT_FILENAME)
-    health_district_outline = folium.features.Choropleth(
-        health_district_layer_path,
-        name="Health Subdistricts",
+    basemap_layer_path = os.path.join(tempdir, base_map_filename)
+    basemap_outline = folium.features.Choropleth(
+        basemap_layer_path,
+        name="Base Map Outline",
         show=True,
         fill_opacity=0,
         line_color="blue"
     )
-    health_district_outline.geojson.embed = False
-    health_district_outline.geojson.embed_link = epi_map_case_layers_to_minio.CT_HEALTH_DISTRICT_FILENAME
-    health_district_outline.geojson.control = False
+    basemap_outline.geojson.embed = False
+    basemap_outline.geojson.embed_link = base_map_filename
+    basemap_outline.geojson.control = False
 
     # Base Layers
     features += [
@@ -491,7 +491,7 @@ def generate_base_map_features(tempdir, minimap=False):
             tiles='https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
             attr='Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
         ),
-        health_district_outline.geojson
+        basemap_outline.geojson
     ]
 
     # Minimap
@@ -550,11 +550,11 @@ def create_marker_clusters(features):
     return features
 
 
-def add_tree_layer_control_to_map(map):
+def add_tree_layer_control_to_map(map, category_map=CATEGORY_BUCKET_MAP):
     base_layers = []
     overlays = []
     category_overlays = {
-        bucket: [] for bucket in CATEGORY_BUCKETS
+        bucket: [] for bucket in category_map.values()
     }
 
     for item in map._children.values():
@@ -565,8 +565,8 @@ def add_tree_layer_control_to_map(map):
         item.layer_name = f" {key}"
         if not item.overlay:
             base_layers += [item]
-        elif key in CATEGORY_BUCKET_MAP:
-            category = CATEGORY_BUCKET_MAP[key]
+        elif key in category_map:
+            category = category_map[key]
             category_overlays[category] += [item]
         else:
             logging.warning(f"Putting '{key}' in the top layer - it is uncategorised!")
@@ -581,7 +581,7 @@ def add_tree_layer_control_to_map(map):
     tlc = tree_layer_control.TreeLayerControl(
         base_tree_entries=list(reversed(base_layers)), overlay_tree_entries=overlays,
         overlay_tree_entries_properties={
-            f"<i> {bucket}</i>": {"selectAllCheckbox": True, "collapsed": True, } for bucket in CATEGORY_BUCKETS
+            f"<i> {bucket}</i>": {"selectAllCheckbox": True, "collapsed": True, } for bucket in category_map
         },
         collapsed=False, namedToggle=True,
     )
@@ -632,12 +632,11 @@ if __name__ == "__main__":
             # layername: (location, data, layer_metadata)
             layer: (local_path, layer_gdf, layer_metadata)
             for layer, local_path, layer_gdf, layer_metadata in
-            city_map_widget_to_minio.get_layers(district_file_prefix,
-                                                subdistrict_file_prefix,
-                                                tempdir,
+            city_map_widget_to_minio.get_layers(tempdir,
                                                 secrets["minio"]["edge"]["access"],
                                                 secrets["minio"]["edge"]["secret"],
-                                                layer_properties=HOTSPOT_LAYER_PROPERTIES_LOOKUP, )
+                                                layer_filename_prefix=f"{district_file_prefix}_{subdistrict_file_prefix}",
+                                                layer_properties=HOTSPOT_LAYER_PROPERTIES_LOOKUP)
         }
 
         float_left_offset = f"{MINIMAP_WIDTH + MINIMAP_PADDING}px" if subdistrict_name != "*" else "0%"
@@ -665,7 +664,8 @@ if __name__ == "__main__":
 
         logging.info("Writ[ing] to Minio")
         city_map_widget_to_minio.write_map_to_minio(data_map,
-                                                    district_file_prefix, subdistrict_file_prefix, tempdir,
+                                                    f"{district_file_prefix}_{subdistrict_file_prefix}",
+                                                    tempdir,
                                                     secrets["minio"]["edge"]["access"],
                                                     secrets["minio"]["edge"]["secret"],
                                                     js_libs, css_libs, MAP_FILENAME)

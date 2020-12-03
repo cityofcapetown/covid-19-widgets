@@ -39,66 +39,68 @@ class LayerType(Enum):
 LAYER_PROPERTIES_LOOKUP = collections.OrderedDict((
     ("Active Covid-19 Cases by L7 Hex", (
         LayerType.CHOROPLETH,
-        (HEX_COUNT_INDEX_PROPERTY, epi_map_case_layers_to_minio.ACTIVE_CASE_COUNT_COL), ("Hex ID", "Presumed Active Cases"),
+        (HEX_COUNT_INDEX_PROPERTY, epi_map_case_layers_to_minio.ACTIVE_CASE_COUNT_COL),
+        ("Hex ID", "Presumed Active Cases"),
         ("OrRd",), epi_map_case_layers_to_minio.HEX_L7_COUNT_SUFFIX, True, True,
-        epi_map_case_layers_to_minio.ACTIVE_METADATA_KEY
+        epi_map_case_layers_to_minio.ACTIVE_METADATA_KEY, True
     )),
     ("Active Covid-19 Cases by Ward", (
         LayerType.CHOROPLETH,
         (WARD_COUNT_NAME_PROPERTY, epi_map_case_layers_to_minio.ACTIVE_CASE_COUNT_COL),
         ("Ward Name", "Presumed Active Cases"),
-        ("BuPu",), epi_map_case_layers_to_minio.WARD_COUNT_SUFFIX, False, True, epi_map_case_layers_to_minio.ACTIVE_METADATA_KEY
+        ("BuPu",), epi_map_case_layers_to_minio.WARD_COUNT_SUFFIX, False, True,
+        epi_map_case_layers_to_minio.ACTIVE_METADATA_KEY, True
     )),
     ("Active Covid-19 Cases by District", (
         LayerType.CHOROPLETH,
         (DISTRICT_NAME_PROPERTY, epi_map_case_layers_to_minio.ACTIVE_CASE_COUNT_COL),
         ("Healthcare District Name", "Presumed Active Cases"),
         ("YlGn",), epi_map_case_layers_to_minio.DISTRICT_COUNT_SUFFIX, False, True,
-        epi_map_case_layers_to_minio.ACTIVE_METADATA_KEY
+        epi_map_case_layers_to_minio.ACTIVE_METADATA_KEY, True
     )),
     ("All Covid-19 Cases by L7 Hex", (
         LayerType.CHOROPLETH,
         (HEX_COUNT_INDEX_PROPERTY, epi_map_case_layers_to_minio.CASE_COUNT_COL), ("Hex ID", "All Cases"),
         ("OrRd",), epi_map_case_layers_to_minio.HEX_L7_COUNT_SUFFIX, False, True,
-        epi_map_case_layers_to_minio.CUMULATIVE_METADATA_KEY
+        epi_map_case_layers_to_minio.CUMULATIVE_METADATA_KEY, True
     )),
     ("All Covid-19 Cases by Ward", (
         LayerType.CHOROPLETH,
         (WARD_COUNT_NAME_PROPERTY, epi_map_case_layers_to_minio.CASE_COUNT_COL), ("Ward Name", "All Cases"),
         ("BuPu",), epi_map_case_layers_to_minio.WARD_COUNT_SUFFIX, False, True,
-        epi_map_case_layers_to_minio.CUMULATIVE_METADATA_KEY
+        epi_map_case_layers_to_minio.CUMULATIVE_METADATA_KEY, True
     )),
     ("All Covid-19 Cases by District", (
         LayerType.CHOROPLETH,
         (DISTRICT_NAME_PROPERTY, epi_map_case_layers_to_minio.ACTIVE_CASE_COUNT_COL),
         ("Healthcare District Name", "Presumed Active Cases"),
         ("YlGn",), epi_map_case_layers_to_minio.DISTRICT_COUNT_SUFFIX, False, True,
-        epi_map_case_layers_to_minio.CUMULATIVE_METADATA_KEY
+        epi_map_case_layers_to_minio.CUMULATIVE_METADATA_KEY, True
     )),
     ("Informal Settlements", (
         LayerType.POLYGON,
         ("INF_STLM_NAME",), ("Informal Settlement Name",),
-        ("purple",), "informal_settlements.geojson", False, False, None
+        ("purple",), "informal_settlements.geojson", False, False, None, False
     )),
     ("Healthcare Facilities", (
         LayerType.POINT,
         ("NAME", "ADR",), ("Healthcare Facility Name", "Address",),
-        ("red", "clinic-medical"), "health_care_facilities.geojson", False, False, None
+        ("red", "clinic-medical"), "health_care_facilities.geojson", False, False, None, False
     )),
     ("Healthcare Districts", (
         LayerType.POLYGON,
         ("CITY_HLTH_RGN_NAME",), ("Healthcare District Name",),
-        ("red",), "health_districts.geojson", False, False, None
+        ("red",), "health_districts.geojson", False, False, None, False
     )),
     ("Official Suburbs", (
         LayerType.POLYGON,
         ("OFC_SBRB_NAME",), ("Official Suburb Name",),
-        ("black",), "official_suburbs.geojson", False, False, None
+        ("black",), "official_suburbs.geojson", False, False, None, False
     )),
     ("Official Suburb Labels", (
         LayerType.LABEL,
         ("OFC_SBRB_NAME",), ("Official Suburb Name",),
-        ("black",), "official_suburb_labels.geojson", False, False, None
+        ("black",), "official_suburb_labels.geojson", False, False, None, False
     )),
 ))
 
@@ -109,21 +111,24 @@ MAP_RIGHT_PADDING = 100
 MAP_FILENAME = "map_widget.html"
 
 
-def get_layers(district_file_prefix, subdistrict_file_prefix, tempdir, minio_access, minio_secret,
-               layer_properties=LAYER_PROPERTIES_LOOKUP):
+def get_layers(tempdir, minio_access, minio_secret,
+               layer_properties=LAYER_PROPERTIES_LOOKUP,
+               layer_filename_prefix=None,
+               minio_path_prefix=epi_map_case_layers_to_minio.CASE_MAP_PREFIX):
     for layer, layer_properties in layer_properties.items():
-        layer_type, *_, layer_suffix, _1, has_metadata, _3 = layer_properties
+        layer_type, *_, layer_suffix, _1, has_metadata, _3, apply_prefix = layer_properties
 
-        layer_filename = (f"{district_file_prefix}_{subdistrict_file_prefix}_{layer_suffix}"
-                          if layer_type is LayerType.CHOROPLETH and has_metadata
+        layer_filename = (f"{layer_filename_prefix}_{layer_suffix}"
+                          if apply_prefix
                           else layer_suffix)
 
         local_path = os.path.join(tempdir, layer_filename)
 
         layer_minio_path = (
-            f"{epi_map_case_layers_to_minio.CASE_MAP_PREFIX}"
+            f"{minio_path_prefix}"
             f"{layer_filename}"
         )
+        logging.debug(layer_minio_path)
         minio_utils.minio_to_file(
             filename=local_path,
             minio_filename_override=layer_minio_path,
@@ -140,7 +145,7 @@ def get_layers(district_file_prefix, subdistrict_file_prefix, tempdir, minio_acc
             metadata_filename = os.path.splitext(layer_filename)[0] + ".json"
             metadata_local_path = os.path.join(tempdir, metadata_filename)
             metadata_minio_path = (
-                f"{epi_map_case_layers_to_minio.CASE_MAP_PREFIX}"
+                f"{minio_path_prefix}"
                 f"{metadata_filename}"
             )
 
@@ -160,9 +165,9 @@ def get_layers(district_file_prefix, subdistrict_file_prefix, tempdir, minio_acc
         yield layer, local_path, layer_gdf, layer_metadata
 
 
-def _get_choropleth_bins(count_series):
+def _get_choropleth_bins(count_series, bin_quantiles):
     bins = [count_series.min() - 1]
-    data_edges = list(count_series.quantile(BIN_QUANTILES).values)
+    data_edges = list(count_series.quantile(bin_quantiles).values)
 
     bins += [
         val for val in data_edges if val > bins[-1]
@@ -172,17 +177,21 @@ def _get_choropleth_bins(count_series):
     if len(bins) <= 3:
         bins.insert(0, count_series.min() - 1)
 
+    logging.info(f"bins={', '.join(map(str, bins))}")
+
     return bins
 
 
-def generate_map_features(layers_dict, layer_properties=LAYER_PROPERTIES_LOOKUP, float_left_offset="0%"):
+def generate_map_features(layers_dict,
+                          layer_properties=LAYER_PROPERTIES_LOOKUP,
+                          float_left_offset="0%", choropleth_bins=BIN_QUANTILES):
     # Going layer by layer
     for title, (layer_path, count_gdf, layer_metadata) in layers_dict.items():
         (layer_type,
          layer_lookup_fields, layer_lookup_aliases,
          display_properties, layer_suffix, visible_by_default,
-         has_metadata, metadata_key) = layer_properties[title]
-        logging.debug(f"Generating {title} map feature")
+         has_metadata, metadata_key, apply_prefix) = layer_properties[title]
+        logging.info(f"Generating {title} map feature")
 
         # Everything gets packed into a feature group
         layer_feature_group = folium.features.FeatureGroup(
@@ -195,6 +204,11 @@ def generate_map_features(layers_dict, layer_properties=LAYER_PROPERTIES_LOOKUP,
             layer_lookup_key, choropleth_key = layer_lookup_fields[:2] if layer_type is LayerType.CHOROPLETH else (
                 None, None,)
             colour_scheme, *_ = display_properties
+            logging.info(f"\n{count_gdf}")
+            logging.info(f"{str(layer_lookup_key)}, {str(choropleth_key)}")
+
+            if "level_0" in count_gdf.columns:
+                count_gdf.drop(columns=["level_0"], inplace=True)
 
             choropleth = folium.features.Choropleth(
                 layer_path,
@@ -206,7 +220,7 @@ def generate_map_features(layers_dict, layer_properties=LAYER_PROPERTIES_LOOKUP,
                 highlight=True,
                 show=visible_by_default,
                 line_opacity=0,
-                bins=_get_choropleth_bins(count_gdf[choropleth_key].dropna()),
+                bins=_get_choropleth_bins(count_gdf[choropleth_key].dropna(), choropleth_bins),
                 nan_fill_opacity=0,
                 fill_opacity=0.7,
             ) if layer_type is LayerType.CHOROPLETH else folium.features.Choropleth(
@@ -419,9 +433,10 @@ def pull_out_leaflet_deps(tempdir, proxy_username, proxy_password, minio_access,
     return js_libs, css_libs
 
 
-def write_map_to_minio(city_map, district_file_prefix, subdistrict_file_prefix, tempdir, minio_access, minio_secret,
-                       js_libs, css_libs, map_suffix=MAP_FILENAME):
-    map_filename = f"{district_file_prefix}_{subdistrict_file_prefix}_{map_suffix}"
+def write_map_to_minio(city_map, map_file_prefix, tempdir, minio_access, minio_secret,
+                       js_libs, css_libs, map_suffix=MAP_FILENAME,
+                       map_minio_prefix=epi_map_case_layers_to_minio.CASE_MAP_PREFIX):
+    map_filename = f"{map_file_prefix}_{map_suffix}"
     local_path = os.path.join(tempdir, map_filename)
 
     folium.folium._default_js = js_libs
@@ -431,9 +446,7 @@ def write_map_to_minio(city_map, district_file_prefix, subdistrict_file_prefix, 
 
     result = minio_utils.file_to_minio(
         filename=local_path,
-        filename_prefix_override=(
-            f"{epi_map_case_layers_to_minio.CASE_MAP_PREFIX}"
-        ),
+        filename_prefix_override=map_minio_prefix,
         minio_bucket=MINIO_BUCKET,
         minio_key=minio_access,
         minio_secret=minio_secret,
@@ -476,11 +489,10 @@ if __name__ == "__main__":
         map_layers_dict = {
             # layername: (location, data, choropleth flag?, layer_metadata)
             layer: (local_path, layer_gdf, layer_metadata)
-            for layer, local_path, layer_gdf, layer_metadata in get_layers(district_file_prefix,
-                                                                           subdistrict_file_prefix,
-                                                                           tempdir,
+            for layer, local_path, layer_gdf, layer_metadata in get_layers(tempdir,
                                                                            secrets["minio"]["edge"]["access"],
-                                                                           secrets["minio"]["edge"]["secret"])
+                                                                           secrets["minio"]["edge"]["secret"],
+                                                                           layer_filename_prefix=f"{district_file_prefix}_{subdistrict_file_prefix}",)
         }
         logging.info("G[ot] layers")
 
@@ -492,7 +504,8 @@ if __name__ == "__main__":
 
         logging.info("Writ[ing] to Minio")
         write_map_to_minio(data_map,
-                           district_file_prefix, subdistrict_file_prefix, tempdir,
+                           f"{district_file_prefix}_{subdistrict_file_prefix}",
+                           tempdir,
                            secrets["minio"]["edge"]["access"],
                            secrets["minio"]["edge"]["secret"],
                            js_libs, css_libs)

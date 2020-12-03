@@ -88,8 +88,8 @@ DIRECTORATE_DETAILS_DICT = {
     #      "receiver_email": ["Maurietta.Page@capetown.gov.za"],
     #      "cc_email": HR_CREW + ["Lele.Sithole@capetown.gov.za"]},
     "FINANCE":
-        {"receiver_name": ["Tembekile", "Louise", "Gillian", "Petro"],
-         "receiver_email": ["Tembekile.Solanga@capetown.gov.za", "Louise.Muller@capetown.gov.za", "Gillian.Meyer@capetown.gov.za", "Petro.Rheeder@capetown.gov.za"],
+        {"receiver_name": ["Tembekile", "Louise", "Petro", "Bertie"],
+         "receiver_email": ["Tembekile.Solanga@capetown.gov.za", "Louise.Muller@capetown.gov.za", "Petro.Rheeder@capetown.gov.za", "Bertie.vanNiekerk@capetown.gov.za"],
          "cc_email": HR_CREW + ["Lele.Sithole@capetown.gov.za"]},
     # "CORPORATE SERVICES":
     #     {"receiver_name": ["Gordon"],
@@ -120,8 +120,8 @@ DIRECTORATE_DETAILS_DICT = {
     #      "receiver_email": ["gordon.inggs@capetown.gov.za"],
     #      "cc_email": []},
     "URBAN MANAGEMENT":
-        {"receiver_name": ["Sibusiso"],
-         "receiver_email": ["Sibusiso.Mayekiso@capetown.gov.za"],
+        {"receiver_name": ["Sibusiso", "Neliswa"],
+         "receiver_email": ["Sibusiso.Mayekiso@capetown.gov.za", "Neliswa.Gaji@capetown.gov.za"],
          "cc_email": HR_CREW + ["Lele.Sithole@capetown.gov.za"]},
     "CITY MANAGER":
         {"receiver_name": ["Phindile", "Ashwin"],

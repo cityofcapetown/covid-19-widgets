@@ -4,7 +4,7 @@ from airflow.contrib.kubernetes.secret import Secret
 
 from datetime import datetime, timedelta
 
-DAG_STARTDATE = datetime(2020, 4, 8)
+DAG_STARTDATE = datetime(2020, 8, 31)
 default_args = {
     'owner': 'airflow',
     'depends_on_past': False,
@@ -23,8 +23,9 @@ startup_cmd = (
     "pip3 install $DB_UTILS_LOCATION/$DB_UTILS_PKG"
 )
 
-dag_interval = timedelta(hours=1)
-dag = DAG('covid-19-behavioural-widgets',
+dag_interval = "0 12 * * *"
+dag_name = "covid-19-dashboard-publishing-dag"
+dag = DAG(dag_name,
           start_date=DAG_STARTDATE,
           catchup=False,
           default_args=default_args,
@@ -33,7 +34,7 @@ dag = DAG('covid-19-behavioural-widgets',
 
 # env variables for inside the k8s pod
 k8s_run_env = {
-    'SECRETS_PATH': '/secrets/secrets.json',
+    'SECRETS_PATH': '/secrets/wcgh-secrets.json',
     'COVID_19_DEPLOY_FILE': 'covid-19-widgets.zip',
     'COVID_19_DEPLOY_URL': 'https://ds2.capetown.gov.za/covid-19-widgets-deploy',
     'COVID_19_WIDGETS_DIR': '/covid-19-widgets',
@@ -42,7 +43,7 @@ k8s_run_env = {
 }
 
 # airflow-workers' secrets
-secret_file = Secret('volume', '/secrets', 'airflow-workers-secret')
+secret_file = Secret('volume', '/secrets', 'wcgh-secret')
 
 # arguments for the k8s operator
 k8s_run_args = {
@@ -54,13 +55,13 @@ k8s_run_args = {
     "secrets": [secret_file],
     "env_vars": k8s_run_env,
     "image_pull_policy": "IfNotPresent",
-     "startup_timeout_seconds": 60*30,
+    "startup_timeout_seconds": 60 * 30,
 }
 
 
-def covid_19_widget_task(task_name, task_kwargs={}):
+def covid_19_data_task(task_name, task_kwargs={}):
     """Factory for k8sPodOperator"""
-    name = "covid-19-behavioural-widgets-{}".format(task_name)
+    name = f"{dag_name}-{task_name}"
     run_args = {**k8s_run_args.copy(), **task_kwargs}
     run_cmd = "bash -c '{} && \"$COVID_19_WIDGETS_DIR\"/bin/{}.sh'".format(startup_cmd, task_name)
 
@@ -71,6 +72,7 @@ def covid_19_widget_task(task_name, task_kwargs={}):
         task_id=name,
         dag=dag,
         execution_timeout=timedelta(hours=1),
+
         **run_args
     )
 
@@ -78,5 +80,5 @@ def covid_19_widget_task(task_name, task_kwargs={}):
 
 
 # Defining tasks
-MEDIA_PLOTS = 'media-plots'
-media_plots_operator = covid_19_widget_task(MEDIA_PLOTS)
+DATA_PRODUCTS_CKAN_PUSH_TASK = 'data-products-ckan-push'
+data_products_ckan_push_operator = covid_19_data_task(DATA_PRODUCTS_CKAN_PUSH_TASK)

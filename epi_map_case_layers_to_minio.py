@@ -120,9 +120,18 @@ def filter_district_case_data(case_data_df, district_name, subdistrict_name):
         DATE_DIAGNOSIS_COL].notna()
     logging.debug(f"district / all cases {district_filter.sum()} / {district_filter.shape[0]}")
 
-    district_filter &= case_data_df[
-                           SUBDISTRICT_COL].str.lower() == subdistrict_name if subdistrict_name != "*" else True
+    # Horrible hack due to subdistrict column renaming
+    case_data_df[SUBDISTRICT_COL] = case_data_df[SUBDISTRICT_COL].apply(
+        lambda subdistrict: subdistrict.split(" - ")[-1]
+    )
+
+    district_filter &= (
+        case_data_df[SUBDISTRICT_COL].str.lower() == subdistrict_name if subdistrict_name != "*" else True
+    )
     logging.debug(f"subdistrict / all cases {district_filter.sum()} / {district_filter.shape[0]}")
+
+    district_filter &= ~case_data_df[DATE_DIAGNOSIS_COL].isna()
+    logging.debug(f"valid diagnosis dates / all cases {district_filter.sum()} / {district_filter.shape[0]}")
 
     return case_data_df[district_filter]
 
@@ -256,7 +265,7 @@ def calculate_latest_increase(case_data_df, relative=False):
     previous_period_median = previous_period_median if pandas.notna(previous_period_median) else 0
 
     delta = most_recent_period_median - previous_period_median
-    delta /= previous_period_median if relative else 1
+    delta /= previous_period_median if (relative and previous_period_median != 0) else 1
 
     logging.debug(f"most_recent={most_recent}, previous_period_end={previous_period_end}, delta={delta}")
 
@@ -282,21 +291,21 @@ def generate_metadata(case_data_df, case_data_groupby_index):
     return metadata_dict
 
 
-def write_case_count_gdf_to_disk(case_count_data_gdf, tempdir, case_count_filename):
-    local_path = os.path.join(tempdir, case_count_filename)
-    case_count_data_gdf.reset_index().to_file(local_path, driver='GeoJSON')
+def write_case_count_gdf_to_disk(data_gdf, tempdir, filename):
+    local_path = os.path.join(tempdir, filename)
+    data_gdf.reset_index().to_file(local_path, driver='GeoJSON')
 
-    return local_path, case_count_data_gdf
+    return local_path, data_gdf
 
 
-def write_metadata_to_minio(metadata_dict, tempdir, metadata_filename, minio_access, minio_secret):
+def write_metadata_to_minio(metadata_dict, tempdir, metadata_filename, minio_access, minio_secret, minio_prefix=CASE_MAP_PREFIX):
     local_path = os.path.join(tempdir, metadata_filename)
     with open(local_path, "w") as not_spatial_case_count_file:
         json.dump(metadata_dict, not_spatial_case_count_file)
 
     result = minio_utils.file_to_minio(
         filename=local_path,
-        filename_prefix_override=CASE_MAP_PREFIX,
+        filename_prefix_override=minio_prefix,
         minio_bucket=MINIO_COVID_BUCKET,
         minio_key=minio_access,
         minio_secret=minio_secret,

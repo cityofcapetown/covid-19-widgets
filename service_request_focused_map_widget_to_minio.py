@@ -172,8 +172,8 @@ if __name__ == "__main__":
 
     logging.info("G[etting] SR Data")
     sr_data_df = service_request_map_layers_to_minio.get_service_request_data(
-        secrets["minio"]["confidential"]["access"],
-        secrets["minio"]["confidential"]["secret"])
+        secrets["minio"]["lake"]["access"],
+        secrets["minio"]["lake"]["secret"])
     logging.info("G[ot] SR Data")
 
     logging.info("Upfront filter[ing] of SR Data")

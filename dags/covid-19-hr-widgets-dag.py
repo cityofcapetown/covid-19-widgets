@@ -53,7 +53,7 @@ k8s_run_args = {
     "in_cluster": True,
     "secrets": [secret_file],
     "env_vars": k8s_run_env,
-    "image_pull_policy": "Always",
+    "image_pull_policy": "IfNotPresent",
      "startup_timeout_seconds": 60*30,
 }
 
@@ -102,18 +102,12 @@ DIRECTORATE_LIST = {
     ("spatial_planning_and_environment", "SPATIAL PLANNING AND ENVIRONMENT")
 }
 
-# These directorates aren't covered by the HR form
-HR_FORM_BLACKLIST = {
-    "energy_and_climate_change", "safety_and_security", "community_services_and_health"
-}
-
 LATEST_VALUES = 'hr-latest-values'
 latest_values_operators = [
     covid_19_widget_task(
         LATEST_VALUES,
         task_cmdline_args=(directorate_file_prefix, directorate_name)
     ) for directorate_file_prefix, directorate_name in DIRECTORATE_LIST
-    if directorate_file_prefix not in HR_FORM_BLACKLIST
 ]
 
 ABSENTEEISM_LINE_PLOT = 'hr-absenteeism-plot'
@@ -122,7 +116,6 @@ absenteeism_operators = [
         ABSENTEEISM_LINE_PLOT,
         task_cmdline_args=(directorate_file_prefix, directorate_name)
     ) for directorate_file_prefix, directorate_name in DIRECTORATE_LIST
-    if directorate_file_prefix not in HR_FORM_BLACKLIST
 ]
 
 BUSUNIT_STATUS_PLOT = 'hr-busunit-status-plot'
@@ -131,13 +124,20 @@ busunit_operators = [
         BUSUNIT_STATUS_PLOT,
         task_cmdline_args=(directorate_file_prefix, directorate_name)
     ) for directorate_file_prefix, directorate_name in DIRECTORATE_LIST
-    if directorate_file_prefix not in HR_FORM_BLACKLIST
 ]
 
 OHS_FORM_PLOT = "ohs-cases-plot"
 ohs_plot_operator = [
     covid_19_widget_task(
         OHS_FORM_PLOT,
+        task_cmdline_args=(directorate_file_prefix, directorate_name)
+    ) for directorate_file_prefix, directorate_name in DIRECTORATE_LIST
+]
+
+HR_ABSENCE_GEOJSON = "hr-absence-layer-generate"
+hr_absence_geojson_operator = [
+    covid_19_widget_task(
+        HR_ABSENCE_GEOJSON,
         task_cmdline_args=(directorate_file_prefix, directorate_name)
     ) for directorate_file_prefix, directorate_name in DIRECTORATE_LIST
 ]
