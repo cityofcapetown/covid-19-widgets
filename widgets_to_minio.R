@@ -69,14 +69,12 @@ listN <- function(...){
 }
 
 save_widget <- function(widg, destdir, name_override=NULL, screenshot = TRUE) {
-  
-  
   widget_name <- deparse(substitute(widg))
   if (!is.null(name_override)){
     widget_name <- name_override
     print(paste("Overriding widget name to ", widget_name))
   }
-
+  
   savepath <- file.path(getwd(), destdir, 
                         paste(widget_name, "html", sep = "."))
   libdir <- file.path(getwd(), destdir, 
@@ -99,7 +97,7 @@ save_widget <- function(widg, destdir, name_override=NULL, screenshot = TRUE) {
       withTimeout({
         webshot2::webshot(savepath, file = png_savepath)
       }, timeout = 10, onTimeout = "warning")
-
+      
     }
     print(paste("Saved to", savepath))
   }
@@ -130,10 +128,9 @@ dir.create(private_destdir, recursive = TRUE)
 
 # PULL IN PUBLIC DATA =======================================================
 covid_assets <- bucket_objects_to_df("covid", 
-                     minio_key,
-                     minio_secret,
-                     "ds2.capetown.gov.za")
-
+                                     minio_key,
+                                     minio_secret,
+                                     "ds2.capetown.gov.za")
 
 # pull in public dataset ---------------
 datasets <- covid_assets %>% 
@@ -354,11 +351,11 @@ rsa_demographic <- rsa_demographic %>%
 
 # cape town confirmed cases pop pyramid ---------------
 ct_raw_age_confirmed_cases <- ct_all_cases  %>%
-    select(Agegroup) %>%
-    separate(Agegroup, sep = "[ ]", into = c("age"), extra = "drop") %>%
-    filter(age >= 0) %>%
-    mutate(age_interval = findInterval(age, age_brackets, rightmost.closed = TRUE)) %>%
-    drop_na(age_interval) %>%
+  select(Agegroup) %>%
+  separate(Agegroup, sep = "[ ]", into = c("age"), extra = "drop") %>%
+  filter(age >= 0) %>%
+  mutate(age_interval = findInterval(age, age_brackets, rightmost.closed = TRUE)) %>%
+  drop_na(age_interval) %>%
   mutate(age_interval = age_bracket_labels[age_interval]) %>%
   group_by(age_interval) %>%
   summarise(ct_raw_age_confirmed_cases = n(), .groups = "keep") %>%
@@ -427,22 +424,22 @@ latest_values <- listN(ct_latest_update,
                        rsa_latest_tested, 
                        rsa_latest_confirmed, 
                        rsa_latest_deaths,
-                  global_last_updated,
-                  global_last_confirmed_val,
-                  global_last_deaths_val,
-                  subdistrict_latest)
+                       global_last_updated,
+                       global_last_confirmed_val,
+                       global_last_deaths_val,
+                       subdistrict_latest)
 
 
 
 write(
   toJSON(latest_values), 
   file.path(getwd(), public_destdir,"latest_values.json")
-  )
+)
 
 latest_private_values <- append(latest_values,
                                 listN(ct_latest_update,
-                                ct_latest_confirmed,
-                                ct_latest_deaths))
+                                      ct_latest_confirmed,
+                                      ct_latest_deaths))
 
 
 write(
@@ -459,7 +456,7 @@ future_trajectory <- global_ts_since_100 %>%
   drop_na(MEDIAN) %>%
   select(-days_since_passed_100) %>%
   ts(., start =1, end = nrow(.), frequency = 1) %>%
-    dygraph() %>%
+  dygraph() %>%
   dyLegend(show = "follow") %>%
   dyCSS(textConnection("
     .dygraph-legend > span { display: none; }
@@ -550,7 +547,7 @@ deaths_per_million_trajectory <-   global_deaths_since_25 %>%
   select(-days_since_passed_25) %>% gather(key = "country", value = "deaths", -day)
 
 deaths_per_million_trajectory <- left_join(deaths_per_million_trajectory, 
-            global_country_pop, by = c("country" = "NAME")) %>% 
+                                           global_country_pop, by = c("country" = "NAME")) %>% 
   mutate(deaths_per_million = deaths / population * 10^6) %>% select(day, country, deaths_per_million) %>% 
   spread(key = "country", value = "deaths_per_million") %>% arrange(day) %>% select(-day)
 
@@ -608,7 +605,7 @@ save_widget(rsa_tests_vs_cases_rebased, public_destdir)
 
 # rsa_transmission_type_timeseries --------
 rsa_transmission_type_timeseries <- rsa_confirmed_by_type %>%
-df_as_xts("YYYYMMDD") %>% 
+  df_as_xts("YYYYMMDD") %>% 
   dygraph() %>%
   dyLegend(show = "follow") %>%
   dyCSS(textConnection("
@@ -668,7 +665,7 @@ ct_all_cases_parsed <- ct_all_cases #%>% mutate_at(vars(Date.of.Diagnosis, Admis
 #          cumulative_deaths = cumsum(deaths)) %>% 
 #   mutate(cases_under_14_days = rollsum(cases, 14, fill = NA, align = "right")) %>% 
 #   mutate(cases_under_14_days = ifelse(is.na(cases_under_14_days), cumulative_cases, cases_under_14_days))
-  
+
 # ct_cumulative count_timeseries plot ------------
 # NOTE: REMOVED IN FAVOUR OF PLOTLY BAR CHART
 # ct_confirmed_timeseries <- ct_cumulative_daily_counts %>% 
@@ -792,24 +789,24 @@ for (subdist in unique(ct_subdistrict_cumulative_daily_counts$Subdistrict)) {
 
 y_upper <- max(ct_subdistrict_cumulative_daily_counts$cumulative_cases)
 ct_subdistrict_cumulative_daily_counts_bar_chart <- ct_subdistrict_cumulative_daily_counts %>%
-    group_by(Subdistrict) %>%
-    group_map(.f = ~{          
-          plot_ly(.,  x = ~date, 
-               y = ~presumed_active, 
-               type = 'bar', 
-               name = 'Presumed Active',
-               marker = list(color = 'rgba(55, 128, 191, 0.7)'), 
-              showlegend = (.y == "Eastern"), legendgroup = "group1") %>%
-           add_trace(y = ~presumed_recovered, name = 'Presumed Recovered <br> * 14 days since diagnosis', 
-                     marker = list(color = 'rgba(50, 171, 96, 0.7)')) %>%
-           add_trace(y = ~cumulative_deaths, name = 'Cumulative Deaths',
-                     marker = list(color = 'rgba(219, 64, 82, 0.7)')) %>%
-        layout(yaxis = list(range = c(0, y_upper)),
-               barmode = 'stack') %>%
-        add_annotations(text = as.character(.y), x = 0.05, y = 0.95, yref = "paper", xref = "paper",
-                        xanchor = "left", yanchor = "top", showarrow = FALSE, font = list(size = 14), align = "left")
-      
-        }) %>%
+  group_by(Subdistrict) %>%
+  group_map(.f = ~{          
+    plot_ly(.,  x = ~date, 
+            y = ~presumed_active, 
+            type = 'bar', 
+            name = 'Presumed Active',
+            marker = list(color = 'rgba(55, 128, 191, 0.7)'), 
+            showlegend = (.y == "Eastern"), legendgroup = "group1") %>%
+      add_trace(y = ~presumed_recovered, name = 'Presumed Recovered <br> * 14 days since diagnosis', 
+                marker = list(color = 'rgba(50, 171, 96, 0.7)')) %>%
+      add_trace(y = ~cumulative_deaths, name = 'Cumulative Deaths',
+                marker = list(color = 'rgba(219, 64, 82, 0.7)')) %>%
+      layout(yaxis = list(range = c(0, y_upper)),
+             barmode = 'stack') %>%
+      add_annotations(text = as.character(.y), x = 0.05, y = 0.95, yref = "paper", xref = "paper",
+                      xanchor = "left", yanchor = "top", showarrow = FALSE, font = list(size = 14), align = "left")
+    
+  }) %>%
   subplot(margin = 0.01, 
           shareX = TRUE, 
           shareY = TRUE, 
@@ -831,7 +828,7 @@ ct_daily_counts <-  ct_subdistrict_cumulative_daily_counts %>%
   mutate(rolling_death_5_days = rollmean(deaths, 5, na.pad=TRUE, align="right"),
          rolling_cases_5_days = rollmean(cases, 5, na.pad=TRUE, align="right"))
 
-        
+
 #---------------------------------
 # Add lag - day adjustment curve to the ct daily counts bar chart
 #---------------------------------
@@ -871,7 +868,7 @@ ct_daily_counts$Deaths_adjusted <- round(ct_daily_counts$Deaths_adjusted, 0)
 ct_daily_counts <-  ct_daily_counts %>% 
   mutate(rolling_death_5_days_adjust = rollmean(ct_daily_counts$Deaths_adjusted, 5, na.pad=TRUE, align="right"),
          rolling_cases_5_days_adjust = rollmean(ct_daily_counts$cases_adjusted, 5, na.pad=TRUE, align="right"))
-        
+
 #---------------------------------
 #---------------------------------
 
@@ -883,12 +880,12 @@ ct_rolling_5_day_deaths_day_change <- ct_rolling_5_day_deaths_latest - ct_rollin
 ct_rolling_5_day_cases_day_change <- ct_rolling_5_day_cases_latest - ct_rolling_5_day_cases_yesterday
 
 latest_values <- append(latest_values,
-       listN(ct_rolling_5_day_deaths_latest,
-                       ct_rolling_5_day_cases_latest,
-                       ct_rolling_5_day_deaths_yesterday,
-                       ct_rolling_5_day_cases_yesterday,
-                       ct_rolling_5_day_deaths_day_change,
-                       ct_rolling_5_day_cases_day_change))
+                        listN(ct_rolling_5_day_deaths_latest,
+                              ct_rolling_5_day_cases_latest,
+                              ct_rolling_5_day_deaths_yesterday,
+                              ct_rolling_5_day_cases_yesterday,
+                              ct_rolling_5_day_deaths_day_change,
+                              ct_rolling_5_day_cases_day_change))
 
 write(
   toJSON(latest_values), 
@@ -969,7 +966,7 @@ for (subdist in unique(ct_subdistrict_cumulative_daily_counts$Subdistrict)) {
     filter(Subdistrict == subdist) %>%  
     mutate(rolling_death_5_days = rollmean(deaths_adjusted, 5, na.pad=TRUE, align="right"),
            rolling_cases_5_days = rollmean(cases_adjusted, 5, na.pad=TRUE, align="right"))
-
+  
   p <- subdist_cumulative_daily_counts %>%
     plot_ly(.,  x = ~date, 
             y = ~cases, 
@@ -1005,9 +1002,9 @@ for (subdist in unique(ct_subdistrict_cumulative_daily_counts$Subdistrict)) {
 }
 
 y_upper <- max(ct_subdistrict_cumulative_daily_counts$cases + 
-  ct_subdistrict_cumulative_daily_counts$deaths + 
-  ct_subdistrict_cumulative_daily_counts$gen_admissions + 
-  ct_subdistrict_cumulative_daily_counts$icu_admissions)
+                 ct_subdistrict_cumulative_daily_counts$deaths + 
+                 ct_subdistrict_cumulative_daily_counts$gen_admissions + 
+                 ct_subdistrict_cumulative_daily_counts$icu_admissions)
 ct_subdistrict_daily_counts_bar_chart <- ct_subdistrict_cumulative_daily_counts %>%
   group_by(Subdistrict) %>%
   group_map(.f = ~{          
@@ -1016,7 +1013,7 @@ ct_subdistrict_daily_counts_bar_chart <- ct_subdistrict_cumulative_daily_counts 
             type = 'bar', 
             name = 'New Cases',
             marker = list(color = 'rgba(55, 128, 191, 0.7)'),
-      showlegend = (.y == "Eastern"), legendgroup = "group1") %>%
+            showlegend = (.y == "Eastern"), legendgroup = "group1") %>%
       add_trace(y = ~gen_admissions, name = 'General Hospital Admissions', 
                 marker = list(color = 'rgba(50, 171, 96, 0.7)')) %>%
       add_trace(y = ~icu_admissions, name = 'ICU Admissions', 
@@ -1107,26 +1104,26 @@ save_widget(rsa_dem_pyramid, public_destdir)
 # rsa demographic mortality plot ---------------------
 rsa_demographic_mortality_plot <- 
   china_demographic %>% mutate(rate_pct = -rate_pct,
-                                population_pct = -population_pct) %>%
-    rbind(., rsa_demographic) %>%
-    ggplot(aes(x = age_interval, y = population_pct)) +
-    geom_bar(aes(fill = population), 
-             alpha = 6/10,
-             stat = "identity") +
-    geom_bar(aes(y = rate_pct, fill = fatal_label), 
-             
-             width = 0.5, 
-             stat = "identity", group = 1) +
-    
-    scale_fill_manual(values = c(`SA Pop %` = "#D55E00", 
-                                 `China Pop %` = "#E69F00", 
-                                 `SA Fatality Rate %` = "#D55E00",
-                                 `China Case Fatality Rate %` = "#E69F00"), 
-                      name="") +
-    coord_flip() +
-    labs(x = "", y = "RSA Demographics vs COVID Case Fatalities (%)") +
-    theme_bw()
+                               population_pct = -population_pct) %>%
+  rbind(., rsa_demographic) %>%
+  ggplot(aes(x = age_interval, y = population_pct)) +
+  geom_bar(aes(fill = population), 
+           alpha = 6/10,
+           stat = "identity") +
+  geom_bar(aes(y = rate_pct, fill = fatal_label), 
+           
+           width = 0.5, 
+           stat = "identity", group = 1) +
   
+  scale_fill_manual(values = c(`SA Pop %` = "#D55E00", 
+                               `China Pop %` = "#E69F00", 
+                               `SA Fatality Rate %` = "#D55E00",
+                               `China Case Fatality Rate %` = "#E69F00"), 
+                    name="") +
+  coord_flip() +
+  labs(x = "", y = "RSA Demographics vs COVID Case Fatalities (%)") +
+  theme_bw()
+
 rsa_demographic_mortality_plot <- ggplotly(rsa_demographic_mortality_plot)  %>% plotly::config(displayModeBar = F)  
 save_widget(rsa_demographic_mortality_plot, public_destdir)
 
@@ -1226,16 +1223,16 @@ global_mortality_data <- global_latest_data %>% filter(!(case_fatality_rate_pct 
   filter(country != "San Marino") %>% as.data.frame()
 
 global_mortality_boxplot <- bpexploder(data = global_mortality_data,
-           settings = list(
-             groupVar = "maturity",
-             levels = levels(global_mortality_data$maturity),
-             yVar = "case_fatality_rate_pct",
-             yAxisLabel = "Case Fatality Rate %",
-             xAxisLabel = "Cumulative confirmed cases",
-             tipText = list(
-               country = "country"
-             ),
-             relativeWidth = 0.75)
+                                       settings = list(
+                                         groupVar = "maturity",
+                                         levels = levels(global_mortality_data$maturity),
+                                         yVar = "case_fatality_rate_pct",
+                                         yAxisLabel = "Case Fatality Rate %",
+                                         xAxisLabel = "Cumulative confirmed cases",
+                                         tipText = list(
+                                           country = "country"
+                                         ),
+                                         relativeWidth = 0.75)
 )
 
 save_widget(global_mortality_boxplot, public_destdir)
@@ -1327,27 +1324,25 @@ wc_model_latest_hospital_figures <- wc_model_latest_default %>%
 save_widget(wc_model_latest_hospital_figures, private_destdir)
 
 wc_latest_modeled_deaths <- wc_model_latest_default %>%
-  filter(TimeInterval == as.Date(Sys.time())) %>%
+  filter(TimeInterval == min(as.Date(Sys.time()), max(wc_model_latest_default$TimeInterval))) %>%
   pull(TotalDeaths) %>% .[[1]]
 
 wc_latest_modeled_cumulative_cases <- wc_model_latest_default %>%
-  filter(TimeInterval == as.Date(Sys.time())) %>%
+  filter(TimeInterval == min(as.Date(Sys.time()), max(wc_model_latest_default$TimeInterval))) %>%
   pull(TotalInfections) %>% .[[1]]
-
 
 wc_latest_modeled_active_cases <- wc_model_latest_default %>%
   arrange(TimeInterval) %>%
-  filter(TimeInterval >= (as.Date(Sys.time()) - 14)) %>%
+  filter(TimeInterval >= (min(as.Date(Sys.time()), max(wc_model_latest_default$TimeInterval)) - 14)) %>%
   mutate(modeled_active_cases = cumsum(NewInfections)) %>%
-  filter(TimeInterval == as.Date(Sys.time())) %>%
+  filter(TimeInterval == min(as.Date(Sys.time()), max(wc_model_latest_default$TimeInterval))) %>%
   pull(modeled_active_cases) %>% .[[1]]
-
 
 latest_private_values <- append(latest_private_values,
                                 listN(wc_latest_modeled_deaths,
                                       wc_latest_modeled_cumulative_cases,
                                       wc_latest_modeled_active_cases)
-                                )
+)
 
 write(
   toJSON(latest_private_values),
@@ -1421,7 +1416,7 @@ for (filename in list.files(public_destdir, recursive = T)) {
   } else {
     print(filepath)
     print("This is a directory - not sending!")
-    }
+  }
 }
 
 for (filename in list.files(private_destdir, recursive = T)) {
