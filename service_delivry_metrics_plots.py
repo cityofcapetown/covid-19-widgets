@@ -25,7 +25,7 @@ import pandas as pd
 COVID_BUCKET = "covid"
 RESTRICTED_PREFIX = "data/private/"
 WIDGETS_PREFIX_BIPLOT = "widgets/private/business_continuity_service_delivery_metric_biplots/"
-WIDGETS_PREFIX_QAUD =  "widgets/private/business_continuity_service_delivery_metric_quadrants/"
+WIDGETS_PREFIX_QAUD = "widgets/private/business_continuity_service_delivery_metric_quadrants/"
 
 EDGE_CLASSIFICATION = minio_utils.DataClassification.EDGE
 LAKE_CLASSIFICATION = minio_utils.DataClassification.LAKE
