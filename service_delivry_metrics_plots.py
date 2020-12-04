@@ -438,7 +438,7 @@ if __name__ == "__main__":
         
         # make df of top 10 for labelling
         dept_label_df = dept_df.query(f"{CODE}.isin(@dept_top_10)").copy()
-        if dept_label_df.epmty:
+        if dept_label_df.empty:
             logging.error(f"Empty dataframe for {department}")
             sys.exit(-1)
 
