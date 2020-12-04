@@ -438,6 +438,10 @@ if __name__ == "__main__":
         
         # make df of top 10 for labelling
         dept_label_df = dept_df.query(f"{CODE}.isin(@dept_top_10)").copy()
+        if dept_label_df.epmty:
+            logging.error(f"Empty dataframe for {department}")
+            sys.exit(-1)
+
         dept_df["color"] = dept_df[CODE].apply(lambda val: DEFAULT_GREY if val not in dept_top_10 else BACKLOG_BLUE)
 
         # plot data
