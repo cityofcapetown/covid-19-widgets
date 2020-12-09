@@ -129,19 +129,19 @@ def make_fig(
             x=x_col, y=y_adj_col, source=ds,
             line_dash="dashed", color='#f46d43', line_width=1, legend_label=lab_adj)
     
-    # add the median and fill between model bounds
-    fig.varea(
-        x=model_x, y1=model_p75, y2=model_p95,
-        alpha=0.5, fill_color='#74add1', legend_label="WC Model P75-P95")
-    fig.circle(
-        x=model_x, y=model_median,
-        color='#74add1', legend_label="WC Model Median")
-    fig.line(
-        x=model_x, y=model_median, line_dash="solid",
-             color='#74add1', line_width=1, legend_label="WC Model Median")
-    fig.varea(
-        x=model_x, y1=model_p5, y2=model_p25,
-        alpha=0.2, fill_color='#74add1', legend_label="WC Model P5-P25")   
+#     # add the median and fill between model bounds
+#     fig.varea(
+#         x=model_x, y1=model_p75, y2=model_p95,
+#         alpha=0.5, fill_color='#74add1', legend_label="WC Model P75-P95")
+#     fig.circle(
+#         x=model_x, y=model_median,
+#         color='#74add1', legend_label="WC Model Median")
+#     fig.line(
+#         x=model_x, y=model_median, line_dash="solid",
+#              color='#74add1', line_width=1, legend_label="WC Model Median")
+#     fig.varea(
+#         x=model_x, y1=model_p5, y2=model_p25,
+#         alpha=0.2, fill_color='#74add1', legend_label="WC Model P5-P25")   
     
     # line for today
     vline = Span(location=TODAY_DATE, dimension='height', line_color='grey', line_width=1, line_alpha=0.5)
@@ -166,7 +166,7 @@ def make_fig(
             ("Date", '@Date{%F}')
            ]
         
-    elif y_adj_col:
+    elif not y_adj_col:
         tooltips = [
             (lab, f'@{y_col}{{0}}'),
             ("Date", '@Date{%F}')
