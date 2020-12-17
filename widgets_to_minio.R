@@ -79,6 +79,8 @@ save_widget <- function(widg, destdir, name_override=NULL, screenshot = TRUE) {
                         paste(widget_name, "html", sep = "."))
   libdir <- file.path(getwd(), destdir, 
                       "libdir")
+  r_savepath <- file.path(getwd(), destdir, 
+                          paste(widget_name, "rds", sep = "."))
   
   if (!(file.exists(libdir))) {
     dir.create(libdir)
@@ -101,7 +103,9 @@ save_widget <- function(widg, destdir, name_override=NULL, screenshot = TRUE) {
     }
     print(paste("Saved to", savepath))
   }
+  saveRDS(widg, r_savepath)
 }
+
 
 # INITIALISE CHROME BROWSER ==================================================
 # Need to do this for running chromium in a docker container
