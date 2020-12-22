@@ -33,19 +33,23 @@ CHOROPLETH_LAYERS = (
     DISTRICT_COUNT_SUFFIX
 )
 CT_HEX_L7_FILENAME = "city-hex-polygons-7.geojson"
+PROV_HEX_L7_FILENAME = "prov-hex-polygons-7.geojson"
 CT_HEX_L8_FILENAME = "city-hex-polygons-8.geojson"
+PROV_HEX_L8_FILENAME = "prov-hex-polygons-8.geojson"
 CT_WARD_FILENAME = "ct_wards.geojson"
 CT_HEALTH_DISTRICT_FILENAME = "health_districts.geojson"
 CHOROPLETH_SOURCE_LAYERS = {
-    HEX_L7_COUNT_SUFFIX: CT_HEX_L7_FILENAME,
-    HEX_L8_COUNT_SUFFIX: CT_HEX_L8_FILENAME,
+    HEX_L7_COUNT_SUFFIX: {"city": CT_HEX_L7_FILENAME, "prov": PROV_HEX_L7_FILENAME},
+    HEX_L8_COUNT_SUFFIX: {"city": CT_HEX_L8_FILENAME, "prov": PROV_HEX_L8_FILENAME},
     WARD_COUNT_SUFFIX: CT_WARD_FILENAME,
     DISTRICT_COUNT_SUFFIX: CT_HEALTH_DISTRICT_FILENAME
 }
 
 LAYER_FILES = (
     (CT_HEX_L7_FILENAME, MINIO_HEX_BUCKET, ""),
+    (PROV_HEX_L7_FILENAME, MINIO_COVID_BUCKET, DATA_PUBLIC_PREFIX),
     (CT_HEX_L8_FILENAME, MINIO_HEX_BUCKET, ""),
+    (PROV_HEX_L8_FILENAME, MINIO_COVID_BUCKET, DATA_PUBLIC_PREFIX),
     (CT_WARD_FILENAME, MINIO_COVID_BUCKET, DATA_PUBLIC_PREFIX),
     (CT_HEALTH_DISTRICT_FILENAME, MINIO_COVID_BUCKET, DATA_PUBLIC_PREFIX),
 )
@@ -185,7 +189,7 @@ CASE_COL_FILTER_FUNC_MAP = ((
 
 
 def spatialise_case_data(case_data_df, case_data_groupby_index, data_gdf, data_gdf_index, fill_nas=False):
-    case_count_gdf = data_gdf.copy().set_index(data_gdf_index)
+    case_data_gdf = data_gdf.copy().set_index(data_gdf_index)
 
     # Doing the time period Maths
     most_recent = case_data_df[DATE_DIAGNOSIS_COL].max() - REPORTING_DELAY
@@ -198,43 +202,43 @@ def spatialise_case_data(case_data_df, case_data_groupby_index, data_gdf, data_g
         counts = filter_case_data_func(case_data_df).assign(**{col: 1}).groupby(
             case_data_groupby_index
         ).sum()[col]
-        case_count_gdf[col] = counts
+        case_data_gdf[col] = counts
 
         # Delta Calculation
         previous_counts = filter_case_data_func(previous_cases_data_df).assign(**{col: 1}).groupby(
             case_data_groupby_index
         ).sum()[col]
 
-        case_count_gdf[col + DELTA_SUFFIX] = (counts - previous_counts)
+        case_data_gdf[col + DELTA_SUFFIX] = (counts - previous_counts)
         # Calculating Relative Delta
-        case_count_gdf[col + RELATIVE_DELTA_SUFFIX] = case_count_gdf[col + DELTA_SUFFIX]/case_count_gdf[col]
+        case_data_gdf[col + RELATIVE_DELTA_SUFFIX] = case_data_gdf[col + DELTA_SUFFIX]/case_data_gdf[col]
 
         # Handling NaN deltas
-        na_mask = case_count_gdf[col + DELTA_SUFFIX].isna()
+        na_mask = case_data_gdf[col + DELTA_SUFFIX].isna()
         # where there have been new cases
-        new_counts = counts.index.isin(case_count_gdf[na_mask].index)
-        new_counts_mask = na_mask & case_count_gdf.index.isin(counts.index)
-        case_count_gdf.loc[new_counts_mask, col + DELTA_SUFFIX] = counts.loc[new_counts]
+        new_counts = counts.index.isin(case_data_gdf[na_mask].index)
+        new_counts_mask = na_mask & case_data_gdf.index.isin(counts.index)
+        case_data_gdf.loc[new_counts_mask, col + DELTA_SUFFIX] = counts.loc[new_counts]
         # where there were cases, but there are no more
-        old_counts = previous_counts.index.isin(case_count_gdf[na_mask].index)
-        old_counts_mask = na_mask & case_count_gdf.index.isin(previous_counts.index)
-        case_count_gdf.loc[old_counts_mask, col + DELTA_SUFFIX] = -(previous_counts.loc[old_counts])
+        old_counts = previous_counts.index.isin(case_data_gdf[na_mask].index)
+        old_counts_mask = na_mask & case_data_gdf.index.isin(previous_counts.index)
+        case_data_gdf.loc[old_counts_mask, col + DELTA_SUFFIX] = -(previous_counts.loc[old_counts])
 
         if fill_nas:
-            case_count_gdf[col].fillna(0, inplace=True)
-            case_count_gdf[col + DELTA_SUFFIX].fillna(0, inplace=True)
-            case_count_gdf[col + RELATIVE_DELTA_SUFFIX].fillna(0, inplace=True)
+            case_data_gdf[col].fillna(0, inplace=True)
+            case_data_gdf[col + DELTA_SUFFIX].fillna(0, inplace=True)
+            case_data_gdf[col + RELATIVE_DELTA_SUFFIX].fillna(0, inplace=True)
 
         logging.debug(
-            f"case_count_gdf.sort_values(by='{col}', ascending=False).head(5)=\n"
-            f"{case_count_gdf.sort_values(by=col, ascending=False).head(5)}"
+            f"case_data_gdf.sort_values(by='{col}', ascending=False).head(5)=\n"
+            f"{case_data_gdf.sort_values(by=col, ascending=False).head(5)}"
         )
         logging.debug(
-            f"case_count_gdf.sort_values(by='{col + DELTA_SUFFIX}', ascending=False).head(5)=\n"
-            f"{case_count_gdf.sort_values(by=col + DELTA_SUFFIX, ascending=False).head(5)}"
+            f"case_data_gdf.sort_values(by='{col + DELTA_SUFFIX}', ascending=False).head(5)=\n"
+            f"{case_data_gdf.sort_values(by=col + DELTA_SUFFIX, ascending=False).head(5)}"
         )
 
-    return case_count_gdf
+    return case_data_gdf
 
 
 def compress_gdf(case_count_gdf):
@@ -282,7 +286,8 @@ def generate_metadata(case_data_df, case_data_groupby_index):
             CASE_COUNT_TOTAL: int(filter_case_data_func(case_data_df).shape[0]),
             LATEST_INCREASE: int(calculate_latest_increase(filter_case_data_func(case_data_df))),
             LATEST_RELATIVE_INCREASE: float(
-                calculate_latest_increase(filter_case_data_func(case_data_df), relative=True))
+                calculate_latest_increase(filter_case_data_func(case_data_df), relative=True)
+            )
         }
         for case_count_col, (filter_case_data_func, metadata_key) in CASE_COL_FILTER_FUNC_MAP
     }
@@ -365,6 +370,11 @@ if __name__ == "__main__":
 
             logging.info(f"Count[ing] cases for '{layer_filename}'")
             source_layer = CHOROPLETH_SOURCE_LAYERS[layer_suffix]
+
+            # Selecting city vs prov hex layers
+            if isinstance(source_layer, dict):
+                source_layer = source_layer[district_file_prefix]
+
             _, data_gdf = map_layers_dict[source_layer]
             logging.debug(f"cases_df.columns=\n{filtered_df.columns}")
             filtered_df[df_col] = filtered_df[df_col].apply(sanitise_func)
