@@ -138,6 +138,10 @@ city_hotspot_map_plot_operator = covid_19_widget_task(
     CITY_HOTSPOT_MAP_PLOT,
     task_cmdline_args=["city", "city of cape town", "all", "*"]
 )
+prov_hotspot_map_plot_operator = covid_19_widget_task(
+    CITY_HOTSPOT_MAP_PLOT,
+    task_cmdline_args=["prov", "*", "all", "*"]
+)
 
 SUBDISTRICT_STATS_TABLE = 'subdistrict-stats-table'
 subdistrict_table_operators = [
@@ -160,3 +164,4 @@ for layer_generate_operators, map_plot_operator in zip(city_map_layers_operators
                                     if operator is not mobile_data_map_layers_operator])
 
 city_hotspot_map_plot_operator.set_upstream(city_map_layers_operators[-2])
+prov_hotspot_map_plot_operator.set_upstream(city_map_layers_operators[-2])
