@@ -152,6 +152,12 @@ sd_duration_widget_operator = covid_19_widget_task(SD_DURATION_WIDGET_TASK,)
 SD_BIPLOT_WIDGET_TASK = "service-delivery-plot"
 sd_plot_widget_operator = covid_19_widget_task(SD_BIPLOT_WIDGET_TASK,)
 
+SD_VOLUME_REQUESTS_WIDGET_TASK = "sd-volume-request-plots"
+sd_volume_requests_widget_operator = covid_19_widget_task(SD_VOLUME_REQUESTS_WIDGET_TASK,)
+
+SD_BIPLOT_WIDGET_TASK = "service-delivery-plot"
+sd_plot_widget_operator = covid_19_widget_task(SD_BIPLOT_WIDGET_TASK,)
+
 # Dependencies
 for layer_gen, widget_gen in zip(map_layer_operators, map_widget_operators):
     layer_gen >> widget_gen
@@ -159,4 +165,7 @@ for layer_gen, widget_gen in zip(map_layer_operators, map_widget_operators):
 map_layer_operators[0] >> sd_map_widget_operator
 map_layer_push_operator >> sd_map_widget_operator
 
-sd_latest_values_operator >> [sd_volume_widget_operator, sd_metric_widget_operator, sd_duration_widget_operator]
+sd_latest_values_operator >> [sd_volume_widget_operator,
+                              sd_metric_widget_operator,
+                              sd_duration_widget_operator,
+                              sd_volume_requests_widget_operator]
