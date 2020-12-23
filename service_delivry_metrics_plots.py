@@ -14,7 +14,7 @@ import tempfile
 # external imports
 from bokeh.embed import file_html
 from bokeh.models import BoxZoomTool, ColumnDataSource, HoverTool, LabelSet, Range1d
-from bokeh.models import ResetTool, Span, PanTool, BoxAnnotation, WheelZoomTool
+from bokeh.models import ResetTool, Span, PanTool, BoxAnnotation, WheelZoomTool, NumeralTickFormatter
 from bokeh.plotting import figure
 from bokeh.resources import CDN
 from db_utils import minio_utils
@@ -176,6 +176,7 @@ def make_fig(df, x_col, y_col, x_lab, y_lab, code, best_fit=None):
     
     # figure aesthetics
     fig.add_tools(hover_tool)
+    fig.xaxis.formatter = NumeralTickFormatter(format="0.[0] a")
     fig.axis.axis_label_text_font_size = "12pt"
     fig.axis.minor_tick_line_color = None
     fig.grid.grid_line_color = "white"
@@ -259,9 +260,9 @@ def quadrant_fig(df, x_col, y_col, x_lab, y_lab, code, label_df, fx=5, fy=5):
                       x_offset=fx, y_offset=fy, source=label_ds, render_mode='canvas', level='glyph')
     
     # figure aesthetics
-    
     fig.axis.axis_label_text_font_size = "16pt"
     fig.legend.location = "bottom_left"
+    fig.yaxis.formatter = NumeralTickFormatter(format="0.[0] a")
     fig.axis.minor_tick_line_color = None
     fig.grid.grid_line_color = "white"
     fig.add_layout(labels)
