@@ -74,7 +74,7 @@ def _stlye_axes(plot):
     plot.xaxis.formatter = NumeralTickFormatter(format="0.[0] a")
     plot.xgrid.grid_line_color = "White"
     plot.ygrid.grid_line_alpha = 0
-    plot.axis.axis_label_text_font_size = "20pt"
+    plot.axis.axis_label_text_font_size = "12pt"
 
 
 def _add_legend(plot, legend_items):
@@ -115,7 +115,7 @@ def generate_volume_growth_plot(plot_df):
     plot = figure(
         plot_height=None, plot_width=None,
         sizing_mode="scale_both",
-        x_axis_label=f"Requests Nett Growth since {REFERENCE_DATE}",
+        x_axis_label=f"Requests Backlog Growth since {REFERENCE_DATE}",
         y_range=plot_df.head(PLOT_CODES)[CODE_COL].values[::-1],
         background_fill_color=BACKGROUND_COLOUR,
         toolbar_location=None,
@@ -131,8 +131,8 @@ def generate_volume_growth_plot(plot_df):
     _stlye_axes(plot)
 
     # dummy plots to create legend
-    growth_bar = plot.hbar(right=[0], y=[plot_df[GROWTH_COL].iloc[0]], color=GOOD_COLOUR)
-    shrink_bar = plot.hbar(right=[0], y=[plot_df[GROWTH_COL].iloc[0]], color=BAD_COLOUR)
+    growth_bar = plot.hbar(right=[0], y=[plot_df[GROWTH_COL].iloc[0]], color=BAD_COLOUR)
+    shrink_bar = plot.hbar(right=[0], y=[plot_df[GROWTH_COL].iloc[0]], color=GOOD_COLOUR)
 
     # adding legend beloew plot
     legend_items = [("Nett Growth", [growth_bar]),
