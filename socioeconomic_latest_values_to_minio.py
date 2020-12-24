@@ -23,7 +23,8 @@ METRICS_FIELD = "metrics"
 METRICS_DELTA_FIELD = "metrics-delta"
 METRICS_DELTA_RELATIVE_FIELD = "metrics-delta-relative"
 
-OUTPUT_VALUE_FILENAME = "socioeconomic_values.json"
+SE_PREFIX = "city_socioeconomic"
+OUTPUT_VALUE_FILENAME = f"{SE_PREFIX}_values.json"
 
 
 def create_latest_se_values_dict(ts_df):

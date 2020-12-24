@@ -21,7 +21,6 @@ TS_MEASURES = (
     "GDP", "Poverty", "Unemployment"
 )
 
-SD_PREFIX = "socioeconomic"
 PLOT_SUFFIX = "plot.html"
 
 
@@ -135,7 +134,7 @@ if __name__ == "__main__":
 
         logging.info("Writ[ing] to Minio...")
         measure_prefix = measure.lower().replace(" ", "_")
-        plot_filename = f"{SD_PREFIX}_{measure_prefix}_ts_{PLOT_SUFFIX}"
+        plot_filename = f"{socioeconomic_latest_values_to_minio.SE_PREFIX}_{measure_prefix}_ts_{PLOT_SUFFIX}"
 
         service_request_timeseries_plot_widget_to_minio.write_to_minio(plot_html, plot_filename,
                                                                        secrets["minio"]["edge"]["access"],
