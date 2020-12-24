@@ -45,7 +45,7 @@ def generate_ts_plot(plot_df, measure_label, features):
     window_min = 0 if window_min > 0 else -window_abs
 
     plot = figure(
-        plot_height=300, plot_width=None,
+        plot_height=None, plot_width=None,
         sizing_mode="scale_both",
         y_range=(window_min, window_max),
         x_axis_type='datetime', toolbar_location=None,
@@ -86,9 +86,7 @@ def generate_ts_plot(plot_df, measure_label, features):
     plot.legend.click_policy = 'mute'
     plot.legend.location = "bottom_center"
 
-    combined_plot = column(plot, height_policy="max", width_policy="max")
-
-    plot_html = file_html(combined_plot, CDN, f"Socioeconomic {measure} Time Series")
+    plot_html = file_html(plot, CDN, f"Socioeconomic {measure} Time Series")
 
     return plot_html
 
