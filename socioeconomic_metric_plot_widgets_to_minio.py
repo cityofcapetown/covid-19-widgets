@@ -18,7 +18,7 @@ from socioeconomic_latest_values_to_minio import DATE_COL, FEATURE_COL, MEASURE_
 import socioeconomic_latest_values_to_minio
 
 TS_MEASURES = (
-    "GDP", "Poverty", "Unemployment"
+    "GDP Growth", "Poverty", "Unemployment"
 )
 
 PLOT_SUFFIX = "plot.html"
