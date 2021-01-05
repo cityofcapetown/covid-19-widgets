@@ -18,25 +18,30 @@ import service_delivery_latest_values_to_minio
 
 BACKLOG = "backlog"
 SERVICE_STANDARD = "service_standard"
-COLS_SET = {BACKLOG, SERVICE_STANDARD}
+LONG_BACKLOG = "long_backlog"
+COLS_SET = {BACKLOG, SERVICE_STANDARD, LONG_BACKLOG}
 
 PREVIOUS_YEARS = 3
 PREVIOUS_YEAR_TEMPLATE = "previous_{}_year"
 
 # metric_label, unit_label, line_colour, marker_line_colour
+# colours from default Seaborn palette: https://seaborn.pydata.org/generated/seaborn.color_palette.html
 COL_PLOT_SETTINGS = {
     BACKLOG: ("Backlog", "# of requests", "#4c72b0", "#c44e52"),
-    SERVICE_STANDARD: ("Closed within target", "%", "#c44e52", "#4c72b0"),
+    SERVICE_STANDARD: ("Service Standard", "%", "#c44e52", "#4c72b0"),
+    LONG_BACKLOG: ("Still Open > 180 days", "%", "#55a868", "#dd8452")
 }
 
 TOOL_TIPS = [
     (DATE_COL, f"@{DATE_COL}{{%F}}"),
     (f"Backlog (vs {REFERENCE_DATE})", f"@{BACKLOG}{{0.0 a}} (@{BACKLOG}_delta_relative{{+0.0%}})"),
-    (f"% Within Target (vs {REFERENCE_DATE})", f"@{SERVICE_STANDARD}{{0.0%}} (@{SERVICE_STANDARD}_delta{{+0.0%}})"),
+    (f"Service Standard (vs {REFERENCE_DATE})", f"@{SERVICE_STANDARD}{{0.0%}} (@{SERVICE_STANDARD}_delta{{+0.0%}})"),
+    (f"Still Open > 180 days (vs {REFERENCE_DATE})", f"@{LONG_BACKLOG}{{0.0%}} (@{LONG_BACKLOG}_delta{{+0.0%}})"),
 ]
 AXIS_FORMATTERS = {
     BACKLOG: '0 a',
-    SERVICE_STANDARD: '0 %'
+    SERVICE_STANDARD: '0 %',
+    LONG_BACKLOG: '0 %'
 }
 
 DEFAULT_WINDOW_SIZE = 28
