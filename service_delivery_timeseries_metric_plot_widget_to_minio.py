@@ -237,6 +237,10 @@ if __name__ == "__main__":
         logging.info("...Mung[ed] data")
 
         for metric_col in COLS_SET:
+            if metric_col not in filtered_df[MEASURE_COL].unique():
+                logging.warning(f"skipping '{feature}' for metric '{metric_col}' - it's not present!")
+                continue
+
             metric_label, unit_label, line_colour, marker_line_colour = COL_PLOT_SETTINGS[metric_col]
 
             logging.info(f"Generat[ing] Plot for {metric_col}...")
