@@ -34,14 +34,14 @@ COL_PLOT_SETTINGS = {
 
 TOOL_TIPS = [
     (DATE_COL, f"@{DATE_COL}{{%F}}"),
-    (f"Backlog (vs {REFERENCE_DATE})", f"@{BACKLOG}{{0.0 a}} (@{BACKLOG}_delta_relative{{+0.0%}})"),
-    (f"Service Standard (vs {REFERENCE_DATE})", f"@{SERVICE_STANDARD}{{0.0%}} (@{SERVICE_STANDARD}_delta{{+0.0%}})"),
-    (f"Still Open > 180 days (vs {REFERENCE_DATE})", f"@{LONG_BACKLOG}{{0.0%}} (@{LONG_BACKLOG}_delta{{+0.0%}})"),
+    (f"Backlog (vs {REFERENCE_DATE})", f"@{BACKLOG}{{0.0 a}} (@{BACKLOG}_delta_relative{{+0.[0]%}})"),
+    (f"Service Standard (vs {REFERENCE_DATE})", f"@{SERVICE_STANDARD}{{0.[0]%}} (@{SERVICE_STANDARD}_delta{{+0.[0]%}})"),
+    (f"Still Open > 180 days (vs {REFERENCE_DATE})", f"@{LONG_BACKLOG}{{0.[00]%}} (@{LONG_BACKLOG}_delta{{+0.[00]%}})"),
 ]
 AXIS_FORMATTERS = {
     BACKLOG: '0 a',
-    SERVICE_STANDARD: '0 %',
-    LONG_BACKLOG: '0 %'
+    SERVICE_STANDARD: '0.[0] %',
+    LONG_BACKLOG: '0.[00] %'
 }
 
 DEFAULT_WINDOW_SIZE = 28
