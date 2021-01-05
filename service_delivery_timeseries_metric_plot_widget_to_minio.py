@@ -69,15 +69,17 @@ def generate_plot_timeseries(data_df):
         shifted_df = resampled_df.shift(365 * i + 1).loc[:max_date]
 
         for col in COLS_SET:
-            resampled_df[f"{prefix}_{col}"] = shifted_df[col].copy().rolling(7).median()
+            if col in shifted_df.columns:
+                resampled_df[f"{prefix}_{col}"] = shifted_df[col].copy().rolling(7).median()
 
     # Comparison with reference period
     time_filter = resampled_df.index > REFERENCE_DATE
     for col in COLS_SET:
-        resampled_df.loc[time_filter, f"{col}_delta"] = resampled_df[col] - resampled_df.loc[REFERENCE_DATE, col]
-        resampled_df.loc[time_filter, f"{col}_delta_relative"] = (
-                resampled_df[f"{col}_delta"] / resampled_df.loc[REFERENCE_DATE, col]
-        )
+        if col in resampled_df[col]:
+            resampled_df.loc[time_filter, f"{col}_delta"] = resampled_df[col] - resampled_df.loc[REFERENCE_DATE, col]
+            resampled_df.loc[time_filter, f"{col}_delta_relative"] = (
+                    resampled_df[f"{col}_delta"] / resampled_df.loc[REFERENCE_DATE, col]
+            )
 
     return resampled_df.loc[PLOT_START:]
 
