@@ -70,14 +70,15 @@ def _add_hover_tool(plot):
     plot.add_tools(hover_tool)
 
 
-def _stlye_axes(plot):
+def stlye_axes(plot):
     plot.xaxis.formatter = NumeralTickFormatter(format="0.[0] a")
     plot.xgrid.grid_line_color = "White"
     plot.ygrid.grid_line_alpha = 0
     plot.axis.axis_label_text_font_size = "12pt"
+    plot.axis.major_label_text_font_size = "12pt"
 
 
-def _add_legend(plot, legend_items):
+def add_legend(plot, legend_items):
     # Adding legend below plot
     plot.legend.visible = False
     legend = Legend(items=legend_items, location="center", orientation="horizontal", margin=2, padding=2)
@@ -103,8 +104,8 @@ def generate_volume_perf_plot(plot_df):
     )
 
     _add_hover_tool(plot)
-    _stlye_axes(plot)
-    _add_legend(plot, plot.legend.items)
+    stlye_axes(plot)
+    add_legend(plot, plot.legend.items)
 
     plot_html = file_html(plot, CDN, f"Business Continuity Service Delivery Request Type Within Target")
 
@@ -128,7 +129,7 @@ def generate_volume_growth_plot(plot_df):
     )
 
     _add_hover_tool(plot)
-    _stlye_axes(plot)
+    stlye_axes(plot)
 
     # dummy plots to create legend
     growth_bar = plot.hbar(right=[0], y=[plot_df[GROWTH_COL].iloc[0]], color=BAD_COLOUR)
@@ -137,7 +138,7 @@ def generate_volume_growth_plot(plot_df):
     # adding legend beloew plot
     legend_items = [("Nett Growth", [growth_bar]),
                     ("Nett Shrink", [shrink_bar])]
-    _add_legend(plot, legend_items)
+    add_legend(plot, legend_items)
 
     plot_html = file_html(plot, CDN, f"Business Continuity Service Delivery Request Type Nett Growth")
 

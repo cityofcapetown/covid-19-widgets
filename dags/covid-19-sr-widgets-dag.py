@@ -155,6 +155,9 @@ sd_plot_widget_operator = covid_19_widget_task(SD_BIPLOT_WIDGET_TASK,)
 SD_VOLUME_REQUESTS_WIDGET_TASK = "sd-volume-request-plots"
 sd_volume_requests_widget_operator = covid_19_widget_task(SD_VOLUME_REQUESTS_WIDGET_TASK,)
 
+SD_REQUESTS_DISTRIBUTION_WIDGET_TASK = "sd-request-distribution-plots"
+sd_requests_distribution_widget_operator = covid_19_widget_task(SD_REQUESTS_DISTRIBUTION_WIDGET_TASK,)
+
 SD_BIPLOT_WIDGET_TASK = "service-delivery-plot"
 sd_plot_widget_operator = covid_19_widget_task(SD_BIPLOT_WIDGET_TASK,)
 
@@ -168,4 +171,5 @@ map_layer_push_operator >> sd_map_widget_operator
 sd_latest_values_operator >> [sd_volume_widget_operator,
                               sd_metric_widget_operator,
                               sd_duration_widget_operator,
-                              sd_volume_requests_widget_operator]
+                              sd_volume_requests_widget_operator,
+                              sd_requests_distribution_widget_operator]
