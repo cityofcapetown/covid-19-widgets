@@ -119,6 +119,6 @@ if __name__ == "__main__":
     logging.info("G[ot] latest values data")
 
     logging.info("Writ[ing] everything to Minio...")
-    # write_to_minio(latest_sd_values_json, OUTPUT_VALUE_FILENAME,
-    #                secrets["minio"]["edge"]["access"], secrets["minio"]["edge"]["secret"])
+    write_to_minio(latest_sd_values_json, OUTPUT_VALUE_FILENAME,
+                   secrets["minio"]["edge"]["access"], secrets["minio"]["edge"]["secret"])
     logging.info("...Wr[ote] everything to Minio")
