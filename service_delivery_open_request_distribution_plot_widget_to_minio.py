@@ -26,9 +26,9 @@ OPEN_PROPORTION_COL = "open_proportion"
 CUMULATIVE_PROPORTION_COL = "open_cumulative_proportion"
 
 HOVER_COLS = [
-    ("Age", f"@{AGE_COL}{{0 a}} days"),
+    ("Age", f"@{AGE_COL}{{0.[0] a}} days"),
     ("Date Opened", f"@{DATE_COL}{{%F}}"),
-    ("Requests Open", f"@{STILL_OPEN_COL}{{0 a}}"),
+    ("Requests Open", f"@{STILL_OPEN_COL}{{0.[0] a}}"),
     ("Cumulative Open Proportion", f"@{CUMULATIVE_PROPORTION_COL}{{0.[00]%}}")
 ]
 
@@ -104,7 +104,7 @@ def generate_plot(plot_df):
 
     # Plot grid and axis
     service_delivery_volume_code_metric_plot_widgets_to_minio.stlye_axes(plot)
-    plot.yaxis.formatter = NumeralTickFormatter(format="0 a")
+    plot.yaxis.formatter = NumeralTickFormatter(format="0.[0] a")
     secondary_axis.formatter = NumeralTickFormatter(format="0.[00] %")
 
     # Plot legend
