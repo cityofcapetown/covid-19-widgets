@@ -35,18 +35,23 @@ def create_latest_sd_values_dict(ts_df):
     latest_values_dict = ts_df.sort_values(by=[FEATURE_COL, MEASURE_COL, DATE_COL]).drop_duplicates(
         subset=[FEATURE_COL, MEASURE_COL], keep="last"
     ).reset_index().to_dict(orient="records")
-
     logging.debug(f"latest_values_dict=\n{pprint.pformat(latest_values_dict)}")
 
-    ref_values_dict = ts_df[
+    ref_values_dicts = ts_df[
         ts_df[DATE_COL] <= REFERENCE_DATE
-        ].sort_values(by=[FEATURE_COL, MEASURE_COL, DATE_COL]).drop_duplicates(
+    ].sort_values(by=[FEATURE_COL, MEASURE_COL, DATE_COL]).drop_duplicates(
         subset=[FEATURE_COL, MEASURE_COL], keep="last"
     ).reset_index().to_dict(orient="records")
 
-    # transforming from flat records into heirachy of values
+    ref_values_dicts = {
+        (ref_values_dict[FEATURE_COL], ref_values_dict[MEASURE_COL]): ref_values_dict
+        for ref_values_dict in ref_values_dicts
+    }
+    logging.debug(f"ref_values_dicts=\n{pprint.pformat(ref_values_dicts)}")
+
+    # transforming from flat records into hierarchy of values
     output_dict = {}
-    for value_dict, ref_value_dict in zip(latest_values_dict, ref_values_dict):
+    for value_dict in latest_values_dict:
         feature_values = value_dict[FEATURE_COL].split("-")
 
         if any([feature_val in SKIP_LIST for feature_val in feature_values]):
@@ -67,18 +72,20 @@ def create_latest_sd_values_dict(ts_df):
 
         value_output_dict[METRICS_FIELD][value_dict[MEASURE_COL]] = value_dict[VALUE_COL]
 
-        assert value_dict[FEATURE_COL] == ref_value_dict[FEATURE_COL]
-        assert value_dict[MEASURE_COL] == ref_value_dict[MEASURE_COL]
+        ref_lookup_key = (value_dict[FEATURE_COL], value_dict[MEASURE_COL])
+        if ref_lookup_key not in ref_values_dicts:
+            logging.warning(f"No reference values for '{value_dict[FEATURE_COL]}' for measure '{value_dict[MEASURE_COL]}'")
+        else:
+            ref_value_dict = ref_values_dicts[ref_lookup_key]
+            value_output_dict[METRICS_DELTA_FIELD][value_dict[MEASURE_COL]] = (
+                    value_dict[VALUE_COL] - ref_value_dict[VALUE_COL]
+            )
 
-        value_output_dict[METRICS_DELTA_FIELD][value_dict[MEASURE_COL]] = (
-                value_dict[VALUE_COL] - ref_value_dict[VALUE_COL]
-        )
-
-        value_output_dict[METRICS_DELTA_RELATIVE_FIELD][value_dict[MEASURE_COL]] = round(
-            (value_dict[VALUE_COL] - ref_value_dict[VALUE_COL]) / (
-                ref_value_dict[VALUE_COL] if ref_value_dict[VALUE_COL] else 1e-7
-            ), 2
-        )
+            value_output_dict[METRICS_DELTA_RELATIVE_FIELD][value_dict[MEASURE_COL]] = round(
+                (value_dict[VALUE_COL] - ref_value_dict[VALUE_COL]) / (
+                    ref_value_dict[VALUE_COL] if ref_value_dict[VALUE_COL] else 1e-7
+                ), 2
+            )
 
     logging.debug(f"output_dict=\n{pprint.pformat(output_dict)}")
 
@@ -112,6 +119,6 @@ if __name__ == "__main__":
     logging.info("G[ot] latest values data")
 
     logging.info("Writ[ing] everything to Minio...")
-    write_to_minio(latest_sd_values_json, OUTPUT_VALUE_FILENAME,
-                   secrets["minio"]["edge"]["access"], secrets["minio"]["edge"]["secret"])
+    # write_to_minio(latest_sd_values_json, OUTPUT_VALUE_FILENAME,
+    #                secrets["minio"]["edge"]["access"], secrets["minio"]["edge"]["secret"])
     logging.info("...Wr[ote] everything to Minio")
