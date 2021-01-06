@@ -70,12 +70,12 @@ def _add_hover_tool(plot):
     plot.add_tools(hover_tool)
 
 
-def stlye_axes(plot):
+def stlye_axes(plot, major_label_fontsize="10pt"):
     plot.xaxis.formatter = NumeralTickFormatter(format="0.[0] a")
     plot.xgrid.grid_line_color = "White"
     plot.ygrid.grid_line_alpha = 0
     plot.axis.axis_label_text_font_size = "12pt"
-    plot.axis.major_label_text_font_size = "12pt"
+    plot.axis.major_label_text_font_size = major_label_fontsize
 
 
 def add_legend(plot, legend_items):

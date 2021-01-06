@@ -40,8 +40,8 @@ TOOL_TIPS = [
 ]
 AXIS_FORMATTERS = {
     BACKLOG: '0 a',
-    SERVICE_STANDARD: '0.[0] %',
-    LONG_BACKLOG: '0.[00] %'
+    SERVICE_STANDARD: '0.[0]%',
+    LONG_BACKLOG: '0.[00]%'
 }
 
 DEFAULT_WINDOW_SIZE = 28
