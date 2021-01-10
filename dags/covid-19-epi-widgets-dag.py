@@ -60,9 +60,13 @@ k8s_run_args = {
 
 def covid_19_widget_task(task_name, task_kwargs={}, task_cmdline_args=[]):
     """Factory for k8sPodOperator"""
-    name = "covid-19-epi-widgets-{}-{}-{}".format(task_name,
-                                                  task_cmdline_args[0].replace("_", "-").replace(" ", "-"),
-                                                  task_cmdline_args[2].replace("_", "-").replace(" ", "-"))
+    name = f"covid-19-epi-widgets-{task_name}"
+
+    # Adding task cmdline args to name if relevant
+    task_cmdline_args_formatted = list(map(lambda val: val.replace("_", "-").replace(" ", "-"), task_cmdline_args))
+    name = f"{name}-{task_cmdline_args_formatted[0]}" if len(task_cmdline_args_formatted) > 0 else name
+    name = f"{name}-{task_cmdline_args_formatted[2]}" if len(task_cmdline_args_formatted) > 2 else name
+
     run_args = {**k8s_run_args.copy(), **task_kwargs}
     run_cmd = "bash -c '{} && \"$COVID_19_WIDGETS_DIR\"/bin/{}.sh \"{}\"'".format(
         startup_cmd, task_name, '" "'.join(task_cmdline_args)
