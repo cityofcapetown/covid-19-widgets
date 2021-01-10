@@ -158,6 +158,12 @@ SPV_PLOT_TASK = 'spv-data-plot'
 spv_plot_operator = covid_19_widget_task(SPV_PLOT_TASK,
                                          task_cmdline_args=["city", "city of cape town", "all", "*"])
 
+SPV_AGE_PLOT_TASK = 'spv-plot-age-distributions'
+spv_age_plot_operator = covid_19_widget_task(SPV_AGE_PLOT_TASK)
+
+SPV_GROWTH_PLOT_TASK = 'spv-plot-doubling-time'
+spv_growth_plot_operator = covid_19_widget_task(SPV_GROWTH_PLOT_TASK)
+
 # Dependencies
 for layer_generate_operators, map_plot_operator in zip(city_map_layers_operators, city_map_plot_operators):
     map_plot_operator.set_upstream([operator for operator in layer_generate_operators
