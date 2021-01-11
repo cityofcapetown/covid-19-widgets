@@ -79,7 +79,7 @@ def write_html_to_minio(plotly_fig, outfile, prefix, bucket, secret_access, secr
         with open(local_path, "w") as plot_file:
             plotly_fig.write_html(
                 local_path,
-                # include_plotlyjs='directory',
+                include_plotlyjs='directory',
                 default_height='100%',
                 default_width='100%'
             )
