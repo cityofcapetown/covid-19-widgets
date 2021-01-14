@@ -88,7 +88,7 @@ def get_subdistrict_populations(minio_access, minio_secret):
             minio_bucket=epi_map_case_layers_to_minio.MINIO_COVID_BUCKET,
             minio_key=minio_access,
             minio_secret=minio_secret,
-            data_classification=epi_map_case_layers_to_minio.MINIO_CLASSIFICATION,
+            data_classification=epi_map_case_layers_to_minio.EDGE_MINIO_CLASSIFICATION,
         )
 
         population_df = pandas.read_csv(temp_datafile.name)
@@ -288,7 +288,7 @@ def write_table_widget_file_to_minio(localpath, minio_access, minio_secret):
         minio_bucket=epi_map_case_layers_to_minio.MINIO_COVID_BUCKET,
         minio_key=minio_access,
         minio_secret=minio_secret,
-        data_classification=epi_map_case_layers_to_minio.MINIO_CLASSIFICATION,
+        data_classification=epi_map_case_layers_to_minio.EDGE_MINIO_CLASSIFICATION,
     )
 
     assert result

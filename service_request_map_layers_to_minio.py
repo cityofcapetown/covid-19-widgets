@@ -13,8 +13,9 @@ import shapely.geometry
 import city_map_layers_to_minio
 
 MINIO_COVID_BUCKET = "covid"
-MINIO_HEX_BUCKET = "city-hex-polygons"
-MINIO_CLASSIFICATION = minio_utils.DataClassification.EDGE
+MINIO_HEX_BUCKET = "city-hex.polygons"
+MINIO_EDGE_CLASSIFICATION = minio_utils.DataClassification.EDGE
+MINIO_LAKE_CLASSIFICATION = minio_utils.DataClassification.EDGE
 
 DATA_PUBLIC_PREFIX = "data/public/"
 DATA_RESTRICTED_PREFIX = "data/private/"
@@ -49,10 +50,10 @@ CHOROPLETH_SOURCE_ATTRS = {
 }
 
 LAYER_FILES = (
-    (CT_HEX_L7_FILENAME, MINIO_HEX_BUCKET, ""),
-    (CT_HEX_L8_FILENAME, MINIO_HEX_BUCKET, ""),
-    (CT_WARD_FILENAME, MINIO_COVID_BUCKET, DATA_PUBLIC_PREFIX),
-    (CT_SUBCOUNCIL_FILENAME, MINIO_COVID_BUCKET, DATA_PUBLIC_PREFIX),
+    (CT_HEX_L7_FILENAME, MINIO_LAKE_CLASSIFICATION, MINIO_HEX_BUCKET, ""),
+    (CT_HEX_L8_FILENAME, MINIO_LAKE_CLASSIFICATION, MINIO_HEX_BUCKET, ""),
+    (CT_WARD_FILENAME, MINIO_EDGE_CLASSIFICATION, MINIO_COVID_BUCKET, DATA_PUBLIC_PREFIX),
+    (CT_SUBCOUNCIL_FILENAME, MINIO_EDGE_CLASSIFICATION, MINIO_COVID_BUCKET, DATA_PUBLIC_PREFIX),
 )
 
 SOD_DATE = pandas.Timestamp(year=2020, month=3, day=15, tz="Africa/Johannesburg")
@@ -324,7 +325,7 @@ def write_metadata_to_minio(metadata_dict, tempdir, metadata_filename, minio_acc
         minio_bucket=MINIO_COVID_BUCKET,
         minio_key=minio_access,
         minio_secret=minio_secret,
-        data_classification=MINIO_CLASSIFICATION,
+        data_classification=MINIO_EDGE_CLASSIFICATION,
     )
 
     assert result
@@ -356,7 +357,9 @@ if __name__ == "__main__":
             for layer, local_path, layer_gdf in city_map_layers_to_minio.get_layers(tempdir,
                                                                                     secrets["minio"]["edge"]["access"],
                                                                                     secrets["minio"]["edge"]["secret"],
-                                                                                    LAYER_FILES)
+                                                                                    LAYER_FILES,
+                                                                                    secrets["minio"]["lake"]["access"],
+                                                                                    secrets["minio"]["lake"]["secret"],)
         }
         logging.info("G[ot] layers")
 

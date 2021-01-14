@@ -13,8 +13,9 @@ import pandas
 import city_map_layers_to_minio
 
 MINIO_COVID_BUCKET = "covid"
-MINIO_HEX_BUCKET = "city-hex-polygons"
-MINIO_CLASSIFICATION = minio_utils.DataClassification.EDGE
+MINIO_HEX_BUCKET = "city-hex.polygons"
+MINIO_EDGE_CLASSIFICATION = minio_utils.DataClassification.EDGE
+MINIO_LAKE_CLASSIFICATION = minio_utils.DataClassification.LAKE
 
 DATA_PUBLIC_PREFIX = "data/public/"
 DATA_RESTRICTED_PREFIX = "data/private/"
@@ -61,11 +62,11 @@ CHOROPLETH_SOURCE_LAYERS = {
 }
 
 LAYER_FILES = (
-    (CT_VODACOM_POLYGONS, MINIO_COVID_BUCKET, DATA_RESTRICTED_PREFIX),
-    (CT_HEX_L7_FILENAME, MINIO_HEX_BUCKET, ""),
-    (CT_HEX_L8_FILENAME, MINIO_HEX_BUCKET, ""),
-    (CT_WARD_FILENAME, MINIO_COVID_BUCKET, DATA_PUBLIC_PREFIX),
-    (CT_HEALTH_DISTRICT_FILENAME, MINIO_COVID_BUCKET, DATA_PUBLIC_PREFIX),
+    (CT_VODACOM_POLYGONS, MINIO_EDGE_CLASSIFICATION, MINIO_COVID_BUCKET, DATA_RESTRICTED_PREFIX),
+    (CT_HEX_L7_FILENAME, MINIO_LAKE_CLASSIFICATION, MINIO_HEX_BUCKET, ""),
+    (CT_HEX_L8_FILENAME, MINIO_LAKE_CLASSIFICATION, MINIO_HEX_BUCKET, ""),
+    (CT_WARD_FILENAME, MINIO_EDGE_CLASSIFICATION, MINIO_COVID_BUCKET, DATA_PUBLIC_PREFIX),
+    (CT_HEALTH_DISTRICT_FILENAME, MINIO_EDGE_CLASSIFICATION, MINIO_COVID_BUCKET, DATA_PUBLIC_PREFIX),
 )
 
 HEX_COUNT_INDEX_PROPERTY = "index"
@@ -94,7 +95,7 @@ def get_mobile_data(minio_access, minio_secret):
             minio_bucket=MINIO_COVID_BUCKET,
             minio_key=minio_access,
             minio_secret=minio_secret,
-            data_classification=MINIO_CLASSIFICATION,
+            data_classification=MINIO_EDGE_CLASSIFICATION,
         )
 
         mobile_data_df = pandas.read_csv(temp_datafile.name)
@@ -286,7 +287,9 @@ if __name__ == "__main__":
             for layer, local_path, layer_gdf in city_map_layers_to_minio.get_layers(tempdir,
                                                                                     secrets["minio"]["edge"]["access"],
                                                                                     secrets["minio"]["edge"]["secret"],
-                                                                                    layers=LAYER_FILES)
+                                                                                    LAYER_FILES,
+                                                                                    secrets["minio"]["lake"]["access"],
+                                                                                    secrets["minio"]["lake"]["secret"],)
         }
         logging.info("G[ot] layers")
 
