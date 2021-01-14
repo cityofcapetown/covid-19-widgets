@@ -15,7 +15,7 @@ import city_map_layers_to_minio
 MINIO_COVID_BUCKET = "covid"
 MINIO_HEX_BUCKET = "city-hexes.polygons"
 MINIO_EDGE_CLASSIFICATION = minio_utils.DataClassification.EDGE
-MINIO_LAKE_CLASSIFICATION = minio_utils.DataClassification.EDGE
+MINIO_LAKE_CLASSIFICATION = minio_utils.DataClassification.LAKE
 
 DATA_PUBLIC_PREFIX = "data/public/"
 DATA_RESTRICTED_PREFIX = "data/private/"
