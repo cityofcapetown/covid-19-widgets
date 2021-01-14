@@ -11,7 +11,7 @@ import pandas
 import city_map_layers_to_minio
 
 MINIO_COVID_BUCKET = "covid"
-MINIO_HEX_BUCKET = "city-hex.polygons"
+MINIO_HEX_BUCKET = "city-hexes.polygons"
 EDGE_MINIO_CLASSIFICATION = minio_utils.DataClassification.EDGE
 LAKE_MINIO_CLASSIFICATION = minio_utils.DataClassification.LAKE
 

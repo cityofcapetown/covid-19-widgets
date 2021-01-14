@@ -13,7 +13,7 @@ import shapely.geometry
 import city_map_layers_to_minio
 
 MINIO_COVID_BUCKET = "covid"
-MINIO_HEX_BUCKET = "city-hex.polygons"
+MINIO_HEX_BUCKET = "city-hexes.polygons"
 MINIO_EDGE_CLASSIFICATION = minio_utils.DataClassification.EDGE
 MINIO_LAKE_CLASSIFICATION = minio_utils.DataClassification.EDGE
 
