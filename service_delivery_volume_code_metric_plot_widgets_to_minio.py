@@ -25,7 +25,7 @@ DEPARTMENTS = [
     ("Water and Waste Services", "Solid Waste Management"),
     ("Transport", "Roads Infrastructure and Management"),
     ("Human Settlements", "Public Housing"),
-    # ("Community Services and Health", "Recreation and Parks")
+    ("Community Services and Health", "Recreation and Parks")
 ]
 
 DIRECTORATE_COL = "directorate"
