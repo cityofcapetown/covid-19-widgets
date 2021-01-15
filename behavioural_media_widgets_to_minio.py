@@ -169,7 +169,7 @@ def get_nett_sentiment(mentions_df, start_date, end_date):
     )
 
     # calculating the nett sentiment per day
-    sentiment_mean_series = filtered_mentions.mean()["sentiment"]
+    sentiment_mean_series = filtered_mentions.mean()["sentiment"].rolling().mean(7)
     sentiment_count_series = filtered_mentions.count()["sentiment"]
 
     # assigning the values to the specified time range
@@ -197,7 +197,7 @@ def generate_sentiment_ts_plot(sentiment_ts_data, sentiment_ts_sample_count):
     tooltips = [
         ("Date", "@date{%F}"),
         ("Mentions", "@Count"),
-        ("Nett Sentiment", "@NettSentiment{0.0%}"),
+        ("Nett Sentiment (7 day mean)", "@NettSentiment{0.0%}"),
     ]
 
     line_plot = figure(title=None,
@@ -205,7 +205,7 @@ def generate_sentiment_ts_plot(sentiment_ts_data, sentiment_ts_sample_count):
                        sizing_mode="scale_both",
                        x_range=(sentiment_ts_data["date"].min(), sentiment_ts_data["date"].max()),
                        x_axis_type='datetime',
-                       y_axis_label="Nett Sentiment (%)",
+                       y_axis_label="Nett Sentiment (7 day mean)",
                        tools=[], toolbar_location=None
                        )
     # Setting range of y range
