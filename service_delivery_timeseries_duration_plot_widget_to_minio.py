@@ -133,7 +133,7 @@ def generate_plot(plot_df):
     # Plot grid and axis
     plot.grid.grid_line_color = "white"
     plot.xaxis.major_label_orientation = math.pi / 4
-    plot.xaxis.formatter = DatetimeTickFormatter(format=ISO601_DATE_FORMAT)
+    plot.xaxis.formatter = DatetimeTickFormatter(days=ISO601_DATE_FORMAT)
     plot.y_range.start = 0
 
     plot.axis.axis_label_text_font_size = "12pt"
@@ -173,7 +173,7 @@ def generate_plot(plot_df):
 
     select.xgrid.grid_line_color = "White"
     select.ygrid.grid_line_color = None
-    select.xaxis.formatter = DatetimeTickFormatter(format=ISO601_DATE_FORMAT)
+    select.xaxis.formatter = DatetimeTickFormatter(days=ISO601_DATE_FORMAT)
     select.add_tools(range_tool)
     select.toolbar.active_multi = range_tool
 

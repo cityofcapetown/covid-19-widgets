@@ -134,7 +134,7 @@ def generate_plot(plot_df, metric_col,
     # Plot grid and axis
     plot.grid.grid_line_color = "white"
     plot.xaxis.major_label_orientation = math.pi / 4
-    plot.xaxis.formatter = DatetimeTickFormatter(format=ISO8601_DATE_FORMAT)
+    plot.xaxis.formatter = DatetimeTickFormatter(days=ISO8601_DATE_FORMAT)
     plot.yaxis.formatter = NumeralTickFormatter(format=AXIS_FORMATTERS[metric_col])
 
     plot.axis.axis_label_text_font_size = "12pt"
