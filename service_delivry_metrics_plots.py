@@ -38,7 +38,7 @@ SECRETS_PATH_VAR = "SECRETS_PATH"
 # departments
 DEPARTMENTS = [
     "Electricity", "Water and Sanitation", "Solid Waste Management",
-    "Roads Infrastructure and Management", "Public Housing",
+    "Roads Infrastructure and Management", "Public Housing", "Recreation and Parks"
 ]
 CODE = "Code"
 BACKLOG_BLUE = "#4c72b0"
