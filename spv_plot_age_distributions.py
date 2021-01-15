@@ -25,10 +25,15 @@ COVID_BUCKET = "covid"
 RESTRICTED_PREFIX = "data/private/"
 WIDGETS_PREFIX = "widgets/private/"
 EDGE_CLASSIFICATION = minio_utils.DataClassification.EDGE
-
+# infiles
 CASES_ADJUSTED_METRO = "spv_cases_age_distribution.csv"
+HOSP_ADJUSTED_METRO = "spv_hosp_age_distribution.csv"
+ICU_ADJUSTED_METRO = "spv_icu_age_distribution.csv"
 DEATHS_ADJUSTED_METRO = "spv_deaths_age_distribution.csv"
+# outfiles
 CASES_HEATMAP = "spv_cases_by_age_heatmap"
+HOSP_HEATMAP = "spv_hosp_by_age_heatmap"
+ICU_HEATMAP = "spv_icu_by_age_heatmap"
 DEATHS_HEATMAP = "spv_deaths_by_age_heatmap"
 
 CT_CITY = 'City of Cape Town'
@@ -36,6 +41,8 @@ DATE = "Date"
 COUNT = "count"
 EXPORT = "Export.Date"
 DIAGNOSIS = "Date.of.Diagnosis"
+HOSP = "Admission.Date"
+ICU = "Date.of.ICU.Admission"
 DEATH = "Date.of.Death"
 DISTRICT = "District"
 SUBDISTRICT = "Subdistrict"
@@ -155,6 +162,8 @@ if __name__ == "__main__":
 
     for dict_collection in [
         {"kind": DIAGNOSIS, "infile": CASES_ADJUSTED_METRO, "outfile": CASES_HEATMAP},
+        {"kind": HOSP, "infile": HOSP_ADJUSTED_METRO, "outfile": HOSP_HEATMAP},
+        {"kind": ICU, "infile": ICU_ADJUSTED_METRO, "outfile": ICU_HEATMAP},
         {"kind": DEATH, "infile": DEATHS_ADJUSTED_METRO, "outfile": DEATHS_HEATMAP}
     ]:
         kind = dict_collection["kind"]

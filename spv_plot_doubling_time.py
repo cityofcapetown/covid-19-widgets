@@ -23,13 +23,20 @@ COVID_BUCKET = "covid"
 RESTRICTED_PREFIX = "data/private/"
 WIDGETS_PREFIX = "widgets/private/"
 EDGE_CLASSIFICATION = minio_utils.DataClassification.EDGE
-
+# infile metro
 CASES_DT_DISTR = "spv_cases_doubling_time_metro.csv"
+HOSP_DT_DISTR = "spv_hosp_doubling_time_metro.csv"
+ICU_DT_DISTR = "spv_icu_doubling_time_metro.csv"
 DEATHS_DT_DISTR = "spv_deaths_doubling_time_metro.csv"
+# infile subdistrict
 CASES_DT_SUBDISTR = "spv_cases_doubling_time_metro_subdistricts.csv"
+HOSP_DT_SUBDISTR = "spv_hosp_doubling_time_metro_subdistricts.csv"
+ICU_DT_SUBDISTR = "spv_icu_doubling_time_metro_subdistricts.csv"
 DEATHS_DT_SUBDISTR = "spv_deaths_doubling_time_metro_subdistricts.csv"
-
+# outfiles
 CASE_DOUBLE_TIME_PLOT = "spv_cases_percent_change"
+HOSP_DOUBLE_TIME_PLOT = "spv_hosp_percent_change"
+ICU_DOUBLE_TIME_PLOT = "spv_icu_percent_change"
 DEATH_DOUBLE_TIME_PLOT = "spv_deaths_percent_change"
 
 DATE = "Date"
@@ -43,9 +50,9 @@ DISTRICT = "District"
 SUBDISTRICT = "Subdistrict"
 SELECT_CT_METRO = 'CT_Metro_(lag_adjusted)'
 DAILY_CASES = "Daily_Cases"
+DAILY_HOSP = "Daily_Hospitalisations"
+DAILY_ICU = "Daily ICU Admissions"
 DAILY_DEATHS = "Daily_Deaths"
-CUM_CASES = "Cumulative_Cases"
-CUM_DEATHS = "Cumulative_Deaths"
 
 # secrets var
 SECRETS_PATH_VAR = "SECRETS_PATH"
@@ -213,6 +220,16 @@ if __name__ == "__main__":
         right_y_col=RIGHT_Y_COL, right_y_label=DAILY_CASES,
         outfile=CASE_DOUBLE_TIME_PLOT
     )
+    hosp_data = data(
+        dist_infile=HOSP_DT_DISTR, subdist_infile=HOSP_DT_SUBDISTR,
+        right_y_col=RIGHT_Y_COL, right_y_label=DAILY_HOSP,
+        outfile=HOSP_DOUBLE_TIME_PLOT
+    )
+    icu_data = data(
+        dist_infile=ICU_DT_DISTR, subdist_infile=ICU_DT_SUBDISTR,
+        right_y_col=RIGHT_Y_COL, right_y_label=DAILY_ICU,
+        outfile=ICU_DOUBLE_TIME_PLOT
+    )
     deaths_data = data(
         dist_infile=DEATHS_DT_DISTR, subdist_infile=DEATHS_DT_SUBDISTR,
         right_y_col=RIGHT_Y_COL, right_y_label=DAILY_DEATHS,
@@ -220,7 +237,7 @@ if __name__ == "__main__":
     )
     logging.info(f"Generat[ed] data objects")
 
-    for data_element in [cases_data, deaths_data]:
+    for data_element in [cases_data, hosp_data, icu_data, deaths_data]:
         dist_infile = data_element.dist_infile
         subdist_infile = data_element.subdist_infile
 
