@@ -169,7 +169,7 @@ def get_nett_sentiment(mentions_df, start_date, end_date):
     )
 
     # calculating the nett sentiment per day
-    sentiment_mean_series = filtered_mentions.mean()["sentiment"].rolling().mean(7)
+    sentiment_mean_series = filtered_mentions.mean()["sentiment"].rolling(7).mean()
     sentiment_count_series = filtered_mentions.count()["sentiment"]
 
     # assigning the values to the specified time range
