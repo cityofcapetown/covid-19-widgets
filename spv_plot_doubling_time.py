@@ -78,7 +78,7 @@ def write_html_to_minio(plotly_fig, outfile, prefix, bucket, secret_access, secr
 
         with open(local_path, "w") as plot_file:
             plotly_fig.write_html(
-                local_path,
+                plot_file,
                 include_plotlyjs='directory',
                 default_height='100%',
                 default_width='100%'
@@ -168,11 +168,13 @@ def plot_wrapper(df, data_element):
 
     x_vals = df[DATE].to_list()
     y1_vals = df[LEFT_Y_COL].to_list()
+    # convert to rolling mean
+    df[data_element.right_y_col] = df[data_element.right_y_col].rolling(7).mean()
     y2_vals = df[data_element.right_y_col].to_list()
 
     # make the plot
     logging.info(f"Generat[ing] plot")
-    right_y_lab = data_element.right_y_label.replace("_", " ") + "<br>adjusted for reporting lag</br>"
+    right_y_lab = f'{data_element.right_y_label.replace("_", " ")} (7 day avr)<br>adjusted for reporting lag</br>'
     doubling_time_plot = plot_plotly_plot(x_vals, y1_vals, y2_vals, right_y_lab)
     logging.info(f"Generat[ed] plot")
 
