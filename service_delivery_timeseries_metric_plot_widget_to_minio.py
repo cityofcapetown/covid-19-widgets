@@ -46,6 +46,7 @@ AXIS_FORMATTERS = {
 
 DEFAULT_WINDOW_SIZE = 28
 PLOT_START = "2019-09-01"
+ISO8601_DATE_FORMAT = "%Y-%m-%d"
 
 WINDOW_START = "2020-10-01"
 REFERENCE_DATE = "2020-10-12"
@@ -133,7 +134,7 @@ def generate_plot(plot_df, metric_col,
     # Plot grid and axis
     plot.grid.grid_line_color = "white"
     plot.xaxis.major_label_orientation = math.pi / 4
-    plot.xaxis.formatter = DatetimeTickFormatter(days="%Y-%m-%d")
+    plot.xaxis.formatter = DatetimeTickFormatter(format=ISO8601_DATE_FORMAT)
     plot.yaxis.formatter = NumeralTickFormatter(format=AXIS_FORMATTERS[metric_col])
 
     plot.axis.axis_label_text_font_size = "12pt"
@@ -175,6 +176,7 @@ def generate_plot(plot_df, metric_col,
 
     select.xgrid.grid_line_color = "White"
     select.ygrid.grid_line_color = None
+    select.xaxis.formatter = DatetimeTickFormatter(format=ISO8601_DATE_FORMAT)
     select.add_tools(range_tool)
     select.toolbar.active_multi = range_tool
 
