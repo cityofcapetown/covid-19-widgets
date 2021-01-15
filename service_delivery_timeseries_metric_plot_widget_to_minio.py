@@ -176,7 +176,7 @@ def generate_plot(plot_df, metric_col,
 
     select.xgrid.grid_line_color = "White"
     select.ygrid.grid_line_color = None
-    select.xaxis.formatter = DatetimeTickFormatter(format=ISO8601_DATE_FORMAT)
+    select.xaxis.formatter = DatetimeTickFormatter(days=ISO8601_DATE_FORMAT)
     select.add_tools(range_tool)
     select.toolbar.active_multi = range_tool
 
