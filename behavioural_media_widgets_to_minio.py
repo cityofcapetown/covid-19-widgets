@@ -6,7 +6,7 @@ import sys
 import tempfile
 
 from bokeh.embed import file_html
-from bokeh.models import HoverTool, Range1d, ColumnDataSource,  LinearAxis, Span, Label, DatetimeTickFormatter
+from bokeh.models import HoverTool, Range1d, ColumnDataSource,  LinearAxis, Span, Label, DatetimeTickFormatter, NumeralTickFormatter
 from bokeh.models.widgets.tables import HTMLTemplateFormatter, TableColumn, DataTable, DateFormatter
 
 from bokeh.plotting import figure
@@ -36,7 +36,7 @@ MEDIA_SOURCES_CLASSIFICATION = (("PRESS", "NA"),
                                 ("CONSUMER", "FACEBOOK"))
 COLOURS = ("#fc8d59", "#ffffbf", "#91bfdb")
 SOURCE_COLOURS = ("#b8b9bb", "#1da1f2", "#4267b2")
-LONG_TERM_SENTIMENT = -52.2
+LONG_TERM_SENTIMENT = -0.522
 
 WIDGETS_RESTRICTED_PREFIX = "widgets/private/behavioural_"
 OUTPUT_VALUE_FILENAME = "values.json"
@@ -128,7 +128,7 @@ def get_media_count_datasource(mentions_df):
 def generate_media_count_plot(media_count_datasource):
     tooltips = [
         ("Date", "@date{%F}"),
-        *[(media_source, f"@{media_source}") for media_source in MEDIA_SOURCES]
+        *[(media_source, f"@{media_source}{{0.[0a]}}") for media_source in MEDIA_SOURCES]
     ]
     hover_tool = HoverTool(tooltips=tooltips,
                            formatters={'@date': 'datetime'})
@@ -138,7 +138,8 @@ def generate_media_count_plot(media_count_datasource):
         width=None, height=None,
         x_range=(media_count_datasource["date"].min(), media_count_datasource["date"].max()),
         toolbar_location=None, sizing_mode="scale_both", x_axis_type='datetime',
-        tools=[hover_tool]
+        tools=[hover_tool],
+        y_axis_label="Mentions",
     )
 
     for media_source, media_source_colour in zip(MEDIA_SOURCES, SOURCE_COLOURS):
@@ -148,6 +149,10 @@ def generate_media_count_plot(media_count_datasource):
     line_plot.legend.location = "top_left"
     line_plot.y_range.start = 0
     line_plot.xaxis.formatter = DatetimeTickFormatter(days="%Y-%m-%d")
+    line_plot.yaxis.formatter = NumeralTickFormatter(format="0.[0] a")
+
+    line_plot.axis.axis_label_text_font_size = "12pt"
+    line_plot.axis.major_label_text_font_size = "12pt"
 
     plot_html = file_html(line_plot, CDN, "Behavioural Media Channel Timeseries")
 
@@ -164,19 +169,16 @@ def get_nett_sentiment(mentions_df, start_date, end_date):
     )
 
     # calculating the nett sentiment per day
-    sentiment_sum = filtered_mentions.sum()["sentiment"].rename("Sum")
-    sentiment_abs_count = filtered_mentions.agg(
-        lambda series: series.count()
-    )["sentiment"].rename("AbsCount")
-    sentiment_series = (sentiment_sum / sentiment_abs_count * 100).round(2)
+    sentiment_mean_series = filtered_mentions.mean()["sentiment"]
+    sentiment_count_series = filtered_mentions.count()["sentiment"]
 
     # assigning the values to the specified time range
     empty_series = pandas.Series(
         0, index=pandas.date_range(start_date, end_date, tz=TZ_STRING)
     )
-    filled_series = sentiment_series.tz_convert(TZ_STRING).combine_first(empty_series)
+    filled_series = sentiment_mean_series.tz_convert(TZ_STRING).combine_first(empty_series)
 
-    return filled_series.sort_index(), sentiment_abs_count
+    return filled_series.sort_index(), sentiment_count_series
 
 
 def get_sentiment_ts_datasource(mentions_df):
@@ -195,7 +197,7 @@ def generate_sentiment_ts_plot(sentiment_ts_data, sentiment_ts_sample_count):
     tooltips = [
         ("Date", "@date{%F}"),
         ("Mentions", "@Count"),
-        ("Nett Sentiment", "@NettSentiment %"),
+        ("Nett Sentiment", "@NettSentiment{0.0%}"),
     ]
 
     line_plot = figure(title=None,
@@ -207,14 +209,15 @@ def generate_sentiment_ts_plot(sentiment_ts_data, sentiment_ts_sample_count):
                        tools=[], toolbar_location=None
                        )
     # Setting range of y range
-    line_plot.y_range = Range1d(-100, 100)
+    line_plot.y_range = Range1d(-1, 1)
 
     # Adding Count range on the right
     line_plot.extra_y_ranges = {"count_range": Range1d(start=0, end=sentiment_ts_sample_count.max() * 1.1)}
-    line_plot.add_layout(LinearAxis(y_range_name="count_range", axis_label="Mentions"), 'right')
+    secondary_axis = LinearAxis(y_range_name="count_range", axis_label="Mentions")
+    line_plot.add_layout(secondary_axis, 'right')
 
-    sentiment_count_bars = line_plot.vbar(x="date", top="Count", width=5e7, color="orange", source=sentiment_ts_data,
-                                          y_range_name="count_range")
+    sentiment_count_bars = line_plot.vbar(x="date", top="Count", width=pandas.Timedelta(days=0.75), color="orange",
+                                          source=sentiment_ts_data, y_range_name="count_range")
     sentiment_line = line_plot.line(x="date", y="NettSentiment", color="blue", source=sentiment_ts_data, line_width=5)
 
     # Long Term sentiment baseline
@@ -236,6 +239,11 @@ def generate_sentiment_ts_plot(sentiment_ts_data, sentiment_ts_sample_count):
     line_plot.add_tools(hover_tool)
 
     line_plot.xaxis.formatter = DatetimeTickFormatter(days="%Y-%m-%d")
+    line_plot.yaxis.formatter = NumeralTickFormatter(format="0.[0]%")
+    secondary_axis.formatter = NumeralTickFormatter(format="0.[0] a")
+
+    line_plot.axis.axis_label_text_font_size = "12pt"
+    line_plot.axis.major_label_text_font_size = "12pt"
 
     plot_html = file_html(line_plot, CDN, "Behavioural Sentiment Timeseries")
 
