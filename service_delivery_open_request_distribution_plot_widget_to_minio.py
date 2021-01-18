@@ -187,7 +187,7 @@ if __name__ == "__main__":
 
         if ((directorate_file_prefix and directorate_file_prefix in SKIP_LIST) or
                 (department_file_prefix and department_file_prefix in SKIP_LIST)):
-            logging.warning(f"skipping {feature}!")
+            logging.warning(f"skipping {feature} because of skip list!")
             continue
 
         logging.info(f"Generat[ing] plot for '{feature}'")
@@ -199,6 +199,12 @@ if __name__ == "__main__":
         )
         logging.info(f"...Filter[ed] data")
         logging.debug(f"directorate_df.shape={filtered_df.shape}")
+
+        df_measures = set(filtered_df[MEASURE_COL].unique())
+        missing_measures = MEASURES_SET - df_measures
+        if len(missing_measures):
+            logging.warning(f"skipping {feature} because it's missing '{','.join(missing_measures)}'!")
+            continue
 
         logging.info("Mung[ing] data for plotting...")
         dist_plot_df = generate_plot_data(filtered_df)
