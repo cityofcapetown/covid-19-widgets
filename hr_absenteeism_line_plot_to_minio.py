@@ -7,11 +7,14 @@ import sys
 import tempfile
 
 from bokeh.embed import file_html
-from bokeh.models import HoverTool, NumeralTickFormatter, DatetimeTickFormatter, Range1d, LinearAxis, Legend
+from bokeh.models import HoverTool, NumeralTickFormatter, DatetimeTickFormatter, Range1d, LinearAxis, Legend, RangeTool, \
+    Span
+from bokeh.layouts import column
 from bokeh.plotting import figure
 from bokeh.resources import CDN
 from db_utils import minio_utils
 import holidays
+import numpy
 import pandas
 
 import hr_data_last_values_to_minio
@@ -96,7 +99,7 @@ def generate_plot(plot_df):
     # Main plot
     line_plot = figure(
         title=None,
-        width=None, height=None,
+        plot_height=300, plot_width=None,
         x_axis_type='datetime', sizing_mode="scale_both",
         x_range=(start_date, end_date), y_axis_label="Rate (%)",
         y_range=(0, 1.05),
@@ -124,6 +127,8 @@ def generate_plot(plot_df):
     # axis formatting
     line_plot.xaxis.formatter = DatetimeTickFormatter(days="%Y-%m-%d")
     line_plot.xaxis.major_label_orientation = math.pi / 4
+    line_plot.axis.axis_label_text_font_size = "12pt"
+    line_plot.axis.major_label_text_font_size = "12pt"
 
     line_plot.yaxis.formatter = NumeralTickFormatter(format="0 %")
     second_y_axis.formatter = NumeralTickFormatter(format="0 a")
@@ -147,7 +152,44 @@ def generate_plot(plot_df):
     hover_tool = HoverTool(tooltips=tooltips, mode='vline', renderers=[count_vbar], formatters={'@Date': 'datetime'})
     line_plot.add_tools(hover_tool)
 
-    plot_html = file_html(line_plot, CDN, "Business Continuity HR Capacity Time Series")
+    # Adding select figure below main plot
+    select = figure(plot_height=75, plot_width=None, y_range=line_plot.y_range,
+                    sizing_mode="scale_width",
+                    x_axis_type="datetime", y_axis_type=None,
+                    tools="", toolbar_location=None)
+    select.extra_y_ranges = {"count_range": Range1d(start=0, end=plot_df[DAY_COUNT_COL].max() * 1.1)}
+    second_y_axis = LinearAxis(y_range_name="count_range")
+    select.add_layout(second_y_axis, 'right')
+
+    range_tool = RangeTool(x_range=line_plot.x_range)
+    range_tool.overlay.fill_color = "navy"
+    range_tool.overlay.fill_alpha = 0.2
+
+    select_count_line = select.line(
+        y=DAY_COUNT_COL, x=DATE_COL_NAME, line_width=1, source=plot_df,
+        line_color="blue", alpha=0.6, line_alpha=0.6, y_range_name="count_range"
+    )
+    select_absent_line = select.line(
+        y=ABSENTEEISM_RATE_COL, x=DATE_COL_NAME, line_width=1, source=plot_df,
+        line_color="red", alpha=0.6, line_alpha=0.6
+    )
+    select_covid_line = select.line(
+        y=COVID_SICK_COL, x=DATE_COL_NAME, line_width=1, source=plot_df,
+        line_color="orange", alpha=0.6, line_alpha=0.6
+    )
+
+    select.xgrid.grid_line_color = "White"
+    select.ygrid.grid_line_color = None
+    select.xaxis.formatter = DatetimeTickFormatter(days="%Y-%m-%d")
+    select.add_tools(range_tool)
+    select.toolbar.active_multi = range_tool
+
+    select.axis.axis_label_text_font_size = "12pt"
+    select.axis.major_label_text_font_size = "12pt"
+
+    combined_plot = column(line_plot, select, height_policy="max", width_policy="max")
+
+    plot_html = file_html(combined_plot, CDN, "Business Continuity HR Capacity Time Series")
 
     return plot_html
 
@@ -225,7 +267,7 @@ if __name__ == "__main__":
         val for val in hr_filtered_df[DEPARTMENT_COL].unique()
         if pandas.notna(val)
     ] if directorate_title != "*" else []
-    logging.debug(f"Departments: {', '.join(map(str,directorate_departments))}")
+    logging.debug(f"Departments: {', '.join(map(str, directorate_departments))}")
     for department in directorate_departments:
         logging.info(f"Generat[ing] plot for '{department}'...")
         department_file_prefix = department[:department.index("(")] if "(" in department else department
@@ -246,7 +288,7 @@ if __name__ == "__main__":
         logging.info(f"...Generat[ed] plot for '{department}'")
 
     logging.info("Writ[ing] everything to Minio...")
-    for html, filename  in plot_tuples:
+    for html, filename in plot_tuples:
         write_to_minio(html, filename,
                        secrets["minio"]["edge"]["access"], secrets["minio"]["edge"]["secret"])
     logging.info("...Wr[ote] everything to Minio")
