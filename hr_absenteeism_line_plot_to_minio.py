@@ -34,10 +34,12 @@ COVID_SICK_COL = "CovidSick"
 ABSENTEEISM_RATE_COL = "Absent"
 DAY_COUNT_COL = "DayCount"
 
+ROLLING_WINDOW = 7
+
 TZ_STRING = "Africa/Johannesburg"
 ISO_TIMESTAMP_FORMAT = "%Y-%m-%dT%H:%M"
 
-WIDGETS_RESTRICTED_PREFIX = "widgets/private/business_continuity_"
+WIDGETS_RESTRICTED_PREFIX = "widgets/staging/business_continuity_"
 PLOT_FILENAME_SUFFIX = "hr_absenteeism_plot.html"
 
 
@@ -64,8 +66,9 @@ def get_plot_df(succinct_hr_df):
     succinct_hr_df = succinct_hr_df.copy()
     succinct_hr_df[DATE_COL_NAME] = succinct_hr_df[DATE_COL_NAME].dt.date
     plot_df = (
-        succinct_hr_df.groupby(DATE_COL_NAME)
-            .apply(
+        succinct_hr_df.groupby(
+            DATE_COL_NAME
+        ).apply(
             lambda data_df: pandas.DataFrame({
                 ABSENTEEISM_RATE_COL: [
                     data_df[SUCCINCT_STATUS_COL].value_counts(normalize=True)[NOT_WORKING_STATUS]
@@ -76,8 +79,24 @@ def get_plot_df(succinct_hr_df):
                     if data_df[COVID_SICK_COL].shape[0] > 0 else 0
                 ],
                 DAY_COUNT_COL: data_df.shape[0]
-            }))
+            })
+        )
     ).reset_index().drop("level_1", axis='columns')
+    logging.debug(f"plot_df=\n{plot_df}")
+
+    # Converting trend cols in 7 day rolling means
+    def weighted_average(value_df, col):
+        return numpy.average(
+            plot_df.loc[value_df.index, col],
+            weights=plot_df.loc[value_df.index, DAY_COUNT_COL]
+        )
+
+    plot_df[ABSENTEEISM_RATE_COL] = plot_df[ABSENTEEISM_RATE_COL].rolling(ROLLING_WINDOW, min_periods=1).apply(
+        weighted_average, kwargs={"col": ABSENTEEISM_RATE_COL}, raw=False,
+    )
+    plot_df[COVID_SICK_COL] = plot_df[COVID_SICK_COL].rolling(ROLLING_WINDOW, min_periods=1).apply(
+        weighted_average, kwargs={"col": COVID_SICK_COL}, raw=False,
+    )
     logging.debug(f"plot_df=\n{plot_df}")
 
     # Filtering out holidays
@@ -136,8 +155,8 @@ def generate_plot(plot_df):
     # Legend
     legend_items = [
         ("Assessed", [count_vbar]),
-        ("Not at Work (%)", [absent_line, absent_scatter]),
-        ("Covid-19 Exposure (%)", [covid_line, covid_scatter])
+        ("Not at Work - 7 day mean (%)", [absent_line, absent_scatter]),
+        ("Covid-19 Exposure - 7 day mean (%)", [covid_line, covid_scatter])
     ]
     legend = Legend(items=legend_items, location="center", orientation="horizontal", padding=2, margin=2)
     line_plot.add_layout(legend, "below")
