@@ -39,7 +39,7 @@ ROLLING_WINDOW = 7
 TZ_STRING = "Africa/Johannesburg"
 ISO_TIMESTAMP_FORMAT = "%Y-%m-%dT%H:%M"
 
-WIDGETS_RESTRICTED_PREFIX = "widgets/staging/business_continuity_"
+WIDGETS_RESTRICTED_PREFIX = "widgets/private/business_continuity_"
 PLOT_FILENAME_SUFFIX = "hr_absenteeism_plot.html"
 
 
