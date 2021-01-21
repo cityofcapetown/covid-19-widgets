@@ -41,7 +41,8 @@ THRESHOLD_COL = "long_backlog_weighting_delta"
 PERCENT_COLS = ["service_standard", "service_standard_delta", "long_backlog", "long_backlog_delta",
                 "backlog_delta_relative"]
 
-THRESHOLD_VALUES = 100
+THRESHOLD_MIN_VALUES = 100
+THRESHOLD_VALUES = 0.005
 
 CHOROPLETH_SOURCE_ATTRS = {
     # filename: source_filename, index_col, NULL Value
@@ -65,6 +66,13 @@ def generate_indexed_dict(metrics_df, index_col, index_null_value):
     initial_dict = metrics_df.set_index([index_col, FEATURE_COL]).to_dict(orient='index')
     logging.debug(f"len(initial_dict)={len(initial_dict)}")
 
+    percentile_mins_df = (metrics_df.groupby(FEATURE_COL)[THRESHOLD_COL].sum()*THRESHOLD_VALUES).to_frame()
+    percentile_mins_df["dummy"] = THRESHOLD_MIN_VALUES
+
+    logging.debug(f"percentile_mins={percentile_mins_df}")
+    threshold_limits = percentile_mins_df.min(axis='columns')
+    logging.debug(f"Using minimum value of {threshold_limits} per index")
+
     nested_dict = {}
     for (index, feature), values_dict in initial_dict.items():
         index_dict = nested_dict.get(index, {})
@@ -76,15 +84,16 @@ def generate_indexed_dict(metrics_df, index_col, index_null_value):
             }
 
         threshold_val = sanitised_values.get(f"{feature}-{THRESHOLD_COL}", 0)
-        if threshold_val < THRESHOLD_VALUES or index == index_null_value:
-            logging.warning(f"below threshold - skipping '{feature}' for '{index}' ({index_col})!")
-            null_dict[f"{feature}-{THRESHOLD_COL}"] = null_dict.get(f"{feature}-{THRESHOLD_COL}", 0) + threshold_val
 
-        if len(sanitised_values) and threshold_val >= THRESHOLD_VALUES:
+        if len(sanitised_values) and threshold_val >= threshold_limits[feature]:
             index_dict = {**sanitised_values, **index_dict}
             nested_dict[index] = index_dict
+        elif threshold_val < threshold_limits[feature] or index == index_null_value:
+            logging.warning(f"below threshold - skipping '{feature}' for '{index}' ({index_col})!")
+            null_dict[f"{feature}-{THRESHOLD_COL}"] = null_dict.get(f"{feature}-{THRESHOLD_COL}", 0) + threshold_val
+            nested_dict[index_null_value] = null_dict
         else:
-            logging.warning(f"skipping '{feature}' for '{index}' ('{index_col}')!")
+            logging.warning(f"insufficent non-null values - skipping '{feature}' for '{index}' ('{index_col}')!")
 
     feature_df = pandas.DataFrame.from_dict(nested_dict, orient='index')
 
