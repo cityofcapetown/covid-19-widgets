@@ -76,30 +76,30 @@ SERVICE_DELIVERY_LAYER_PROPERTIES_LOOKUP = collections.OrderedDict((
         city_map_widget_to_minio.LayerType.CHOROPLETH,
         (HEX_COUNT_INDEX_PROPERTY, BACKLOG_COL + DELTA_SUFFIX + RELATIVE_SUFFIX,
          SERVICE_STANDARD_COL + DELTA_SUFFIX, LONG_BACKLOG_COL + DELTA_SUFFIX,
-         DATE_COL),
+         DATE_COL, DATE_COL + DELTA_SUFFIX),
         ("Hex ID", "Backlog Growth (%)",
          "Service Standard Change (%)", "Still Open > 180 days Change (%)",
-         "Last Updated",),
+         "Last Updated", "Days since 2020-10-12"),
         ("RdBu", True, [-numpy.inf, -10, 10, numpy.inf]), HEX_METRIC_L7_FILENAME, False, True, None, False
     )),
     ("Service Standard Change (hexes)", (
         city_map_widget_to_minio.LayerType.CHOROPLETH,
         (HEX_COUNT_INDEX_PROPERTY, SERVICE_STANDARD_COL + DELTA_SUFFIX,
          BACKLOG_COL + DELTA_SUFFIX + RELATIVE_SUFFIX, LONG_BACKLOG_COL + DELTA_SUFFIX,
-         DATE_COL),
+         DATE_COL, DATE_COL + DELTA_SUFFIX),
         ("Hex ID", "Service Standard Change (%)",
          "Backlog Growth (%)", "Still Open > 180 days Change (%)",
-         "Last Updated",),
+         "Last Updated", "Days since 2020-10-12"),
         ("RdBu", False, [-numpy.inf, -1, 1, numpy.inf]), HEX_METRIC_L7_FILENAME, False, True, None, False
     )),
     ("Still Open > 180 days Change (hexes)", (
         city_map_widget_to_minio.LayerType.CHOROPLETH,
         (HEX_COUNT_INDEX_PROPERTY, LONG_BACKLOG_COL + DELTA_SUFFIX,
          SERVICE_STANDARD_COL + DELTA_SUFFIX, BACKLOG_COL + DELTA_SUFFIX + RELATIVE_SUFFIX,
-         DATE_COL),
+         DATE_COL, DATE_COL + DELTA_SUFFIX),
         ("Hex ID", "Still Open > 180 days Change (%)",
          "Service Standard Change (%)", "Backlog Growth (%)",
-         "Last Updated",),
+         "Last Updated", "Days since 2020-10-12"),
         ("RdBu", True, [-numpy.inf, -0.1, 0.1, numpy.inf]), HEX_METRIC_L7_FILENAME, False, True, None, False
     )),
 ))
