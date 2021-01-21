@@ -209,7 +209,7 @@ MINIMAP_PADDING = 20
 MAP_FILENAME = "metric_map_widget.html"
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.DEBUG,
+    logging.basicConfig(level=logging.INFO,
                         format='%(asctime)s-%(module)s.%(funcName)s [%(levelname)s]: %(message)s')
 
     # Loading secrets
