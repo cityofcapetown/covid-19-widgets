@@ -1,4 +1,5 @@
 import collections
+import copy
 import itertools
 import json
 import logging
@@ -291,7 +292,8 @@ HOTSPOT_LAYER_PROPERTIES_LOOKUP = collections.OrderedDict((
         city_map_widget_to_minio.LayerType.POINT,
         ("ORG_NAME", "ORGWARDS", "SUBCOUNCIL_DESCRIPTION", "ORG_ADDRESS", "ORG_PHONE_NUMBER", "ORG_EMAIL_ADDRESS"),
         ("Name", "Ward", "Subcouncil", "Address", "Phone Number", "Email"),
-        ("cadetblue", "heart"), "community-organisations-designated-vulnerable-groups.geojson", False, False, None, False
+        ("cadetblue", "heart"), "community-organisations-designated-vulnerable-groups.geojson", False, False, None,
+        False
     )),
     ("Safety & Security Organisations", (
         city_map_widget_to_minio.LayerType.POINT,
@@ -322,7 +324,8 @@ HOTSPOT_LAYER_PROPERTIES_LOOKUP = collections.OrderedDict((
         city_map_widget_to_minio.LayerType.POINT,
         ("ORG_NAME", "ORGWARDS", "SUBCOUNCIL_DESCRIPTION", "ORG_ADDRESS", "ORG_PHONE_NUMBER", "ORG_EMAIL_ADDRESS"),
         ("Name", "Ward", "Subcouncil", "Address", "Phone Number", "Email"),
-        ("cadetblue", "comments"), "community-organisations-civic-based-organisations.geojson", False, False, None, False
+        ("cadetblue", "comments"), "community-organisations-civic-based-organisations.geojson", False, False, None,
+        False
     )),
     ("Business Organisations", (
         city_map_widget_to_minio.LayerType.POINT,
@@ -463,7 +466,9 @@ MINIMAP_PADDING = 20
 MAP_FILENAME = "hotspot_map_widget.html"
 
 
-def generate_base_map_features(tempdir, base_map_filename=epi_map_case_layers_to_minio.CT_HEALTH_DISTRICT_FILENAME, minimap=False):
+def generate_base_map_features(tempdir,
+                               base_map_filename=epi_map_case_layers_to_minio.CT_HEALTH_DISTRICT_FILENAME,
+                               minimap=False):
     features = []
 
     # Health SubDistrict Outlines
@@ -473,7 +478,9 @@ def generate_base_map_features(tempdir, base_map_filename=epi_map_case_layers_to
         name="Base Map Outline",
         show=True,
         fill_opacity=0,
-        line_color="blue"
+        line_color="blue",
+        overlay=False,
+        zIndex=0,
     )
     basemap_outline.geojson.embed = False
     basemap_outline.geojson.embed_link = base_map_filename
@@ -484,14 +491,23 @@ def generate_base_map_features(tempdir, base_map_filename=epi_map_case_layers_to
         folium.TileLayer(
             name='No Base Map',
             tiles='',
-            attr='No one'
+            attr='No one',
+            show=True
         ),
         folium.TileLayer(
-            name='Terrain',
+            name='Terrain Map',
             tiles='https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-            attr='Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
+            attr='Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community',
+            show=False
         ),
-        basemap_outline.geojson
+        folium.TileLayer(
+            name='Feature Map',
+            tiles='https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
+            attr='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; '
+                 '<a href="https://carto.com/attributions">CARTO</a>',
+            show=False,
+        ),
+        basemap_outline.geojson,
     ]
 
     # Minimap
@@ -561,7 +577,7 @@ def add_tree_layer_control_to_map(map, category_map=CATEGORY_BUCKET_MAP):
         if not isinstance(item, folium.map.Layer) or not item.control:
             continue
 
-        key = item.layer_name
+        key = item.layer_name.strip()
         item.layer_name = f" {key}"
         if not item.overlay:
             base_layers += [item]
@@ -579,14 +595,22 @@ def add_tree_layer_control_to_map(map, category_map=CATEGORY_BUCKET_MAP):
         ]
 
     tlc = tree_layer_control.TreeLayerControl(
-        base_tree_entries=list(reversed(base_layers)), overlay_tree_entries=overlays,
+        base_tree_entries=list(base_layers), overlay_tree_entries=overlays,
         overlay_tree_entries_properties={
-            f"<i> {bucket}</i>": {"selectAllCheckbox": True, "collapsed": True, } for bucket in category_map
+            f"<i> {bucket}</i>": {
+                "selectAllCheckbox": True,
+                "collapsed": not any([item.show for item in bucket_items if isinstance(item, folium.map.Layer)]),
+            } for bucket, bucket_items in category_overlays.items()
         },
         collapsed=False, namedToggle=True,
     )
 
     tlc.add_to(map)
+
+    map.keep_in_front(*[
+        item for item in base_layers + overlays
+        if isinstance(item, folium.map.Layer)
+    ])
 
     return map
 
@@ -658,7 +682,7 @@ if __name__ == "__main__":
 
         map_zoom = DISTRICT_MAP_ZOOM if subdistrict_name != "*" else MAP_ZOOM
         data_map = city_map_widget_to_minio.generate_map(map_feature_generator,
-                                                         map_zoom=map_zoom, map_right_padding=MAP_RIGHT_PADDING, )
+                                                         map_zoom=map_zoom, map_right_padding=MAP_RIGHT_PADDING, add_basemap=False)
         data_map = add_tree_layer_control_to_map(data_map)
         logging.info("Generat[ed] map")
 

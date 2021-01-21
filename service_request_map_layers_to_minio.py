@@ -309,19 +309,19 @@ def generate_sr_metadata(sr_df, start_dates):
 
 def write_service_request_count_gdf_to_disk(case_count_data_gdf, tempdir, case_count_filename):
     local_path = os.path.join(tempdir, case_count_filename)
-    case_count_data_gdf.reset_index().to_file(local_path, driver='GeoJSON')
+    case_count_data_gdf.reset_index().to_file(local_path, driver='GeoJSON', na='drop')
 
     return local_path, case_count_data_gdf
 
 
-def write_metadata_to_minio(metadata_dict, tempdir, metadata_filename, minio_access, minio_secret):
+def write_metadata_to_minio(metadata_dict, tempdir, metadata_filename, minio_access, minio_secret, map_prefix=SERVICE_REQUEST_MAP_PREFIX):
     local_path = os.path.join(tempdir, metadata_filename)
     with open(local_path, "w") as metadata_file:
         json.dump(metadata_dict, metadata_file)
 
     result = minio_utils.file_to_minio(
         filename=local_path,
-        filename_prefix_override=SERVICE_REQUEST_MAP_PREFIX,
+        filename_prefix_override=map_prefix,
         minio_bucket=MINIO_COVID_BUCKET,
         minio_key=minio_access,
         minio_secret=minio_secret,

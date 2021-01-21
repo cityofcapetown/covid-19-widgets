@@ -118,6 +118,11 @@ map_layer_push_operator = covid_19_widget_task(
     MAP_LAYER_PUSH_TASK,
 )
 
+METRIC_MAP_LAYER_GENERATE_TASK = 'sd-metric-map-layers-generate'
+metric_map_layer_generate_operator = covid_19_widget_task(
+    METRIC_MAP_LAYER_GENERATE_TASK,
+)
+
 MAP_WIDGET_TASK = 'sr-maps-generate'
 map_widget_operators = [
     covid_19_widget_task(
@@ -136,6 +141,9 @@ focus_map_widget_operators = [
 
 SD_MAP_WIDGET_TASK = "sd-maps-generate"
 sd_map_widget_operator = covid_19_widget_task(SD_MAP_WIDGET_TASK, task_cmdline_args=list(DIRECTORATE_LIST[0]))
+
+SD_METRIC_MAP_WIDGET_TASK = "sd-metric-maps-generate"
+sd_metric_map_widget_operator = covid_19_widget_task(SD_METRIC_MAP_WIDGET_TASK,)
 
 SD_VALUES_TASK = "sd-latest-values"
 sd_latest_values_operator = covid_19_widget_task(SD_VALUES_TASK,)
@@ -158,9 +166,6 @@ sd_volume_requests_widget_operator = covid_19_widget_task(SD_VOLUME_REQUESTS_WID
 SD_REQUESTS_DISTRIBUTION_WIDGET_TASK = "sd-request-distribution-plots"
 sd_requests_distribution_widget_operator = covid_19_widget_task(SD_REQUESTS_DISTRIBUTION_WIDGET_TASK,)
 
-SD_BIPLOT_WIDGET_TASK = "service-delivery-plot"
-sd_plot_widget_operator = covid_19_widget_task(SD_BIPLOT_WIDGET_TASK,)
-
 # Dependencies
 for layer_gen, widget_gen in zip(map_layer_operators, map_widget_operators):
     layer_gen >> widget_gen
@@ -173,3 +178,5 @@ sd_latest_values_operator >> [sd_volume_widget_operator,
                               sd_duration_widget_operator,
                               sd_volume_requests_widget_operator,
                               sd_requests_distribution_widget_operator]
+
+[metric_map_layer_generate_operator, map_layer_push_operator] >> sd_metric_map_widget_operator
