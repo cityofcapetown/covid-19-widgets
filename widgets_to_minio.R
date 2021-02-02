@@ -143,6 +143,7 @@ datasets <- covid_assets %>%
   pull(object_name) %>% as.character() 
 
 for (object_name in datasets) {
+  print(object_name)
   minio_to_file(object_name,
                 "covid",
                 minio_key,
@@ -188,6 +189,7 @@ datasets <- covid_assets %>%
   pull(object_name) %>% as.character() 
 
 for (object_name in datasets) {
+  print(object_name)
   minio_to_file(object_name,
                 "covid",
                 minio_key,
