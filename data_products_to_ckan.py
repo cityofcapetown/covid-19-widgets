@@ -62,7 +62,7 @@ def pull_down_covid_bucket_files(minio_access, minio_secret, patterns, exclude_p
 
         def _list_bucket_objects(minio_client, minio_bucket, prefix=None):
             object_set = set([obj.object_name
-                              for obj in minio_client.list_objects_v2(minio_bucket, recursive=True)
+                              for obj in minio_client.list_objects(minio_bucket, recursive=True)
                               if (
                                       any(map(lambda p: fnmatch.fnmatch(obj.object_name, p), patterns)) and not
                                       any(map(lambda p: fnmatch.fnmatch(obj.object_name, p), exclude_patterns))
