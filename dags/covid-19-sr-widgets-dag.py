@@ -76,7 +76,7 @@ def covid_19_widget_task(task_name, task_kwargs={}, task_cmdline_args=[]):
         name=name,
         task_id=name,
         dag=dag,
-        execution_timeout=timedelta(hours=1),
+        execution_timeout=timedelta(hours=2),
         **run_args
     )
 
