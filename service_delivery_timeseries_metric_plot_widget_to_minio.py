@@ -13,7 +13,7 @@ from bokeh.resources import CDN
 import pandas
 
 import service_request_timeseries_plot_widget_to_minio
-from service_delivery_latest_values_to_minio import DATE_COL, FEATURE_COL, MEASURE_COL, VALUE_COL, REFERENCE_DATE, SKIP_LIST, REMAP_DICT
+from service_delivery_latest_values_to_minio import DATE_COL, FEATURE_COL, MEASURE_COL, VALUE_COL, REFERENCE_DATE, SECOND_REFERENCE_DATE, SKIP_LIST, REMAP_DICT
 import service_delivery_latest_values_to_minio
 
 BACKLOG = "backlog"
@@ -34,9 +34,12 @@ COL_PLOT_SETTINGS = {
 
 TOOL_TIPS = [
     (DATE_COL, f"@{DATE_COL}{{%F}}"),
-    (f"Backlog (vs {REFERENCE_DATE})", f"@{BACKLOG}{{0.0 a}} (@{BACKLOG}_delta_relative{{+0.[0]%}})"),
-    (f"Service Standard (vs {REFERENCE_DATE})", f"@{SERVICE_STANDARD}{{0.[0]%}} (@{SERVICE_STANDARD}_delta{{+0.[0]%}})"),
-    (f"Still Open > 180 days (vs {REFERENCE_DATE})", f"@{LONG_BACKLOG}{{0.[00]%}} (@{LONG_BACKLOG}_delta{{+0.[00]%}})"),
+    (f"Backlog (vs {REFERENCE_DATE}, vs {SECOND_REFERENCE_DATE})",
+     f"@{BACKLOG}{{0.0 a}} (@{BACKLOG}_delta_relative{{+0.[0]%}}, @{BACKLOG}_second_delta_relative{{+0.[0]%}})"),
+    (f"Service Standard (vs {REFERENCE_DATE}, vs {SECOND_REFERENCE_DATE})",
+     f"@{SERVICE_STANDARD}{{0.[0]%}} (@{SERVICE_STANDARD}_delta{{+0.[0]%}}, @{SERVICE_STANDARD}_second_delta{{+0.[0]%}})"),
+    (f"Still Open > 180 days (vs {REFERENCE_DATE}, vs {SECOND_REFERENCE_DATE})",
+     f"@{LONG_BACKLOG}{{0.[00]%}} (@{LONG_BACKLOG}_delta{{+0.[00]%}}, @{LONG_BACKLOG}_second_delta{{+0.[00]%}})"),
 ]
 AXIS_FORMATTERS = {
     BACKLOG: '0 a',
@@ -49,7 +52,6 @@ PLOT_START = "2019-01-01"
 ISO8601_DATE_FORMAT = "%Y-%m-%d"
 
 WINDOW_START = "2020-10-01"
-REFERENCE_DATE = "2020-10-12"
 
 SD_PREFIX = "service_delivery"
 PLOT_SUFFIX = "plot.html"
@@ -80,6 +82,12 @@ def generate_plot_timeseries(data_df):
             resampled_df.loc[time_filter, f"{col}_delta"] = resampled_df[col] - resampled_df.loc[REFERENCE_DATE, col]
             resampled_df.loc[time_filter, f"{col}_delta_relative"] = (
                     resampled_df[f"{col}_delta"] / resampled_df.loc[REFERENCE_DATE, col]
+            )
+            resampled_df.loc[time_filter, f"{col}_second_delta"] = (
+                    resampled_df[col] - resampled_df.loc[SECOND_REFERENCE_DATE, col]
+            )
+            resampled_df.loc[time_filter, f"{col}_second_delta_relative"] = (
+                    resampled_df[f"{col}_second_delta"] / resampled_df.loc[SECOND_REFERENCE_DATE, col]
             )
 
     return resampled_df.loc[PLOT_START:]
@@ -130,6 +138,12 @@ def generate_plot(plot_df, metric_col,
         line_dash='dashed', line_width=4
     )
     plot.add_layout(marker_span)
+    second_marker_span = Span(
+        location=pandas.to_datetime(SECOND_REFERENCE_DATE),
+        dimension='height', line_color=marker_line,
+        line_dash='dashed', line_width=4
+    )
+    plot.add_layout(second_marker_span)
 
     # Plot grid and axis
     plot.grid.grid_line_color = "white"
@@ -173,6 +187,12 @@ def generate_plot(plot_df, metric_col,
         line_dash='dashed', line_width=1
     )
     select.add_layout(select_span)
+    second_select_span = Span(
+        location=pandas.to_datetime(SECOND_REFERENCE_DATE),
+        dimension='height', line_color=marker_line,
+        line_dash='dashed', line_width=1
+    )
+    select.add_layout(second_select_span)
 
     select.xgrid.grid_line_color = "White"
     select.ygrid.grid_line_color = None

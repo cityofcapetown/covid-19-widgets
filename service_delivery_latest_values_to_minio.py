@@ -22,7 +22,11 @@ METRICS_FIELD = "metrics"
 METRICS_DELTA_FIELD = "metrics-delta"
 METRICS_DELTA_RELATIVE_FIELD = "metrics-delta-relative"
 
+METRICS_SECOND_DELTA_FIELD = "metrics-second-delta"
+METRICS_SECOND_DELTA_RELATIVE_FIELD = "metrics-second-delta-relative"
+
 REFERENCE_DATE = "2020-10-12"
+SECOND_REFERENCE_DATE = "2021-02-01"
 
 OUTPUT_VALUE_FILENAME = "service_delivery_values.json"
 
@@ -49,6 +53,18 @@ def create_latest_sd_values_dict(ts_df):
     }
     logging.debug(f"ref_values_dicts=\n{pprint.pformat(ref_values_dicts)}")
 
+    second_ref_values_dicts = ts_df[
+        ts_df[DATE_COL] <= REFERENCE_DATE
+    ].sort_values(by=[FEATURE_COL, MEASURE_COL, DATE_COL]).drop_duplicates(
+        subset=[FEATURE_COL, MEASURE_COL], keep="last"
+    ).reset_index().to_dict(orient="records")
+
+    second_ref_values_dicts = {
+        (second_ref_values_dict[FEATURE_COL], second_ref_values_dict[MEASURE_COL]): second_ref_values_dict
+        for second_ref_values_dict in second_ref_values_dicts
+    }
+    logging.debug(f"second_ref_values_dicts=\n{pprint.pformat(second_ref_values_dicts)}")
+
     # transforming from flat records into hierarchy of values
     output_dict = {}
     for value_dict in latest_values_dict:
@@ -65,7 +81,9 @@ def create_latest_sd_values_dict(ts_df):
             if feature not in value_output_dict:
                 value_output_dict[feature] = {METRICS_FIELD: {DATE_COL: value_dict[DATE_COL].strftime("%Y-%m-%d")},
                                               METRICS_DELTA_FIELD: {DATE_COL: REFERENCE_DATE},
-                                              METRICS_DELTA_RELATIVE_FIELD: {DATE_COL: REFERENCE_DATE}}
+                                              METRICS_SECOND_DELTA_FIELD: {DATE_COL: SECOND_REFERENCE_DATE},
+                                              METRICS_DELTA_RELATIVE_FIELD: {DATE_COL: REFERENCE_DATE},
+                                              METRICS_SECOND_DELTA_RELATIVE_FIELD: {DATE_COL: SECOND_REFERENCE_DATE}}
                 logging.debug(f"Adding {feature} to values dict")
 
             value_output_dict = value_output_dict[feature]
@@ -77,6 +95,8 @@ def create_latest_sd_values_dict(ts_df):
             logging.warning(f"No reference values for '{value_dict[FEATURE_COL]}' for measure '{value_dict[MEASURE_COL]}'")
         else:
             ref_value_dict = ref_values_dicts[ref_lookup_key]
+            second_ref_value_dict = second_ref_values_dicts[ref_lookup_key]
+
             value_output_dict[METRICS_DELTA_FIELD][value_dict[MEASURE_COL]] = (
                     value_dict[VALUE_COL] - ref_value_dict[VALUE_COL]
             )
@@ -84,6 +104,16 @@ def create_latest_sd_values_dict(ts_df):
             value_output_dict[METRICS_DELTA_RELATIVE_FIELD][value_dict[MEASURE_COL]] = round(
                 (value_dict[VALUE_COL] - ref_value_dict[VALUE_COL]) / (
                     ref_value_dict[VALUE_COL] if ref_value_dict[VALUE_COL] else 1e-7
+                ), 2
+            )
+
+            value_output_dict[METRICS_SECOND_DELTA_FIELD][value_dict[MEASURE_COL]] = (
+                    value_dict[VALUE_COL] - second_ref_value_dict[VALUE_COL]
+            )
+
+            value_output_dict[METRICS_SECOND_DELTA_RELATIVE_FIELD][value_dict[MEASURE_COL]] = round(
+                (value_dict[VALUE_COL] - second_ref_value_dict[VALUE_COL]) / (
+                    second_ref_value_dict[VALUE_COL] if second_ref_value_dict[VALUE_COL] else 1e-7
                 ), 2
             )
 
