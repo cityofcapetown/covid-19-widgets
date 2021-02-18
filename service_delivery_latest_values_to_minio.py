@@ -10,7 +10,7 @@ from hr_data_last_values_to_minio import get_data, to_json_data, write_to_minio
 
 SD_DATA_FILENAME = "business_continuity_service_delivery.csv"
 
-SKIP_LIST = ("safety_and_security", "treasury", "insurance", "library_and_information_services")
+SKIP_LIST = ("safety_and_security", "treasury", "insurance", "library_and_information_services", "environment_management")
 REMAP_DICT = {"water_and_waste_services": "water_and_waste"}
 
 DATE_COL = "date"
