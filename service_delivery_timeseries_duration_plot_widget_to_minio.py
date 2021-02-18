@@ -14,7 +14,7 @@ from bokeh.resources import CDN
 import pandas
 from tqdm.auto import tqdm
 
-from service_delivery_latest_values_to_minio import SKIP_LIST, REFERENCE_DATE, REMAP_DICT
+from service_delivery_latest_values_to_minio import SKIP_LIST, REFERENCE_DATE, REMAP_DICT, SECOND_REFERENCE_DATE
 import service_request_timeseries_plot_widget_to_minio
 
 tqdm.pandas()
@@ -43,8 +43,11 @@ PLOT_START = "2019-01-01"
 
 TOOL_TIPS = [
     (DATE_COL, f"@{DATE_COL}{{%F}}"),
-    (f"Duration (vs {REFERENCE_DATE})",
-     f"@{DURATION_DAYS_COL}{{0.0 a}} (@{DURATION_DAYS_COL}_delta_relative{{+0.0%}})"),
+    (f"Duration (vs {REFERENCE_DATE}, vs {SECOND_REFERENCE_DATE})",
+     f"@{DURATION_DAYS_COL}{{0.0 a}} ("
+     f"@{DURATION_DAYS_COL}_delta_relative{{+0.0%}}, "
+     f"@{DURATION_DAYS_COL}_second_delta_relative{{+0.0%}}"
+     f")"),
 ]
 
 HOVER_COLS = [DATE_COL, DURATION_DAYS_COL]
@@ -81,6 +84,10 @@ def generate_plot_ts_df(filtered_sr_df):
         duration_df.loc[time_filter, f"{col}_delta"] = duration_df[col] - duration_df.loc[REFERENCE_DATE, col]
         duration_df.loc[time_filter, f"{col}_delta_relative"] = (
                 duration_df[f"{col}_delta"] / duration_df.loc[REFERENCE_DATE, col]
+        )
+        duration_df.loc[time_filter, f"{col}_second_delta"] = duration_df[col] - duration_df.loc[SECOND_REFERENCE_DATE, col]
+        duration_df.loc[time_filter, f"{col}_second_delta_relative"] = (
+                duration_df[f"{col}_delta"] / duration_df.loc[SECOND_REFERENCE_DATE, col]
         )
 
     duration_df = duration_df.loc[PLOT_START:]
@@ -122,13 +129,19 @@ def generate_plot(plot_df):
     circle = plot.circle(x=DATE_COL, y=DURATION_DAYS_COL,
                          source=plot_df, color="#c44e52", size=6, alpha=0.8, line_alpha=0.8)
 
-    # Marker line
+    # Marker lines
     marker_span = Span(
         location=pandas.to_datetime(REFERENCE_DATE),
         dimension='height', line_color="#4c72b0",
         line_dash='dashed', line_width=4
     )
     plot.add_layout(marker_span)
+    second_marker_span = Span(
+        location=pandas.to_datetime(SECOND_REFERENCE_DATE),
+        dimension='height', line_color="#4c72b0",
+        line_dash='dashed', line_width=4
+    )
+    plot.add_layout(second_marker_span)
 
     # Plot grid and axis
     plot.grid.grid_line_color = "white"
@@ -167,9 +180,15 @@ def generate_plot(plot_df):
     select_span = Span(
         location=pandas.to_datetime(REFERENCE_DATE),
         dimension='height', line_color="#4c72b0",
-        line_dash='dashed', line_width=4
+        line_dash='dashed', line_width=2
     )
-    select.add_layout(marker_span)
+    select.add_layout(select_span)
+    second_select_span = Span(
+        location=pandas.to_datetime(SECOND_REFERENCE_DATE),
+        dimension='height', line_color="#4c72b0",
+        line_dash='dashed', line_width=2
+    )
+    select.add_layout(second_select_span)
 
     select.xgrid.grid_line_color = "White"
     select.ygrid.grid_line_color = None
