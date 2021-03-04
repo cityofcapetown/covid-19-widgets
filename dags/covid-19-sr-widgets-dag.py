@@ -39,7 +39,7 @@ k8s_run_env = {
     'COVID_19_DEPLOY_URL': 'https://ds2.capetown.gov.za/covid-19-widgets-deploy',
     'COVID_19_WIDGETS_DIR': '/covid-19-widgets',
     'DB_UTILS_LOCATION': 'https://ds2.capetown.gov.za/db-utils',
-    'DB_UTILS_PKG': 'db_utils-0.3.8-py2.py3-none-any.whl'
+    'DB_UTILS_PKG': 'db_utils-0.4.0-py2.py3-none-any.whl'
 }
 
 # airflow-workers' secrets
@@ -47,7 +47,7 @@ secret_file = Secret('volume', '/secrets', 'airflow-workers-secret')
 
 # arguments for the k8s operator
 k8s_run_args = {
-    "image": "cityofcapetown/datascience:python@sha256:c5a8ec97e35e603aca281343111193a26a929d821b84c6678fb381f9e7bd08d7",
+    "image": "cityofcapetown/datascience:python@sha256:53a435a5550f057b89b5d750d19efd1c6ac740a0db340698d928929d4335a64f",
     "namespace": 'airflow-workers',
     "is_delete_operator_pod": True,
     "get_logs": True,
