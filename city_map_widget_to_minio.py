@@ -239,6 +239,7 @@ def generate_map_features(layers_dict,
             if len(bins) < 3:
                 logging.warning("Less than 3 data bins - disabling colour scheme")
                 colour_scheme = None
+                layer_type = LayerType.POLYGON
 
             if bins is not None:
                 logging.debug(f"{str(layer_lookup_key)}, {str(choropleth_key)}")
