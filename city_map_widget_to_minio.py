@@ -236,7 +236,7 @@ def generate_map_features(layers_dict,
             elif layer_type is LayerType.CHOROPLETH:
                 bins = _get_choropleth_bins(count_gdf[choropleth_key].dropna(), choropleth_bins)
 
-            if len(bins) < 3:
+            if bins and len(bins) < 3:
                 logging.warning("Less than 3 data bins - disabling colour scheme")
                 colour_scheme = None
                 layer_type = LayerType.POLYGON
