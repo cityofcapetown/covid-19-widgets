@@ -1,4 +1,5 @@
 import collections
+import functools
 import json
 import logging
 import os
@@ -10,6 +11,7 @@ from urllib.parse import urlparse
 from db_utils import minio_utils
 import folium
 import geopandas
+import numpy
 import requests
 
 import epi_map_case_layers_to_minio
@@ -111,6 +113,56 @@ MAP_RIGHT_PADDING = 100
 MAP_FILENAME = "map_widget.html"
 
 
+@functools.lru_cache(maxsize=1)
+def _fetch_layer(tempdir, layer_filename_prefix, layer_suffix, apply_prefix, has_metadata,
+                 minio_path_prefix, minio_access, minio_secret):
+    layer_filename = (f"{layer_filename_prefix}_{layer_suffix}"
+                      if apply_prefix
+                      else layer_suffix)
+
+    local_path = os.path.join(tempdir, layer_filename)
+
+    layer_minio_path = (
+        f"{minio_path_prefix}"
+        f"{layer_filename}"
+    )
+    logging.debug(layer_minio_path)
+    minio_utils.minio_to_file(
+        filename=local_path,
+        minio_filename_override=layer_minio_path,
+        minio_bucket=MINIO_BUCKET,
+        minio_key=minio_access,
+        minio_secret=minio_secret,
+        data_classification=MINIO_CLASSIFICATION,
+    )
+
+    layer_gdf = geopandas.read_file(local_path)
+
+    # Getting the layer's metadata
+    if has_metadata:
+        metadata_filename = os.path.splitext(layer_filename)[0] + ".json"
+        metadata_local_path = os.path.join(tempdir, metadata_filename)
+        metadata_minio_path = (
+            f"{minio_path_prefix}"
+            f"{metadata_filename}"
+        )
+
+        minio_utils.minio_to_file(
+            filename=metadata_local_path,
+            minio_filename_override=metadata_minio_path,
+            minio_bucket=MINIO_BUCKET,
+            minio_key=minio_access,
+            minio_secret=minio_secret,
+            data_classification=MINIO_CLASSIFICATION,
+        )
+        with open(metadata_local_path, "r") as metadata_file:
+            layer_metadata = json.load(metadata_file)
+    else:
+        layer_metadata = {}
+
+    return local_path, layer_gdf, layer_metadata
+
+
 def get_layers(tempdir, minio_access, minio_secret,
                layer_properties=LAYER_PROPERTIES_LOOKUP,
                layer_filename_prefix=None,
@@ -118,49 +170,10 @@ def get_layers(tempdir, minio_access, minio_secret,
     for layer, layer_properties in layer_properties.items():
         layer_type, *_, layer_suffix, _1, has_metadata, _3, apply_prefix = layer_properties
 
-        layer_filename = (f"{layer_filename_prefix}_{layer_suffix}"
-                          if apply_prefix
-                          else layer_suffix)
-
-        local_path = os.path.join(tempdir, layer_filename)
-
-        layer_minio_path = (
-            f"{minio_path_prefix}"
-            f"{layer_filename}"
+        local_path, layer_gdf, layer_metadata = _fetch_layer(
+            tempdir, layer_filename_prefix, layer_suffix, apply_prefix, has_metadata,
+            minio_path_prefix, minio_access, minio_secret
         )
-        logging.debug(layer_minio_path)
-        minio_utils.minio_to_file(
-            filename=local_path,
-            minio_filename_override=layer_minio_path,
-            minio_bucket=MINIO_BUCKET,
-            minio_key=minio_access,
-            minio_secret=minio_secret,
-            data_classification=MINIO_CLASSIFICATION,
-        )
-
-        layer_gdf = geopandas.read_file(local_path)
-
-        # Getting the layer's metadata
-        if has_metadata:
-            metadata_filename = os.path.splitext(layer_filename)[0] + ".json"
-            metadata_local_path = os.path.join(tempdir, metadata_filename)
-            metadata_minio_path = (
-                f"{minio_path_prefix}"
-                f"{metadata_filename}"
-            )
-
-            minio_utils.minio_to_file(
-                filename=metadata_local_path,
-                minio_filename_override=metadata_minio_path,
-                minio_bucket=MINIO_BUCKET,
-                minio_key=minio_access,
-                minio_secret=minio_secret,
-                data_classification=MINIO_CLASSIFICATION,
-            )
-            with open(metadata_local_path, "r") as metadata_file:
-                layer_metadata = json.load(metadata_file)
-        else:
-            layer_metadata = {}
 
         yield layer, local_path, layer_gdf, layer_metadata
 
@@ -177,21 +190,20 @@ def _get_choropleth_bins(count_series, bin_quantiles):
     if len(bins) <= 3:
         bins.insert(0, count_series.min() - 1)
 
-    logging.info(f"bins={', '.join(map(str, bins))}")
-
     return bins
 
 
 def generate_map_features(layers_dict,
                           layer_properties=LAYER_PROPERTIES_LOOKUP,
-                          float_left_offset="0%", choropleth_bins=BIN_QUANTILES):
+                          float_left_offset="0%", choropleth_bins=BIN_QUANTILES,
+                          properties_prefix=None, metadata_override=None, metadata_text_label_override=None):
     # Going layer by layer
     for title, (layer_path, count_gdf, layer_metadata) in layers_dict.items():
         (layer_type,
          layer_lookup_fields, layer_lookup_aliases,
          display_properties, layer_suffix, visible_by_default,
          has_metadata, metadata_key, apply_prefix) = layer_properties[title]
-        logging.info(f"Generating {title} map feature")
+        logging.debug(f"Generating {title} map feature")
 
         # Everything gets packed into a feature group
         layer_feature_group = folium.features.FeatureGroup(
@@ -203,9 +215,28 @@ def generate_map_features(layers_dict,
         if layer_type in {LayerType.CHOROPLETH, LayerType.POLYGON}:
             layer_lookup_key, choropleth_key = layer_lookup_fields[:2] if layer_type is LayerType.CHOROPLETH else (
                 None, None,)
+            choropleth_key = f"{properties_prefix}-{choropleth_key}" if properties_prefix else choropleth_key
+
             colour_scheme, *_ = display_properties
-            logging.info(f"\n{count_gdf}")
-            logging.info(f"{str(layer_lookup_key)}, {str(choropleth_key)}")
+
+            invert_colour_scheme = display_properties[1] if len(display_properties) > 1 else False
+            if invert_colour_scheme:
+                count_gdf[choropleth_key] = -1 * count_gdf[choropleth_key]
+
+            bins = None
+            # Using hardcoded bins
+            if len(display_properties) > 2 and layer_type is LayerType.CHOROPLETH:
+                bins = -1*numpy.array(display_properties[2]) if invert_colour_scheme else display_properties[2]
+                bins = sorted(bins)
+            # Using percentile bins
+            elif layer_type is LayerType.CHOROPLETH:
+                bins = _get_choropleth_bins(count_gdf[choropleth_key].dropna(), choropleth_bins)
+
+            if bins is not None:
+                logging.debug(f"{str(layer_lookup_key)}, {str(choropleth_key)}")
+                logging.debug(f"\n{count_gdf[choropleth_key].head(5)}")
+                logging.debug(f"\n{count_gdf[choropleth_key].describe()}")
+                logging.debug(f"bins={', '.join(map(str, bins))}")
 
             if "level_0" in count_gdf.columns:
                 count_gdf.drop(columns=["level_0"], inplace=True)
@@ -220,7 +251,7 @@ def generate_map_features(layers_dict,
                 highlight=True,
                 show=visible_by_default,
                 line_opacity=0,
-                bins=_get_choropleth_bins(count_gdf[choropleth_key].dropna(), choropleth_bins),
+                bins=bins,
                 nan_fill_opacity=0,
                 fill_opacity=0.7,
             ) if layer_type is LayerType.CHOROPLETH else folium.features.Choropleth(
@@ -236,6 +267,12 @@ def generate_map_features(layers_dict,
             choropleth.geojson.embed_link = f"{layer_filename}"
 
             # Adding the hover-over tooltip
+            if properties_prefix:
+                layer_lookup_fields = [
+                    (field if field == layer_lookup_key or not properties_prefix else f"{properties_prefix}-{field}")
+                    for field in layer_lookup_fields
+                ]
+
             layer_tooltip = folium.features.GeoJsonTooltip(
                 fields=layer_lookup_fields,
                 aliases=layer_lookup_aliases
@@ -329,13 +366,17 @@ def generate_map_features(layers_dict,
         )) if visible_by_default else []
 
         # Adding missing count from metadata
+        metadata_key = metadata_override if metadata_override else metadata_key
+
         if metadata_key in layer_metadata:
-            cases_not_displayed = layer_metadata[metadata_key][epi_map_case_layers_to_minio.NOT_SPATIAL_CASE_COUNT]
+            not_displayed = layer_metadata[metadata_key][epi_map_case_layers_to_minio.NOT_SPATIAL_CASE_COUNT]
             total_count = layer_metadata[metadata_key][epi_map_case_layers_to_minio.CASE_COUNT_TOTAL]
 
+            metadata_text_label = metadata_text_label_override if metadata_text_label_override else "Cases not displayed"
+            metadata_text = f"{metadata_text_label}: {not_displayed} ({not_displayed / total_count:.1%} of total)"
             div = float_div.FloatDiv(content=(
-                "<span style='font-size: 20px; color:#FF0000'>"
-                f"Cases not displayed: {cases_not_displayed} ({cases_not_displayed / total_count:.1%} of total)"
+                "<span style='font-size: 20px; color:#FF0000'>" +
+                 metadata_text +
                 "</span>"
             ), top="95%", left=float_left_offset)
             layer_feature_group.add_child(div)
@@ -343,7 +384,7 @@ def generate_map_features(layers_dict,
         yield layer_feature_group, centroids
 
 
-def generate_map(map_features, map_zoom=MAP_ZOOM, map_right_padding=MAP_RIGHT_PADDING):
+def generate_map(map_features, map_zoom=MAP_ZOOM, map_right_padding=MAP_RIGHT_PADDING, add_basemap=True):
     m = folium.Map(
         location=CITY_CENTRE, zoom_start=map_zoom,
         tiles="",
@@ -351,14 +392,15 @@ def generate_map(map_features, map_zoom=MAP_ZOOM, map_right_padding=MAP_RIGHT_PA
     )
 
     # Feature Map
-    m.add_child(
-        folium.TileLayer(
-            name='Base Map',
-            tiles='https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
-            attr='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; '
-                 '<a href="https://carto.com/attributions">CARTO</a>'
+    if add_basemap:
+        m.add_child(
+            folium.TileLayer(
+                name='Base Map',
+                tiles='https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
+                attr='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; '
+                     '<a href="https://carto.com/attributions">CARTO</a>'
+            )
         )
-    )
 
     # Adding the features
     map_centroids = []
@@ -367,7 +409,8 @@ def generate_map(map_features, map_zoom=MAP_ZOOM, map_right_padding=MAP_RIGHT_PA
         map_centroids += centroids if centroids else []
 
     # Setting the map zoom using any visible layers
-    m.fit_bounds(map_centroids, padding_bottom_right=(0, map_right_padding), max_zoom=map_zoom)
+    if map_centroids:
+        m.fit_bounds(map_centroids, padding_bottom_right=(0, map_right_padding), max_zoom=map_zoom)
 
     return m
 
@@ -436,6 +479,23 @@ def pull_out_leaflet_deps(tempdir, proxy_username, proxy_password, minio_access,
 def write_map_to_minio(city_map, map_file_prefix, tempdir, minio_access, minio_secret,
                        js_libs, css_libs, map_suffix=MAP_FILENAME,
                        map_minio_prefix=epi_map_case_layers_to_minio.CASE_MAP_PREFIX):
+    # Uploading JS and CSS dependencies
+    for key, new_path in js_libs + css_libs:
+        *_, local_filename = os.path.split(new_path)
+        local_path = os.path.join(tempdir, local_filename)
+
+        logging.debug(f"Uploading '{key}' from '{local_path}'")
+        result = minio_utils.file_to_minio(
+            filename=local_path,
+            filename_prefix_override=f"{map_minio_prefix}{DEP_DIR}/",
+            minio_bucket=MINIO_BUCKET,
+            minio_key=minio_access,
+            minio_secret=minio_secret,
+            data_classification=MINIO_CLASSIFICATION,
+        )
+
+        assert result, f"Failed to upload {local_filename}"
+
     map_filename = f"{map_file_prefix}_{map_suffix}"
     local_path = os.path.join(tempdir, map_filename)
 
@@ -492,7 +552,7 @@ if __name__ == "__main__":
             for layer, local_path, layer_gdf, layer_metadata in get_layers(tempdir,
                                                                            secrets["minio"]["edge"]["access"],
                                                                            secrets["minio"]["edge"]["secret"],
-                                                                           layer_filename_prefix=f"{district_file_prefix}_{subdistrict_file_prefix}",)
+                                                                           layer_filename_prefix=f"{district_file_prefix}_{subdistrict_file_prefix}", )
         }
         logging.info("G[ot] layers")
 

@@ -12,7 +12,7 @@ from bokeh.resources import CDN
 
 import pandas
 
-import service_request_timeseries_plot_widget_to_minio
+import service_request_timeseries_utils
 from service_delivery_latest_values_to_minio import DATE_COL, FEATURE_COL, MEASURE_COL, VALUE_COL, SKIP_LIST, REMAP_DICT
 import service_delivery_latest_values_to_minio
 
@@ -22,7 +22,7 @@ COLS_SET = {OPENED_COUNT_COL, CLOSED_COUNT_COL}
 
 PREVIOUS_YEARS = 3
 PREVIOUS_YEAR_TEMPLATE = "previous_{}_year"
-PLOT_START = "2019-07-01"
+PLOT_START = "2019-01-01"
 
 HOVER_COLS = [OPENED_COUNT_COL, CLOSED_COUNT_COL, DATE_COL]
 WINDOW_START = "2020-10-01"
@@ -208,7 +208,7 @@ if __name__ == "__main__":
                                 if department_file_prefix else plot_filename_prefix)
 
         plot_filename = f"{plot_filename_prefix}_{PLOT_FILENAME_SUFFIX}"
-        service_request_timeseries_plot_widget_to_minio.write_to_minio(plot_html, plot_filename,
-                                                                       secrets["minio"]["edge"]["access"],
-                                                                       secrets["minio"]["edge"]["secret"])
+        service_request_timeseries_utils.write_to_minio(plot_html, plot_filename,
+                                                        secrets["minio"]["edge"]["access"],
+                                                        secrets["minio"]["edge"]["secret"])
         logging.info("...Wr[ote] to Minio")

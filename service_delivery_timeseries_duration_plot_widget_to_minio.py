@@ -14,8 +14,8 @@ from bokeh.resources import CDN
 import pandas
 from tqdm.auto import tqdm
 
-from service_delivery_latest_values_to_minio import SKIP_LIST, REFERENCE_DATE, REMAP_DICT
-import service_request_timeseries_plot_widget_to_minio
+from service_delivery_latest_values_to_minio import SKIP_LIST, REFERENCE_DATE, REMAP_DICT, SECOND_REFERENCE_DATE
+import service_request_timeseries_utils
 
 tqdm.pandas()
 
@@ -39,12 +39,15 @@ DURATION_WINDOW = 28
 PREVIOUS_YEARS = 3
 PREVIOUS_YEAR_TEMPLATE = "previous_{}_year"
 WINDOW_START = "2020-10-01"
-PLOT_START = "2019-07-01"
+PLOT_START = "2019-01-01"
 
 TOOL_TIPS = [
     (DATE_COL, f"@{DATE_COL}{{%F}}"),
-    (f"Duration (vs {REFERENCE_DATE})",
-     f"@{DURATION_DAYS_COL}{{0.0 a}} (@{DURATION_DAYS_COL}_delta_relative{{+0.0%}})"),
+    (f"Duration (vs {REFERENCE_DATE}, vs {SECOND_REFERENCE_DATE})",
+     f"@{DURATION_DAYS_COL}{{0.0 a}} ("
+     f"@{DURATION_DAYS_COL}_delta_relative{{+0.0%}}, "
+     f"@{DURATION_DAYS_COL}_second_delta_relative{{+0.0%}}"
+     f")"),
 ]
 
 HOVER_COLS = [DATE_COL, DURATION_DAYS_COL]
@@ -81,6 +84,10 @@ def generate_plot_ts_df(filtered_sr_df):
         duration_df.loc[time_filter, f"{col}_delta"] = duration_df[col] - duration_df.loc[REFERENCE_DATE, col]
         duration_df.loc[time_filter, f"{col}_delta_relative"] = (
                 duration_df[f"{col}_delta"] / duration_df.loc[REFERENCE_DATE, col]
+        )
+        duration_df.loc[time_filter, f"{col}_second_delta"] = duration_df[col] - duration_df.loc[SECOND_REFERENCE_DATE, col]
+        duration_df.loc[time_filter, f"{col}_second_delta_relative"] = (
+                duration_df[f"{col}_delta"] / duration_df.loc[SECOND_REFERENCE_DATE, col]
         )
 
     duration_df = duration_df.loc[PLOT_START:]
@@ -122,18 +129,24 @@ def generate_plot(plot_df):
     circle = plot.circle(x=DATE_COL, y=DURATION_DAYS_COL,
                          source=plot_df, color="#c44e52", size=6, alpha=0.8, line_alpha=0.8)
 
-    # Marker line
+    # Marker lines
     marker_span = Span(
         location=pandas.to_datetime(REFERENCE_DATE),
         dimension='height', line_color="#4c72b0",
         line_dash='dashed', line_width=4
     )
     plot.add_layout(marker_span)
+    second_marker_span = Span(
+        location=pandas.to_datetime(SECOND_REFERENCE_DATE),
+        dimension='height', line_color="#4c72b0",
+        line_dash='dashed', line_width=4
+    )
+    plot.add_layout(second_marker_span)
 
     # Plot grid and axis
     plot.grid.grid_line_color = "white"
     plot.xaxis.major_label_orientation = math.pi / 4
-    plot.xaxis.formatter = DatetimeTickFormatter(format=ISO601_DATE_FORMAT)
+    plot.xaxis.formatter = DatetimeTickFormatter(days=ISO601_DATE_FORMAT)
     plot.y_range.start = 0
 
     plot.axis.axis_label_text_font_size = "12pt"
@@ -167,13 +180,19 @@ def generate_plot(plot_df):
     select_span = Span(
         location=pandas.to_datetime(REFERENCE_DATE),
         dimension='height', line_color="#4c72b0",
-        line_dash='dashed', line_width=4
+        line_dash='dashed', line_width=2
     )
-    select.add_layout(marker_span)
+    select.add_layout(select_span)
+    second_select_span = Span(
+        location=pandas.to_datetime(SECOND_REFERENCE_DATE),
+        dimension='height', line_color="#4c72b0",
+        line_dash='dashed', line_width=2
+    )
+    select.add_layout(second_select_span)
 
     select.xgrid.grid_line_color = "White"
     select.ygrid.grid_line_color = None
-    select.xaxis.formatter = DatetimeTickFormatter(format=ISO601_DATE_FORMAT)
+    select.xaxis.formatter = DatetimeTickFormatter(days=ISO601_DATE_FORMAT)
     select.add_tools(range_tool)
     select.toolbar.active_multi = range_tool
 
@@ -201,8 +220,8 @@ if __name__ == "__main__":
     secrets = json.load(open(secrets_path))
 
     logging.info("Fetch[ing] SR data...")
-    service_request_df = service_request_timeseries_plot_widget_to_minio.get_service_request_data(
-        service_request_timeseries_plot_widget_to_minio.DATA_BUCKET_NAME,
+    service_request_df = service_request_timeseries_utils.get_service_request_data(
+        service_request_timeseries_utils.DATA_BUCKET_NAME,
         secrets["minio"]["lake"]["access"],
         secrets["minio"]["lake"]["secret"]
     )
@@ -239,7 +258,7 @@ if __name__ == "__main__":
         plot_prefix = f"{plot_prefix}_{directorate}_{department}" if directorate and department else plot_prefix
 
         plot_filename = f"{plot_prefix}_{PLOT_FILENAME_SUFFIX}"
-        service_request_timeseries_plot_widget_to_minio.write_to_minio(ts_plot_html, plot_filename,
-                                                                       secrets["minio"]["edge"]["access"],
-                                                                       secrets["minio"]["edge"]["secret"])
+        service_request_timeseries_utils.write_to_minio(ts_plot_html, plot_filename,
+                                                        secrets["minio"]["edge"]["access"],
+                                                        secrets["minio"]["edge"]["secret"])
         logging.info("...Wr[ote] to Minio")

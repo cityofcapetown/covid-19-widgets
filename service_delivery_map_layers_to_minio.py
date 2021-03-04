@@ -15,6 +15,7 @@ MINIO_EDGE_CLASSIFICATION = minio_utils.DataClassification.EDGE
 DATA_PUBLIC_PREFIX = "data/public/"
 DATA_RESTRICTED_PREFIX = "data/private/"
 SERVICE_DELIVERY_MAP_PREFIX = "widgets/private/business_continuity_service_request_map/"
+SERVICE_DELIVERY_METRIC_MAP_PREFIX = "widgets/private/business_continuity_service_delivery_map/"
 DATA_VULNERABILITY_PREFIX = "data/staging/vulenerability_layers/"
 
 LAYER_FILES = (
@@ -73,4 +74,8 @@ if __name__ == "__main__":
                                                        secrets["minio"]["edge"]["access"],
                                                        secrets["minio"]["edge"]["secret"],
                                                        prefix=SERVICE_DELIVERY_MAP_PREFIX)
+        city_map_layers_to_minio.write_layers_to_minio(map_layers_dict,
+                                                       secrets["minio"]["edge"]["access"],
+                                                       secrets["minio"]["edge"]["secret"],
+                                                       prefix=SERVICE_DELIVERY_METRIC_MAP_PREFIX)
         logging.info("Wr[ote] layers to Minio")

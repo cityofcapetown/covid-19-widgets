@@ -8,7 +8,7 @@ if (Sys.getenv("DB_UTILS_DIR") == "") {
   Sys.setenv("DB_UTILS_DIR" = "~/db-utils")
 }
 if (Sys.getenv("SECRETS_FILE") == "") {
-  Sys.setenv("SECRETS_FILE" = "~/secrets.json")
+  Sys.setenv("SECRETS_FILE" = "secrets.json")
 }
 
 # LOAD LIBRARIES ============================================================================
@@ -36,6 +36,7 @@ library(dplyr) # extra dependency for lag day adjustments data manipulation
 library(R.utils)
 library(webshot2)
 library(chromote)
+library(aws.s3)
 
 
 # LOAD SECRETS ==========================================================================
@@ -48,6 +49,10 @@ data_classification = "EDGE"
 filename_prefix_override = NA
 minio_url_override = NA
 
+Sys.setenv("AWS_ACCESS_KEY_ID" = minio_key,
+           "AWS_SECRET_ACCESS_KEY" = minio_secret,
+           "AWS_DEFAULT_REGION" = "ds2",
+           "AWS_S3_ENDPOINT" = "capetown.gov.za")
 
 # FUNCTIONS =================================================================
 df_as_xts <- function(df, time_col) {
@@ -143,12 +148,15 @@ datasets <- covid_assets %>%
   pull(object_name) %>% as.character() 
 
 for (object_name in datasets) {
-  minio_to_file(object_name,
-                "covid",
-                minio_key,
-                minio_secret,
-                "EDGE",
-                minio_filename_override = object_name)
+  print(object_name)
+  save_object(object_name, file = object_name, bucket = "covid")
+  # minio_to_file(object_name,
+  #               "covid",
+  #               minio_key,
+  #               minio_secret,
+  #               "EDGE",
+  #               minio_filename_override = object_name)
+  
 }
 
 dataset_names <- strsplit(datasets, "\\/")
@@ -171,16 +179,6 @@ for (i in seq_along(1:length(datasets))) {
 rm(datasets)
 rm(dataset_names)
 
-# read in service requests ----------------
-# minio_to_file("service-requests-full.parquet",
-#               "service-requests-full",
-#               minio_key,
-#               minio_secret,
-#               "EDGE")
-# 
-# service_requests <- read_parquet("service-requests-full.parquet")
-# unlink("service-requests-full.parquet")
-
 # pull in private dataset ---------------
 datasets <- covid_assets %>% 
   filter(grepl("data/private",object_name) ) %>% 
@@ -188,13 +186,16 @@ datasets <- covid_assets %>%
   pull(object_name) %>% as.character() 
 
 for (object_name in datasets) {
-  minio_to_file(object_name,
-                "covid",
-                minio_key,
-                minio_secret,
-                "EDGE",
-                minio_filename_override = object_name)
+  print(object_name)
+  save_object(object_name, file = object_name, bucket = "covid")
+  # minio_to_file(object_name,
+  #               "covid",
+  #               minio_key,
+  #               minio_secret,
+  #               "EDGE",
+  #               minio_filename_override = object_name)
 }
+
 
 dataset_names <- strsplit(datasets, "\\/")
 dataset_names <- sapply(dataset_names, "[[", 3)

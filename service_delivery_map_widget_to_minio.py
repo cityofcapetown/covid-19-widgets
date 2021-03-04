@@ -310,8 +310,8 @@ CATEGORY_BUCKET_MAP = {
     "Service Request Growth (subcouncils)": "SERVICE DELIVERY",
 
     # Organisational Capacity
-    "Staff Capacity Counts": "Organisational Capacity",
-    "Staff Capacity Relative": "Organisational Capacity",
+    "Staff Capacity Counts": "ORGANISATIONAL CAPACITY",
+    "Staff Capacity Relative": "ORGANISATIONAL CAPACITY",
 
     # Contextual Information
     "ABSD Areas": "CONTEXTUAL INFORMATION",
@@ -408,14 +408,15 @@ if __name__ == "__main__":
         logging.info("Generat[ing] map")
         district_map_features = hotspot_map_widget_to_minio.generate_base_map_features(
             tempdir,
-            minimap=(directorate_name != "*"), base_map_filename="absd_areas.geojson"
+            minimap=(directorate_name != "*"), base_map_filename="absd_areas.geojson",
         )
 
         map_feature_generator = itertools.chain(district_map_features, map_features)
 
         map_zoom = DISTRICT_MAP_ZOOM if directorate_name != "*" else MAP_ZOOM
         data_map = city_map_widget_to_minio.generate_map(map_feature_generator,
-                                                         map_zoom=map_zoom, map_right_padding=MAP_RIGHT_PADDING, )
+                                                         map_zoom=map_zoom, map_right_padding=MAP_RIGHT_PADDING,
+                                                         add_basemap=False)
         data_map = hotspot_map_widget_to_minio.add_tree_layer_control_to_map(data_map, CATEGORY_BUCKET_MAP)
         logging.info("Generat[ed] map")
 

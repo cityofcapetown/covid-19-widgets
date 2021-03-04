@@ -39,7 +39,7 @@ k8s_run_env = {
     'COVID_19_DEPLOY_URL': 'https://ds2.capetown.gov.za/covid-19-widgets-deploy',
     'COVID_19_WIDGETS_DIR': '/covid-19-widgets',
     'DB_UTILS_LOCATION': 'https://ds2.capetown.gov.za/db-utils',
-    'DB_UTILS_PKG': 'db_utils-0.3.6-py2.py3-none-any.whl'
+    'DB_UTILS_PKG': 'db_utils-0.4.0-py2.py3-none-any.whl'
 }
 
 # airflow-workers' secrets
@@ -47,7 +47,7 @@ secret_file = Secret('volume', '/secrets', 'airflow-workers-secret')
 
 # arguments for the k8s operator
 k8s_run_args = {
-    "image": "cityofcapetown/datascience:python",
+    "image": "cityofcapetown/datascience:python@sha256:53a435a5550f057b89b5d750d19efd1c6ac740a0db340698d928929d4335a64f",
     "namespace": 'airflow-workers',
     "is_delete_operator_pod": True,
     "get_logs": True,
@@ -76,7 +76,7 @@ def covid_19_widget_task(task_name, task_kwargs={}, task_cmdline_args=[]):
         name=name,
         task_id=name,
         dag=dag,
-        execution_timeout=timedelta(hours=1),
+        execution_timeout=timedelta(hours=2),
         **run_args
     )
 
@@ -97,14 +97,6 @@ DIRECTORATE_LIST = [
 ]
 
 # Defining tasks
-TS_PLOT_TASK = 'sr-timeseries-plot'
-timeseries_operators = [
-    covid_19_widget_task(
-        TS_PLOT_TASK,
-        task_cmdline_args=[directorate_filename_prefix, directorate_title, ]
-    ) for directorate_filename_prefix, directorate_title in DIRECTORATE_LIST
-]
-
 MAP_LAYER_TASK = 'sr-map-layers-generate'
 map_layer_operators = [
     covid_19_widget_task(
@@ -116,6 +108,11 @@ map_layer_operators = [
 MAP_LAYER_PUSH_TASK = 'sd-map-layers-push'
 map_layer_push_operator = covid_19_widget_task(
     MAP_LAYER_PUSH_TASK,
+)
+
+METRIC_MAP_LAYER_GENERATE_TASK = 'sd-metric-map-layers-generate'
+metric_map_layer_generate_operator = covid_19_widget_task(
+    METRIC_MAP_LAYER_GENERATE_TASK,
 )
 
 MAP_WIDGET_TASK = 'sr-maps-generate'
@@ -136,6 +133,9 @@ focus_map_widget_operators = [
 
 SD_MAP_WIDGET_TASK = "sd-maps-generate"
 sd_map_widget_operator = covid_19_widget_task(SD_MAP_WIDGET_TASK, task_cmdline_args=list(DIRECTORATE_LIST[0]))
+
+SD_METRIC_MAP_WIDGET_TASK = "sd-metric-maps-generate"
+sd_metric_map_widget_operator = covid_19_widget_task(SD_METRIC_MAP_WIDGET_TASK,)
 
 SD_VALUES_TASK = "sd-latest-values"
 sd_latest_values_operator = covid_19_widget_task(SD_VALUES_TASK,)
@@ -158,9 +158,6 @@ sd_volume_requests_widget_operator = covid_19_widget_task(SD_VOLUME_REQUESTS_WID
 SD_REQUESTS_DISTRIBUTION_WIDGET_TASK = "sd-request-distribution-plots"
 sd_requests_distribution_widget_operator = covid_19_widget_task(SD_REQUESTS_DISTRIBUTION_WIDGET_TASK,)
 
-SD_BIPLOT_WIDGET_TASK = "service-delivery-plot"
-sd_plot_widget_operator = covid_19_widget_task(SD_BIPLOT_WIDGET_TASK,)
-
 # Dependencies
 for layer_gen, widget_gen in zip(map_layer_operators, map_widget_operators):
     layer_gen >> widget_gen
@@ -173,3 +170,5 @@ sd_latest_values_operator >> [sd_volume_widget_operator,
                               sd_duration_widget_operator,
                               sd_volume_requests_widget_operator,
                               sd_requests_distribution_widget_operator]
+
+[metric_map_layer_generate_operator, map_layer_push_operator] >> sd_metric_map_widget_operator
