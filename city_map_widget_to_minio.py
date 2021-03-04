@@ -224,7 +224,8 @@ def generate_map_features(layers_dict,
                 count_gdf[choropleth_key] = -1 * count_gdf[choropleth_key]
 
             # Folium is fussy about NaN types it gets served
-            count_gdf[choropleth_key].fillna(numpy.nan, inplace=True)
+            if layer_type is LayerType.CHOROPLETH:
+                count_gdf[choropleth_key].fillna(numpy.nan, inplace=True)
 
             bins = None
             # Using hardcoded bins
