@@ -81,7 +81,7 @@ def minio_csv_to_df(minio_filename_override, minio_bucket, minio_key, minio_secr
             sys.exit(-1)
         else:
             logging.debug(f"Reading in raw data from '{temp_data_file.name}'...")
-            df = pd.read_csv(temp_data_file)
+            df = pd.read_csv(temp_data_file.name)
             return df
 
 
@@ -311,6 +311,10 @@ if __name__ == "__main__":
 
     # plot city wide backlog and % closed vs total opened in period
     
+    if department_metrics.empty:
+        logging.error(f"Empty dataframe for {DEPT_SERVICE_METRICS}")
+        sys.exit(-1)
+        
     # list of top 10 by volume
     logging.info(f"Plott[ing] City-wide backlog and Service Standard")
     top_10 = department_metrics.sort_values(TOTAL_OPEN, ascending=False).head(10)[CODE].to_list()
