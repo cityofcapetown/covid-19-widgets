@@ -39,7 +39,7 @@ k8s_run_env = {
     'COVID_19_DEPLOY_URL': 'https://ds2.capetown.gov.za/covid-19-widgets-deploy',
     'COVID_19_WIDGETS_DIR': '/covid-19-widgets',
     'DB_UTILS_LOCATION': 'https://ds2.capetown.gov.za/db-utils',
-    'DB_UTILS_PKG': 'db_utils-0.3.7-py2.py3-none-any.whl'
+    'DB_UTILS_PKG': 'db_utils-0.3.8-py2.py3-none-any.whl'
 }
 
 # airflow-workers' secrets
@@ -97,14 +97,6 @@ DIRECTORATE_LIST = [
 ]
 
 # Defining tasks
-TS_PLOT_TASK = 'sr-timeseries-plot'
-timeseries_operators = [
-    covid_19_widget_task(
-        TS_PLOT_TASK,
-        task_cmdline_args=[directorate_filename_prefix, directorate_title, ]
-    ) for directorate_filename_prefix, directorate_title in DIRECTORATE_LIST
-]
-
 MAP_LAYER_TASK = 'sr-map-layers-generate'
 map_layer_operators = [
     covid_19_widget_task(

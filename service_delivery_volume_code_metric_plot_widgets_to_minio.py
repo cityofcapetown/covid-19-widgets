@@ -10,7 +10,7 @@ from bokeh.resources import CDN
 
 from service_delivery_latest_values_to_minio import REFERENCE_DATE
 import service_delivery_latest_values_to_minio
-import service_request_timeseries_plot_widget_to_minio
+import service_request_timeseries_utils
 
 SD_DEPT_METRICS = "business_continuity_service_delivery_department_metrics.csv"
 
@@ -200,14 +200,14 @@ if __name__ == "__main__":
                                 if department_file_prefix else plot_filename_prefix)
 
         volume_perf_plot_filename = f"{SD_PREFIX}_{plot_filename_prefix}_{VOLUME_PERF_PLOT_SUFFIX}"
-        service_request_timeseries_plot_widget_to_minio.write_to_minio(volume_perf_plot_html,
-                                                                       volume_perf_plot_filename,
-                                                                       secrets["minio"]["edge"]["access"],
-                                                                       secrets["minio"]["edge"]["secret"])
+        service_request_timeseries_utils.write_to_minio(volume_perf_plot_html,
+                                                        volume_perf_plot_filename,
+                                                        secrets["minio"]["edge"]["access"],
+                                                        secrets["minio"]["edge"]["secret"])
 
         volume_growth_plot_filename = f"{SD_PREFIX}_{plot_filename_prefix}_{VOLUME_GROWTH_PLOT_SUFFIX}"
-        service_request_timeseries_plot_widget_to_minio.write_to_minio(volume_growth_plot_html,
-                                                                       volume_growth_plot_filename,
-                                                                       secrets["minio"]["edge"]["access"],
-                                                                       secrets["minio"]["edge"]["secret"])
+        service_request_timeseries_utils.write_to_minio(volume_growth_plot_html,
+                                                        volume_growth_plot_filename,
+                                                        secrets["minio"]["edge"]["access"],
+                                                        secrets["minio"]["edge"]["secret"])
         logging.info("...Wr[ote] to Minio")

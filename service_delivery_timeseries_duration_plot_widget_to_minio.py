@@ -15,7 +15,7 @@ import pandas
 from tqdm.auto import tqdm
 
 from service_delivery_latest_values_to_minio import SKIP_LIST, REFERENCE_DATE, REMAP_DICT, SECOND_REFERENCE_DATE
-import service_request_timeseries_plot_widget_to_minio
+import service_request_timeseries_utils
 
 tqdm.pandas()
 
@@ -220,8 +220,8 @@ if __name__ == "__main__":
     secrets = json.load(open(secrets_path))
 
     logging.info("Fetch[ing] SR data...")
-    service_request_df = service_request_timeseries_plot_widget_to_minio.get_service_request_data(
-        service_request_timeseries_plot_widget_to_minio.DATA_BUCKET_NAME,
+    service_request_df = service_request_timeseries_utils.get_service_request_data(
+        service_request_timeseries_utils.DATA_BUCKET_NAME,
         secrets["minio"]["lake"]["access"],
         secrets["minio"]["lake"]["secret"]
     )
@@ -258,7 +258,7 @@ if __name__ == "__main__":
         plot_prefix = f"{plot_prefix}_{directorate}_{department}" if directorate and department else plot_prefix
 
         plot_filename = f"{plot_prefix}_{PLOT_FILENAME_SUFFIX}"
-        service_request_timeseries_plot_widget_to_minio.write_to_minio(ts_plot_html, plot_filename,
-                                                                       secrets["minio"]["edge"]["access"],
-                                                                       secrets["minio"]["edge"]["secret"])
+        service_request_timeseries_utils.write_to_minio(ts_plot_html, plot_filename,
+                                                        secrets["minio"]["edge"]["access"],
+                                                        secrets["minio"]["edge"]["secret"])
         logging.info("...Wr[ote] to Minio")

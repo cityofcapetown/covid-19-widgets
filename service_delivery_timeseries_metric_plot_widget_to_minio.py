@@ -12,7 +12,7 @@ from bokeh.resources import CDN
 
 import pandas
 
-import service_request_timeseries_plot_widget_to_minio
+import service_request_timeseries_utils
 from service_delivery_latest_values_to_minio import DATE_COL, FEATURE_COL, MEASURE_COL, VALUE_COL, REFERENCE_DATE, SECOND_REFERENCE_DATE, SKIP_LIST, REMAP_DICT
 import service_delivery_latest_values_to_minio
 
@@ -280,7 +280,7 @@ if __name__ == "__main__":
                                     if department_file_prefix else plot_filename_prefix)
 
             plot_filename = f"{SD_PREFIX}_{plot_filename_prefix}_{metric_col}_{PLOT_SUFFIX}"
-            service_request_timeseries_plot_widget_to_minio.write_to_minio(plot_html, plot_filename,
-                                                                           secrets["minio"]["edge"]["access"],
-                                                                           secrets["minio"]["edge"]["secret"])
+            service_request_timeseries_utils.write_to_minio(plot_html, plot_filename,
+                                                            secrets["minio"]["edge"]["access"],
+                                                            secrets["minio"]["edge"]["secret"])
             logging.info("...Wr[ote] to Minio")

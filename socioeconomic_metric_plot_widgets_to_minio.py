@@ -13,7 +13,7 @@ from bokeh.palettes import d3
 
 import pandas
 
-import service_request_timeseries_plot_widget_to_minio
+import service_request_timeseries_utils
 from socioeconomic_latest_values_to_minio import DATE_COL, FEATURE_COL, MEASURE_COL, VALUE_COL
 import socioeconomic_latest_values_to_minio
 
@@ -134,7 +134,7 @@ if __name__ == "__main__":
         measure_prefix = measure.lower().replace(" ", "_")
         plot_filename = f"{socioeconomic_latest_values_to_minio.SE_PREFIX}_{measure_prefix}_ts_{PLOT_SUFFIX}"
 
-        service_request_timeseries_plot_widget_to_minio.write_to_minio(plot_html, plot_filename,
-                                                                       secrets["minio"]["edge"]["access"],
-                                                                       secrets["minio"]["edge"]["secret"])
+        service_request_timeseries_utils.write_to_minio(plot_html, plot_filename,
+                                                        secrets["minio"]["edge"]["access"],
+                                                        secrets["minio"]["edge"]["secret"])
         logging.info("...Wr[ote] to Minio")
