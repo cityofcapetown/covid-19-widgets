@@ -12,8 +12,8 @@ default_args = {
     'email': ['gordon.inggs@capetown.gov.za'],
     'email_on_failure': False,
     'email_on_retry': False,
-    'retries': 2,
-    'retry_delay': timedelta(minutes=5),
+    'retries': 5,
+    'retry_delay': timedelta(minutes=15),
 }
 
 startup_cmd = (
