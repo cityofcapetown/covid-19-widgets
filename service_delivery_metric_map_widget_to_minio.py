@@ -159,8 +159,8 @@ SERVICE_DELIVERY_SHARED_LAYER_PROPERTIES_LOOKUP = collections.OrderedDict((
     )),
     ("Sewerage Pump Stations", (
         city_map_widget_to_minio.LayerType.POINT,
-        ("NAME", "SAP_KEY", "DPT", "WWTW"), ("Station Name", "SAP Key", "Depot", "WWTW"),
-        ("grey", "cogs"), "sewer_pump_stations.geojson", False, False, None, False
+        ("NAME", "SAP_KEY", "DPT", "WWTW"), ("Station Name", "SAP Key", "Depot", "Waste Water Treatment Plant"),
+        ("gray", "cogs"), "sewer_pump_stations.geojson", False, False, None, False
     )),
     ("Sewerage Drainage Areas", (
         city_map_widget_to_minio.LayerType.POLYGON,
