@@ -208,6 +208,8 @@ CATEGORY_BUCKET_MAP = {
     "Rental Stock (hostels)": CONTEXTUAL_INFORMATION,
     "Areas of Informality": CONTEXTUAL_INFORMATION,
     "2019 Population Estimate": CONTEXTUAL_INFORMATION,
+    "Sewerage Pump Stations": CONTEXTUAL_INFORMATION,
+    "Sewerage Drainage Areas": CONTEXTUAL_INFORMATION
 }
 
 BIN_QUANTILES = [0, 0.2, 0.4, 0.6, 0.8, 1]
