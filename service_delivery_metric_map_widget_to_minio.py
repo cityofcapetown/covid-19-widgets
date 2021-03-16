@@ -157,6 +157,16 @@ SERVICE_DELIVERY_SHARED_LAYER_PROPERTIES_LOOKUP = collections.OrderedDict((
         ("AOI_NAME", "OTH_NAME", "AOI_TYPE"), ("Area Name", "Other Name", "Area Type",),
         ("grey",), "areas_of_informality_2019.geojson", False, False, None, False
     )),
+    ("Sewerage Pump Stations", (
+        city_map_widget_to_minio.LayerType.POINT,
+        ("NAME", "SAP_KEY", "DPT", "WWTW"), ("Station Name", "SAP Key", "Depot", "WWTW"),
+        ("grey", "cogs"), "areas_of_informality_2019.geojson", False, False, None, False
+    )),
+    ("Sewerage Drainage Areas", (
+        city_map_widget_to_minio.LayerType.POLYGON,
+        ("NAME", "WWTP"), ("Drainage Area Name", "Waste Water Treatment Plant",),
+        ("black",), "sewer_drainage_areas.geojson", False, False, None, False
+    )),
 
     # Population Density
     ("2019 Population Estimate", (
