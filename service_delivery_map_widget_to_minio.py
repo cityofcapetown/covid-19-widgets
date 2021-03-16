@@ -272,7 +272,7 @@ SERVICE_DELIVERY_LAYER_PROPERTIES_LOOKUP = collections.OrderedDict((
     ("Areas of Informality", (
         city_map_widget_to_minio.LayerType.POLYGON,
         ("AOI_NAME", "OTH_NAME", "AOI_TYPE"), ("Area Name", "Other Name", "Area Type",),
-        ("gray",), "areas_of_informality_2019.geojson", False, False, None, False
+        ("grey",), "areas_of_informality_2019.geojson", False, False, None, False
     )),
 
     # Population Density
