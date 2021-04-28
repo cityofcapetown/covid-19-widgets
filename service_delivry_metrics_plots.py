@@ -48,6 +48,7 @@ DEFAULT_GREY ="#bababa"
 
 BACKLOG = "backlog"
 SERVICE_STD = "service_standard"
+OPENED_COUNT = "opened_count"
 TOTAL_OPEN = "total_opened"
 BIPLOT_X_LABEL = "Total Requests Opened since 2020-10-12"
 SERVICE_STD_LABEL = "Closed within target (%)"
@@ -223,7 +224,7 @@ def quadrant_fig(df, x_col, y_col, x_lab, y_lab, code, label_df, fx=5, fy=5):
         (y_lab, f'@{y_col}{{0.[0] a}}'),
         (x_lab, f'@{x_col}{{0.[0] a}}'),
         (code, f'@{code}'),
-        ("Requests Opened", f'@{TOTAL_OPEN}'),
+        ("Requests Opened", f'@{OPENED_COUNT}'),
         ("Department", f'@department'),
     ]
     hover_tool = HoverTool(tooltips=tooltips, mode='mouse')
@@ -317,28 +318,28 @@ if __name__ == "__main__":
         
     # list of top 10 by volume
     logging.info(f"Plott[ing] City-wide backlog and Service Standard")
-    top_10 = department_metrics.sort_values(TOTAL_OPEN, ascending=False).head(10)[CODE].to_list()
+    top_10 = department_metrics.sort_values(OPENED_COUNT, ascending=False).head(10)[CODE].to_list()
     top_n_per_dept = department_metrics.query("department.isin(@DEPARTMENTS)").sort_values(
-        TOTAL_OPEN, ascending=False).groupby("department", sort=False).head(SHOW_MIN)[CODE].to_list()
+        OPENED_COUNT, ascending=False).groupby("department", sort=False).head(SHOW_MIN)[CODE].to_list()
     extra = [request for request in top_n_per_dept if request not in top_10]
     top_10.extend(extra)
     
     # best fit
-    x = department_metrics.sort_values(TOTAL_OPEN)[TOTAL_OPEN]
-    y = department_metrics.sort_values(TOTAL_OPEN)[BACKLOG]
+    x = department_metrics.sort_values(OPENED_COUNT)[OPENED_COUNT]
+    y = department_metrics.sort_values(OPENED_COUNT)[BACKLOG]
     best_fit = (np.unique(x), np.poly1d(np.polyfit(x, y, 1))(np.unique(x)))
     
     # create the color codes
     department_metrics["color"] = department_metrics[CODE].apply(lambda val: DEFAULT_GREY if val not in top_10 else BACKLOG_BLUE)
     
     # call the plot function for backlog
-    backlog_fig = make_fig(department_metrics, x_col=TOTAL_OPEN, y_col=BACKLOG,
+    backlog_fig = make_fig(department_metrics, x_col=OPENED_COUNT, y_col=BACKLOG,
                            x_lab=BIPLOT_X_LABEL, y_lab=BACKLOG_LAB,
                            code=CODE, best_fit=best_fit)
     
     # call the plot function for service standard
     department_metrics["color"] = department_metrics[CODE].apply(lambda val: DEFAULT_GREY if val not in top_10 else STANDARD_RED)
-    p_closed_fig = make_fig(department_metrics, x_col=TOTAL_OPEN, y_col=SERVICE_STD,
+    p_closed_fig = make_fig(department_metrics, x_col=OPENED_COUNT, y_col=SERVICE_STD,
                             x_lab=BIPLOT_X_LABEL, y_lab=SERVICE_STD_LABEL,
                             code=CODE, best_fit=None)
     logging.info(f"Plott[ed] City-wide backlog and Service Standard")
@@ -362,24 +363,24 @@ if __name__ == "__main__":
     logging.info(f"Plott[ing] department backlog and Service Standard")
     for department in DEPARTMENTS:
         dept_df = department_metrics.query("department == @department").copy().fillna(0)
-        dpt_top_10 = dept_df.sort_values(TOTAL_OPEN, ascending=False).head(10)[CODE].to_list()
+        dpt_top_10 = dept_df.sort_values(OPENED_COUNT, ascending=False).head(10)[CODE].to_list()
         if dept_df.empty:
             logging.warning(f"{department} is an empty dataframe")
             continue
         directorate = dept_df.directorate.to_list()[0]
 
         # best fit
-        x = dept_df.sort_values(TOTAL_OPEN)[TOTAL_OPEN]
-        y = dept_df.sort_values(TOTAL_OPEN)[BACKLOG]
+        x = dept_df.sort_values(OPENED_COUNT)[OPENED_COUNT]
+        y = dept_df.sort_values(OPENED_COUNT)[BACKLOG]
         best_fit = (np.unique(x), np.poly1d(np.polyfit(x, y, 1))(np.unique(x)))
 
         dept_df["color"] = dept_df[CODE].apply(lambda val: DEFAULT_GREY if val not in dpt_top_10 else BACKLOG_BLUE)
-        backlog_fig = make_fig(dept_df, x_col=TOTAL_OPEN, y_col=BACKLOG,
+        backlog_fig = make_fig(dept_df, x_col=OPENED_COUNT, y_col=BACKLOG,
                                x_lab=BIPLOT_X_LABEL, y_lab=BACKLOG_LAB,
                                code=CODE, best_fit=best_fit)
 
         dept_df["color"] = dept_df[CODE].apply(lambda val: DEFAULT_GREY if val not in dpt_top_10 else STANDARD_RED)
-        p_closed_fig = make_fig(dept_df, x_col=TOTAL_OPEN, y_col=SERVICE_STD,
+        p_closed_fig = make_fig(dept_df, x_col=OPENED_COUNT, y_col=SERVICE_STD,
                                 x_lab=BIPLOT_X_LABEL, y_lab=SERVICE_STD_LABEL,
                                 code=CODE, best_fit=None)
 
@@ -406,8 +407,8 @@ if __name__ == "__main__":
     # city wide quadrant fig
     logging.info(f"Creat[ing] Quadrant plots - all departments")
     # add the point size
-    department_metrics["size"] = (department_metrics[TOTAL_OPEN] /
-                                  department_metrics[TOTAL_OPEN].max() * 20) + 6
+    department_metrics["size"] = (department_metrics[OPENED_COUNT] /
+                                  department_metrics[OPENED_COUNT].max() * 20) + 6
 
     # make df of top 10 for labelling
     label_df = department_metrics.query(f"{CODE}.isin(@top_10)").copy()
@@ -439,7 +440,7 @@ if __name__ == "__main__":
         dept_df = department_metrics.query("department == @department").copy()
 
         # list of top 10 by volume
-        dept_top_10 = dept_df.sort_values(TOTAL_OPEN, ascending=False).head(10)[CODE].to_list()
+        dept_top_10 = dept_df.sort_values(OPENED_COUNT, ascending=False).head(10)[CODE].to_list()
         
         # make df of top 10 for labelling
         dept_label_df = dept_df.query(f"{CODE}.isin(@dept_top_10)").copy()
