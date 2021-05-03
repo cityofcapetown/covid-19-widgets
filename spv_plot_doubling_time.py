@@ -116,7 +116,7 @@ def preprocess_data(df):
     return df
 
 
-def plot_plotly_plot(x_vals, y1_vals, y2_vals, y2_lab):
+def plot_plotly_plot(x_vals, y1_vals, y2_vals, y2_lab, y1_lab=LEFT_Y_LAB):
     """
     function to make doubling time plot
     """
@@ -126,7 +126,7 @@ def plot_plotly_plot(x_vals, y1_vals, y2_vals, y2_lab):
 
     # Add the doubling time trace
     fig.add_trace(
-        go.Scatter(x=x_vals, y=y1_vals, name=LEFT_Y_LAB, line=dict(color='#74add1', width=2)),
+        go.Scatter(x=x_vals, y=y1_vals, name=y1_lab, line=dict(color='#74add1', width=2)),
         secondary_y=False,
     )
 
@@ -159,7 +159,7 @@ def plot_plotly_plot(x_vals, y1_vals, y2_vals, y2_lab):
     fig.update_xaxes(title_text="")
 
     # Set y-axes titles
-    fig.update_yaxes(title_text=LEFT_Y_LAB,
+    fig.update_yaxes(title_text=y1_lab,
                      secondary_y=False, color=LEFT_AXIS_COLR)
     fig.update_yaxes(title_text=f"<b>{y2_lab}</b>", secondary_y=True, color=RIGHT_AXIS_COLR)
 
