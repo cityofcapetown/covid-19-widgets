@@ -1,0 +1,122 @@
+<html>
+<body>
+<font face="Helvetica" style="font-size:16px;">
+    <h2>Covid-19 Vaccination Rollout Report</h2>
+    <h4>Report Date: {{ report_date }}</h4>
+    <h4>Confidentiality Notice</h4>
+    <p>
+        This analysis is for internal use only. It is based on data which is unstable, and in flight.
+        Analysis may change as more data emerges. Please do not distribute.
+    </p>
+    <p>
+        This is an automated email providing a report on the rollout of the Covid-19 vaccine to CoCT staff,
+        as assessed using the Online Covid-19 Vaccine Register and Staff Sequencing forms.
+    </p>
+    <h4>High Level Summary</h4>
+    <p>
+        <strong>{{ total_vaccinated }}</strong> staff vaccinated out of <strong>{{ total_staff }}</strong> total staff <strong>({{ percent_vaccinated }}%)</strong> prioritised for Phase 1 of the vaccination rollout.
+    </p>
+    <hr>
+    <h4>Vaccine Rollout Time Series</h4>
+    <p>
+        <strong>Vaccinations over time: Totals</strong> (For all staff (Top row) and for sequenced staff who are Willing to vaccinate (Bottom row))
+    </p>
+    <p>
+        <img src="cid:{{staff_by_totals_file}}" style="width:80%;height:auto;">
+    </p>
+    <hr>
+    <p>
+        <strong>Vaccinations over time: by Department</strong> (For all staff (Top row) and for sequenced staff who are Willing to vaccinate (Bottom row))
+    </p>
+    <p>
+        <img src="cid:{{staff_by_department_file}}" style="width:80%;height:auto">
+    </p>
+    <hr>
+    <p>
+        <strong>Vaccinations over time: by Subdistrict</strong> (For all staff (Top row) and for sequenced staff who are Willing to vaccinate (Bottom row))
+    </p>
+    <p>
+        <img src="cid:{{staff_by_subdistrict_file}}" style="width:80%;height:auto">
+    </p>
+    <hr>
+    <p>
+        <strong>Vaccinations over time by: Staff-type</strong> (For all staff (Top row) and for sequenced staff who are Willing to vaccinate (Bottom row))
+    </p>
+    <p>
+        <img src="cid:{{staff_by_type_file}}" style="width:80%;height:auto;float:left">
+    </p>
+    <hr>
+    <p>
+        <strong>Vaccinations over time by: Staff Risk-score</strong> (For staff who are Willing to vaccinate | Risk scores are from 0 (low risk) to 4 (high risk))
+    </p>
+    <p>
+        <img src="cid:{{staff_willing_by_risk_file}}" style="width:80%;height:auto;float:left">
+    </p>
+    <hr>
+    <h4>Vaccine Sequencing Results</h4>
+    <p>
+        Results from the Sequencing survey on vaccination willingness
+        among City of Cape Town Staff identified for Phase 1 of the vaccination rollout
+    </p>
+    <p>
+        The following tables indicate the number and percent of sequenced staff who are willing to vaccinate in general,
+        and number and percent of staff who are willing to vaccinate as part of the Sisonke program:
+    </p>
+    <p>
+        <strong>Staff Sequencing Totals</strong> (Overall vaccine willingness)
+    </p>
+    <p>
+        {{ sequencing_totals_df }}
+    </p>
+    <hr>
+    <p>
+        <strong>Staff Sequencing Totals by Branch</strong>:
+    </p>
+    <p>
+        {{ sequencing_branch_df }}
+    </p>
+    <hr>
+    <p>
+        <strong>Staff Sequencing Totals by Staff type</strong>:
+    </p>
+    <p>
+        {{ sequencing_type_df }}
+    </p>
+    <hr>
+    <p>
+        <strong>Staff Sequencing Totals by Risk-score</strong> (Risk scores are from 0 (low risk) to 4 (high risk)):
+    </p>
+    <p>
+        {{ sequencing_risk_df }}
+    </p>
+    <hr>
+
+    <h4>If this email is not displaying correctly: </h4>
+    <p>
+        Our email robot may have encountered an error - if any of the attached files don't make any sense, or if you have any queries,
+        suggestions or issues, please 
+        <a href='mailto:colinscott.anthony@capetown.gov.za,gordon.inggs@capetown.gov.za,riaz.arbi@capetown.gov.za,delyno.dutoit@capetown.gov.za'>contact</a>
+        the Data Science team.
+    </p>
+    <p>
+        Sincerely, <br><br/>
+        <strong>The OPM Data Science Robot</strong> <br><br/>
+        <a href="http://www.capetown.gov.za/General/Contact-us">CCT Contacts</a> |
+        <a href="http://www.capetown.gov.za/General/Contact-us">CCT Media and News</a> |
+        <a href="https://eservices1.capetown.gov.za/coct/wapl/zsreq_app/index.html">Report a fault</a> |
+        <a href="mailto:accounts@capetown.gov.za">Account Queries</a> |
+        <a href="http://www.capetown.gov.za/Family%20and%20home/residential-utility-services/residential-water-and-sanitation-services/make-water-saving-a-way-of-life">Water
+            Restrictions</a>
+
+    </p>
+    <p>
+        <img src="cid:rect_city_logo.png" style="width:25%;height:auto">
+    </p>
+    <hr>
+</font>
+<font face="arial" style="font-size:10px;">
+    <small>Request ID: {{ request_id }} </small>
+    <small>Timestamp: {{ iso8601_timestamp }} </small>
+</font>
+</body>
+</html>
