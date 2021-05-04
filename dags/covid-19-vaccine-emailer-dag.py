@@ -85,7 +85,7 @@ VACCINE_PLOT_TASK = "vaccine-rollout-plots"
 vaccine_plot_operator = covid_19_widget_task(VACCINE_PLOT_TASK)
 
 VACCINE_EMAIL_TASK = 'vaccine-emailer'
-report_date = str(date.today)
+report_date = date.today().strftime("%Y-%m-%d")
 report_date_arg = f" --report_date {report_date}"
 vaccine_email_operator = covid_19_widget_task(VACCINE_EMAIL_TASK, task_args=report_date_arg)
 
