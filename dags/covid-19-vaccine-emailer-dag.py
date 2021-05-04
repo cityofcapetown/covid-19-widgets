@@ -26,7 +26,7 @@ startup_cmd = (
 # At 6am, every weekday
 # NB because of Airflow's dag trigger semantics, the run at 6am will apply to the previous day
 dag_interval = timedelta(hours=1)
-dag_name = "covid-19-hr-emailer"
+dag_name = "covid-19-vaccine-emailer"
 dag = DAG(dag_name,
           start_date=DAG_STARTDATE,
           catchup=False,
