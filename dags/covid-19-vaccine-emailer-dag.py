@@ -61,11 +61,11 @@ k8s_run_args = {
 }
 
 
-def covid_19_widget_task(task_name, task_args, task_kwargs={}):
+def covid_19_widget_task(task_name, task_args='', task_kwargs={}):
     """Factory for k8sPodOperator"""
     name = f"{dag_name}-{task_name}"
     run_args = {**k8s_run_args.copy(), **task_kwargs}
-    run_cmd = f"bash -c '{startup_cmd} && \"$COVID_19_WIDGETS_DIR\"/bin/{task_name}.sh {task_args}"
+    run_cmd = f"bash -c '{startup_cmd} && \"$COVID_19_WIDGETS_DIR\"/bin/{task_name}.sh {task_args}'"
     
     operator = KubernetesPodOperator(
         cmds=["bash", "-cx"],
@@ -82,12 +82,12 @@ def covid_19_widget_task(task_name, task_args, task_kwargs={}):
 
 # Defining tasks
 VACCINE_PLOT_TASK = "vaccine-rollout-plots"
-vaccine_plot_operator = covid_19_widget_task(VACCINE_PLOT_TASK, '')
+vaccine_plot_operator = covid_19_widget_task(VACCINE_PLOT_TASK)
 
 VACCINE_EMAIL_TASK = 'vaccine-emailer'
 report_date = str(date.today)
 report_date_arg = f" --report_date {report_date}"
-vaccine_email_operator = covid_19_widget_task(VACCINE_EMAIL_TASK, report_date_arg)
+vaccine_email_operator = covid_19_widget_task(VACCINE_EMAIL_TASK, task_args=report_date_arg)
 
 # dependencies
 vaccine_plot_operator >> vaccine_email_operator
