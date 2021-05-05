@@ -49,7 +49,7 @@ secret_file = Secret('volume', '/secrets', 'vaccine-data-secret')
 
 # arguments for the k8s operator
 k8s_run_args = {
-    "image": "cityofcapetown/datascience:python@sha256:e80ae8d359b484dac5346f98c549abc694e1d0c87e1d9753d495aed4d9c8b2b3",
+    "image": "cityofcapetown/datascience:python@sha256:b663ff76f7a50699e4a7bcca0ac3a1b6fbcf7281c936dcd17ce8a57e174740b3",
     "namespace": 'airflow-workers',
     "is_delete_operator_pod": True,
     "get_logs": True,
@@ -85,8 +85,7 @@ VACCINE_PLOT_TASK = "vaccine-rollout-plots"
 vaccine_plot_operator = covid_19_widget_task(VACCINE_PLOT_TASK)
 
 VACCINE_EMAIL_TASK = 'vaccine-emailer'
-report_date = date.today().strftime("%Y-%m-%d")
-report_date_arg = f" --report_date {report_date}"
+report_date_arg = date.today().strftime("%Y-%m-%d")
 vaccine_email_operator = covid_19_widget_task(VACCINE_EMAIL_TASK, task_args=report_date_arg)
 
 # dependencies
