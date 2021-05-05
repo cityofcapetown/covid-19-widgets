@@ -25,7 +25,7 @@ startup_cmd = (
 
 # At 6am, every weekday
 # NB because of Airflow's dag trigger semantics, the run at 6am will apply to the previous day
-dag_interval = timedelta(hours=1)
+dag_interval = "0 6 * * 1-5"
 dag_name = "covid-19-vaccine-emailer"
 dag = DAG(dag_name,
           start_date=DAG_STARTDATE,
@@ -57,7 +57,7 @@ k8s_run_args = {
     "secrets": [secret_file],
     "env_vars": k8s_run_env,
     "image_pull_policy": "IfNotPresent",
-     "startup_timeout_seconds": 60*30,
+     "startup_timeout_seconds": 60*60,
 }
 
 
@@ -82,7 +82,7 @@ def covid_19_widget_task(task_name, task_args='', task_kwargs={}):
 
 # Defining tasks
 VACCINE_PLOT_TASK = "vaccine-rollout-plots"
-vaccine_plot_operator = covid_19_widget_task(VACCINE_PLOT_TASK)
+vaccine_plot_operator = covid_19_widget_task(VACCINE_PLOT_TASK, '')
 
 VACCINE_EMAIL_TASK = 'vaccine-emailer'
 report_date_arg = date.today().strftime("%Y-%m-%d")
