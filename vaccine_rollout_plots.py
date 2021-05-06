@@ -53,9 +53,13 @@ PLOT_LEVELS = [TOP_LEVEL, DIRECTORATE, DEPARTMENT, SUBDISTRICT, BRANCH, STAFF_TY
 
 TOTAL_SUFF = "total"
 WILLING_SUFF = "willing"
+TOTAL_STAFF = "total_staff"
+FACILITY = "facility"
+POSITION = "Position"
 VACCINATED_CUMSUM = "vaccinated_cumsum"
 VACCINATED_REL = "vaccinated_relative"
 VACCINATED_PERCENT = "vaccinated_percent"
+FIX_COLS = [AGG_LEVEL, AGG_LEVEL_NAME, TOTAL_STAFF, DIRECTORATE, DEPARTMENT, BRANCH, FACILITY, POSITION]
 
 TOTAL_COUNT = f"{VACCINATED_CUMSUM}_{TOTAL_SUFF}"
 WILLNIG_COUNT = f"{VACCINATED_CUMSUM}_{WILLING_SUFF}"
@@ -203,16 +207,24 @@ def plot_risk(plot_df_willing, label_name, out_name):
 
 
 def daily_resample(df, target_col):
-
     df[VAX_DATE] = pd.to_datetime(df[VAX_DATE])
-    idx = pd.date_range(df[VAX_DATE].min(), df[VAX_DATE].max())
-    new_df = df.set_index([VAX_DATE]).groupby(target_col).apply(
-        lambda agg_df: agg_df.reindex(idx, method='ffill').reset_index())
-    new_df.rename(columns={"index": "Vaccination date"}, inplace=True)
-    new_df[VACCINATED_CUMSUM].fillna(0, inplace=True)
-    new_df[VACCINATED_PERCENT].fillna(0, inplace=True)
+    idx = pd.date_range(df[VAX_DATE].min(), df[VAX_DATE].max(), freq="D")
+    groups = df.groupby(target_col)
+    collected_df = pd.DataFrame()
+    for group_name, group_df in groups:
+        new_group_df = group_df.set_index([VAX_DATE]).reindex(idx, fill_value=0, method='ffill').reset_index().copy()
+        new_group_df[target_col] = group_name
+        for col in FIX_COLS:
+            if col in group_df.columns:
+                value = list(group_df[col].unique())[0]
+                new_group_df[col] = value
+        collected_df = pd.concat([collected_df, new_group_df])
+    collected_df.rename(columns={"index": "Vaccination date"}, inplace=True)
+    collected_df[VACCINATED_CUMSUM].fillna(0, inplace=True)
+    collected_df[VACCINATED_PERCENT].fillna(0, inplace=True)
+    collected_df.reset_index(drop=True, inplace=True)
 
-    return new_df
+    return collected_df
 
 
 if __name__ == "__main__":
