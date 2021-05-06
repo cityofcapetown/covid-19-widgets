@@ -84,9 +84,12 @@ def covid_19_widget_task(task_name, task_args='', task_kwargs={}):
 VACCINE_PLOT_TASK = "vaccine-rollout-plots"
 vaccine_plot_operator = covid_19_widget_task(VACCINE_PLOT_TASK, '')
 
+VACCINE_INTERACTIVE_PLOT_TASK = "vaccine-rollout-interactive-plots"
+vaccine_interactive_plot_operator = covid_19_widget_task(VACCINE_INTERACTIVE_PLOT_TASK, '')
+
 VACCINE_EMAIL_TASK = 'vaccine-emailer'
 report_date_arg = date.today().strftime("%Y-%m-%d")
 vaccine_email_operator = covid_19_widget_task(VACCINE_EMAIL_TASK, task_args=report_date_arg)
 
 # dependencies
-vaccine_plot_operator >> vaccine_email_operator
+[vaccine_plot_operator, vaccine_interactive_plot_operator] >> vaccine_email_operator
