@@ -307,7 +307,7 @@ if __name__ == "__main__":
             minio_result = minio_utils.minio_to_file(
                 filename=tmp_file_name,
                 minio_filename_override=minio_filename_override,
-                minio_bucket="readonly",  # COVID_BUCKET,
+                minio_bucket=COVID_BUCKET,
                 data_classification=EDGE_CLASSIFICATION,
             )
             if not minio_result:
