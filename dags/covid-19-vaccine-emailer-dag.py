@@ -49,7 +49,7 @@ secret_file = Secret('volume', '/secrets', 'vaccine-data-secret')
 
 # arguments for the k8s operator
 k8s_run_args = {
-    "image": "cityofcapetown/datascience:python@sha256:b663ff76f7a50699e4a7bcca0ac3a1b6fbcf7281c936dcd17ce8a57e174740b3",
+    "image": "cityofcapetown/datascience:python@sha256:491802742dabd1eb6c550d220b6d3f3e6ac4359b8ded3307416831583cbcdee9",
     "namespace": 'airflow-workers',
     "is_delete_operator_pod": True,
     "get_logs": True,
@@ -89,7 +89,7 @@ vaccine_interactive_plot_operator = covid_19_widget_task(VACCINE_INTERACTIVE_PLO
 
 VACCINE_EMAIL_TASK = 'vaccine-emailer'
 report_date_arg = date.today().strftime("%Y-%m-%d")
-vaccine_email_operator = covid_19_widget_task(VACCINE_EMAIL_TASK, task_args=report_date_arg)
+# vaccine_email_operator = covid_19_widget_task(VACCINE_EMAIL_TASK, task_args=report_date_arg)
 
 # dependencies
-[vaccine_plot_operator, vaccine_interactive_plot_operator] >> vaccine_email_operator
+[vaccine_plot_operator, vaccine_interactive_plot_operator] #  >> vaccine_email_operator
