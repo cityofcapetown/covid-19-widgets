@@ -83,4 +83,4 @@ def covid_19_widget_task(task_name, task_args='', task_kwargs={}):
 # Defining tasks
 VACCINE_EMAIL_TASK = 'vaccine-emailer'
 report_date_arg = date.today().strftime("%Y-%m-%d")
-# vaccine_email_operator = covid_19_widget_task(VACCINE_EMAIL_TASK, task_args=report_date_arg)
+vaccine_email_operator = covid_19_widget_task(VACCINE_EMAIL_TASK, task_args=report_date_arg)

@@ -21,7 +21,6 @@ from db_utils import minio_utils
 from exchangelib import (DELEGATE, Account, Credentials, Configuration, NTLM, Build, Version, HTMLBody, Message,
                          FileAttachment)
 import pandas
-from pretty_html_table import build_table
 # local imports
 from vaccine_rollout_plots import OUTFILE_PREFIX, VACC_PLOT_PREFIX, TIME_SERIES_PREFIX
 from vaccine_rollout_plots import (COVID_BUCKET, EDGE_CLASSIFICATION, VACCINATED_REL, VACCINATED_CUMSUM, AGG_LEVEL,
@@ -103,12 +102,6 @@ EXCHANGE_VERSION = Version(build=Build(15, 0, 1395, 4000))
 HTML_TABLE_PRETTY_FORMAT = 'blue_light'
 
 
-def htlm_table_maker(df):
-    df_html = build_table(df, HTML_TABLE_PRETTY_FORMAT)
-
-    return df_html
-
-
 def render_email(
         email_template, receiver_dict, total_vaccinated, total_staff,
         percent_vaccinated, staff_by_totals_file, staff_by_department_file, staff_by_subdistrict_file,
@@ -118,10 +111,10 @@ def render_email(
     receiver_name = receiver_dict["receiver_name"]
     receiver_name_string = receiver_name[0]
 
-    sequencing_totals_df_html = htlm_table_maker(sequencing_totals_df)
-    sequencing_branch_df_html = htlm_table_maker(sequencing_branch_df)
-    sequencing_type_df_html = htlm_table_maker(sequencing_type_df)
-    sequencing_risk_df_html = htlm_table_maker(sequencing_risk_df)
+    sequencing_totals_df_html = sequencing_totals_df.to_html()
+    sequencing_branch_df_html = sequencing_branch_df.to_html()
+    sequencing_type_df_html = sequencing_type_df.to_html()
+    sequencing_risk_df_html = sequencing_risk_df.to_html()
 
     # Handling any middle receivers
     if len(receiver_name) > 2:
