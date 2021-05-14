@@ -146,7 +146,7 @@ def plot_timeseries(plot_df, plot_df_willing, label_name, out_name):
         logging.debug(f"writing {outfile_name} to minio")
         result = minio_utils.file_to_minio(
                 filename=outfile_name,
-                minio_bucket=COVID_BUCKET
+                minio_bucket=COVID_BUCKET,
                 filename_prefix_override=VACC_PLOT_PREFIX,
                 data_classification=EDGE_CLASSIFICATION,
         )
@@ -197,7 +197,7 @@ def plot_risk(plot_df_willing, label_name, out_name):
         logging.debug(f"writing {outfile_name} to minio")
         result = minio_utils.file_to_minio(
             filename=outfile_name,
-            minio_bucket=READONLY,  # COVID_BUCKET
+            minio_bucket=COVID_BUCKET,
             filename_prefix_override=VACC_PLOT_PREFIX,
             data_classification=EDGE_CLASSIFICATION,
         )

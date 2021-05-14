@@ -21,7 +21,6 @@ from vaccine_rollout_plots import minio_to_df, daily_resample
 
 # minio settings
 READER = "csv"
-READONLY = "readonly"
 COVID_BUCKET = "covid"
 TIME_SERIES_PREFIX = "data/private/staff_vaccine/time_series/"
 VACC_PLOT_PREFIX = "vaccine/plots/"  # "widgets/private/staff_vaccine/plots/"
@@ -179,7 +178,7 @@ if __name__ == "__main__":
             plotly_fig=figure,
             outfile=region_outfile,
             prefix=VACC_PLOT_PREFIX,
-            bucket=READONLY,
+            bucket=COVID_BUCKET,
             secret_access=secrets["minio"]["edge"]["access"],
             secret_secret=secrets["minio"]["edge"]["secret"],
         )
