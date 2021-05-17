@@ -424,7 +424,7 @@ CATEGORY_BUCKET_MAP = {
     "Faith-based Organisations": "WHO WORKS WHERE",
 
     # INFRASTRUCTURE
-    "Capital Infrastructure Portfolio": "INFRASTRUCTURE"
+    "Capital Infrastructure Portfolio": "INFRASTRUCTURE",
 }
 
 marker_icon_create_function_template = '''
@@ -466,6 +466,7 @@ MARKER_ICON_PROPERTIES = {
     "PLACES OF RISK": {"name": "marker-cluster-places-of-risk", "background_colour": "rgba(111, 173, 37, 0.6)"},
     "PEOPLE AT RISK": {"name": "marker-cluster-people-at-risk", "background_colour": "rgba(209, 82, 184, 0.6)"},
     "WHO WORKS WHERE": {"name": "marker-cluster-community-response", "background_colour": "rgba(65, 103, 118, 0.7)"},
+    "INFRASTRUCTURE": {"name": "marker-infrastructure", "background_colour": "rgba(65, 89, 225, 0.7)"}
 }
 
 BIN_QUANTILES = [0, 0, 0.5, 0.75, 0.9, 0.99, 1]
@@ -694,7 +695,8 @@ if __name__ == "__main__":
 
         map_zoom = DISTRICT_MAP_ZOOM if subdistrict_name != "*" else MAP_ZOOM
         data_map = city_map_widget_to_minio.generate_map(map_feature_generator,
-                                                         map_zoom=map_zoom, map_right_padding=MAP_RIGHT_PADDING, add_basemap=False)
+                                                         map_zoom=map_zoom, map_right_padding=MAP_RIGHT_PADDING,
+                                                         add_basemap=False)
         data_map = add_tree_layer_control_to_map(data_map)
         logging.info("Generat[ed] map")
 
