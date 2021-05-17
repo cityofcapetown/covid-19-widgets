@@ -357,7 +357,7 @@ HOTSPOT_LAYER_PROPERTIES_LOOKUP = collections.OrderedDict((
         city_map_widget_to_minio.LayerType.POINT,
         ("Item", "Name", "Item Description", "Directorate", "Department",),
         ("CPPPM Item", "Project Name", "Directorate", "Department"),
-        ("blue", "wrench",), "infrastructure-projects.geojson", False, False, None, False
+        ("blue", "wrench",), "infrastructure_projects.geojson", False, False, None, False
     ))
 ))
 
