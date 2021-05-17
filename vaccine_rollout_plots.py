@@ -25,7 +25,7 @@ sns.set()
 READER = "csv"
 COVID_BUCKET = "covid"
 TIME_SERIES_PREFIX = "data/private/staff_vaccine/time_series/"
-VACC_PLOT_PREFIX = "widgets/private/staff_vaccine/plots/"
+VACC_PLOT_PREFIX = "widgets/private/staff_vaccine/"
 EDGE_CLASSIFICATION = minio_utils.DataClassification.EDGE
 
 # infile
