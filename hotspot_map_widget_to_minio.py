@@ -351,6 +351,14 @@ HOTSPOT_LAYER_PROPERTIES_LOOKUP = collections.OrderedDict((
         ("Name", "Ward", "Subcouncil", "Address", "Phone Number", "Email"),
         ("cadetblue", "cloud"), "community-organisations-faith-based-organisations.geojson", False, False, None, False
     )),
+
+    # Infrastructure
+    ("Capital Infrastructure Portfolio", (
+        city_map_widget_to_minio.LayerType.POINT,
+        ("Item", "Name", "Item Description", "Directorate", "Department",),
+        ("CPPPM Item", "Project Name", "Directorate", "Department"),
+        ("blue", "wrench",), "infrastructure-projects.geojson", False, False, None, False
+    ))
 ))
 
 CATEGORY_BUCKETS = [
