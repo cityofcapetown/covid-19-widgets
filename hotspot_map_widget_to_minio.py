@@ -368,6 +368,7 @@ CATEGORY_BUCKETS = [
     "PLACES OF RISK",
     "PEOPLE AT RISK",
     "WHO WORKS WHERE",
+    "INFRASTRUCTURE"
 ]
 CATEGORY_BUCKET_MAP = {
     # Contextual Information
@@ -421,6 +422,9 @@ CATEGORY_BUCKET_MAP = {
     "Youth Organisations": "WHO WORKS WHERE",
     "Arts & Culture Organisations": "WHO WORKS WHERE",
     "Faith-based Organisations": "WHO WORKS WHERE",
+
+    # INFRASTRUCTURE
+    "Capital Infrastructure Portfolio": "INFRASTRUCTURE"
 }
 
 marker_icon_create_function_template = '''
