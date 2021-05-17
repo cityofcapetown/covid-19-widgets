@@ -17,13 +17,12 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
 from spv_plot_doubling_time import write_html_to_minio
-from vaccine_rollout_plots import minio_to_df, daily_resample
+from vaccine_rollout_plots import minio_to_df, daily_resample, VACC_PLOT_PREFIX
 
 # minio settings
 READER = "csv"
 COVID_BUCKET = "covid"
 TIME_SERIES_PREFIX = "data/private/staff_vaccine/time_series/"
-VACC_PLOT_PREFIX = "vaccine/plots/"  # "widgets/private/staff_vaccine/plots/"
 EDGE_CLASSIFICATION = minio_utils.DataClassification.EDGE
 
 # infile
